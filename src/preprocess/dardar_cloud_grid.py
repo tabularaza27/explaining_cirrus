@@ -492,9 +492,39 @@ def save_file(dir_path, ds, date, complevel=4):
     """
 
     date_str = date.strftime("%Y_%m_%d")
-    filepath = os.path.join(dir_path, date_str, ".nc")
+    filepath = os.path.join(dir_path, "dardar_cloud_{}.nc".format(date_str))
 
     # compress all data variables
     comp = dict(zlib=True, complevel=complevel)
     encoding = {var: comp for var in ds.data_vars}
     ds.to_netcdf(filepath, encoding=encoding)
+
+# run method #todo make execuatble
+def run_gridding(start_date, end_date):
+    """
+
+    Args:
+        start_date (str): YYYY-mm-dd
+        end_date (str): YYYY-mm-dd
+
+    """
+    daterange = pd.date_range(start=start_date, end=end_date)
+
+    for date in daterange:
+        print("Start Gridding: ", date)
+        dc = DardarCloud(date)
+        # quick'n'diget_filepathsck #todo
+        if get_filepaths(date, dc.SOURCE_DIR) is None:
+            print("No data available for this day")
+            continue
+        dc.load_files()
+        print("loaded files")
+        dc.concatenate_file_vectors()
+        print("concatenated file vectors")
+        dc.grid_and_aggregate()
+        print("gridded and aggregated")
+        ds = dc.create_dateset()
+        print("created dataset")
+        save_file(dc.TARGET_DIR, ds, date)
+        print("saved file")
+
