@@ -1,11 +1,8 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
 import xarray as xr
 import datetime
 import cis
-import iris
 import os
 import glob
 import json
