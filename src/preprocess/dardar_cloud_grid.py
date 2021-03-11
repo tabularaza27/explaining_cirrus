@@ -6,6 +6,7 @@ import cis
 import os
 import glob
 import json
+import sys
 from copy import deepcopy
 
 
@@ -268,7 +269,6 @@ class DardarCloud:
 
         return ds
 
-
     # aggregate helpers
     def aggregate(self, lon, lat, timestamp):
         # get lat/lon/time index in grid
@@ -496,6 +496,7 @@ def save_file(dir_path, ds, date, complevel=4):
     encoding = {var: comp for var in ds.data_vars}
     ds.to_netcdf(filepath, encoding=encoding)
 
+
 # run method #todo make execuatble
 def run_gridding(start_date, end_date):
     """
@@ -525,3 +526,7 @@ def run_gridding(start_date, end_date):
         save_file(dc.TARGET_DIR, ds, date)
         print("saved file")
 
+
+if __name__ == "__main__":
+    # todo make user friendly
+    run_gridding(sys.argv[1], sys.argv[2])
