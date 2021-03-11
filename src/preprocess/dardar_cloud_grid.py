@@ -41,7 +41,8 @@ class DardarCloud:
     ALTINTERVAL = 60
     ALTLEVELS = 419
 
-    DIR_PATH = "/wolke_scratch/nedavid/DARDAR_CLOUD"
+    SOURCE_DIR = "/wolke_scratch/nedavid/DARDAR_CLOUD"
+    TARGET_DIR = "/wolke_scratch/kjeggle/gridded"
 
     def __init__(self, date):
         self.date = date
@@ -95,7 +96,7 @@ class DardarCloud:
         """load L2 files for given date and concat coord and data vectors"""
 
         # load L2 file paths
-        files = get_filepaths(self.date, dir_path=self.DIR_PATH)
+        files = get_filepaths(self.date, dir_path=self.SOURCE_DIR)
 
         # load each file from disk and extract coord and data vectors
         for file in files:
@@ -234,6 +235,10 @@ class DardarCloud:
 
     def create_dataset(self):
 
+        # load dardar nice L3 dataset to copy the coordinate attributes
+        dardar_l3_files = glob.glob('/wolke_scratch/kjeggle/DARDAR_NICE/L3/2006/*')
+        dar_nice = xr.open_dataset(dardar_l3_files[3])
+
         for var_name, var in self.attr_dict.items():
             if var_name in self.VARIABLES_3D or var_name == "cloud_cover":
                 var["coords"] = ["lon", "lat", "lev", "time"]
@@ -244,8 +249,8 @@ class DardarCloud:
             data_vars={var["var_name"]: (var["coords"], self.agg_dict[key], var["attrs"]) for key, var in
                        self.attr_dict.items()},
             coords=dict(
-                lon=(["lon"], self.longr, self.dar_nice.lon.attrs.copy()),
-                lat=(["lat"], self.latgr, self.dar_nice.lat.attrs.copy()),
+                lon=(["lon"], self.longr, dar_nice.lon.attrs.copy()),
+                lat=(["lat"], self.latgr, dar_nice.lat.attrs.copy()),
                 lev=(["lev"], self.alt_levels, {"units": "m", "axis": "Z", "long_name": "Altitude Level"}),
                 time=(["time"], cis.time_util.convert_std_time_to_datetime(self.daily_intervals),
                       {"axis": "T", "long_name": "time"})
