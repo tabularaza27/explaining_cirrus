@@ -8,6 +8,7 @@ import cis
 import iris
 import os
 import glob
+import json
 from copy import deepcopy
 
 
@@ -86,6 +87,10 @@ class DardarCloud:
         for var in self.VARIABLES_2D:
             self.var_dict[var] = []
 
+        # setup dataset attributes dict
+        with open("dataset_attributes.json") as json_file:
+            self.attr_dict = json.load(json_file)
+
     def load_files(self):
         """load L2 files for given date and concat coord and data vectors"""
 
@@ -162,8 +167,9 @@ class DardarCloud:
         ### find coordinates with observations/realizations
 
         # retrieve lat lon, time combinations and how often they occur
-        (self.lats_all, self.lons_all, self.times_all), counts_all = np.unique(np.array([self.latr, self.lonr, self.timer]),
-                                                                               axis=1, return_counts=True)
+        (self.lats_all, self.lons_all, self.times_all), counts_all = np.unique(
+            np.array([self.latr, self.lonr, self.timer]),
+            axis=1, return_counts=True)
         self.lats_all = np.round(self.lats_all.astype('float64'), 4)  # float rounding errors
         self.lons_all = np.round(self.lons_all.astype('float64'), 4)
 
@@ -225,6 +231,41 @@ class DardarCloud:
 
             # calc aggregate for each variable
             self.aggregate(lon, lat, timestamp)
+
+    def create_dataset(self):
+
+        for var_name, var in self.attr_dict.items():
+            if var_name in self.VARIABLES_3D or var_name == "cloud_cover":
+                var["coords"] = ["lon", "lat", "lev", "time"]
+            else:
+                var["coords"] = ["lon", "lat", "time"]
+
+        ds = xr.Dataset(
+            data_vars={var["var_name"]: (var["coords"], self.agg_dict[key], var["attrs"]) for key, var in
+                       self.attr_dict.items()},
+            coords=dict(
+                lon=(["lon"], self.longr, self.dar_nice.lon.attrs.copy()),
+                lat=(["lat"], self.latgr, self.dar_nice.lat.attrs.copy()),
+                lev=(["lev"], self.alt_levels, {"units": "m", "axis": "Z", "long_name": "Altitude Level"}),
+                time=(["time"], cis.time_util.convert_std_time_to_datetime(self.daily_intervals),
+                      {"axis": "T", "long_name": "time"})
+            )
+        )
+
+        # time attrs
+        ds.time.attrs['axis'] = 'T'
+        ds.time.attrs['standard_name'] = 'time'
+        ds.time.attrs['long_name'] = 'time'
+        time_units = cis.time_util.cis_standard_time_unit.origin
+        ds.time.encoding['units'] = time_units
+
+        # level attrs
+        ds.lev.attrs['axis'] = 'Z'
+        ds.lev.attrs["units"] = "m"
+        ds.time.attrs['long_name'] = 'Altitude level'
+
+        return ds
+
 
     # aggregate helpers
     def aggregate(self, lon, lat, timestamp):
@@ -408,6 +449,7 @@ def get_day_files(date, dir_path):
 
     return filepaths
 
+
 def get_filepaths(date, dir_path):
     """load filepaths for given date + last file from previous day
 
@@ -432,3 +474,22 @@ def get_filepaths(date, dir_path):
         filepaths = np.insert(filepaths, 0, prev_day_paths[-1])
 
     return filepaths
+
+
+def save_file(dir_path, ds, date, complevel=4):
+    """compresses and saves file
+
+    Args:
+        dir_path (str): target dir to save files
+        ds (xarray.Dataset):
+        date (datetime.datetime):
+        complevel (int): compression level
+    """
+
+    date_str = date.strftime("%Y_%m_%d")
+    filepath = os.path.join(dir_path, date_str, ".nc")
+
+    # compress all data variables
+    comp = dict(zlib=True, complevel=complevel)
+    encoding = {var: comp for var in ds.data_vars}
+    ds.to_netcdf(filepath, encoding=encoding)
