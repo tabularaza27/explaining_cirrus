@@ -90,7 +90,7 @@ class DardarCloud:
         """load L2 files for given date and concat coord and data vectors"""
 
         # load L2 file paths
-        files = get_filepaths(self.date)
+        files = get_filepaths(self.date, dir_path=self.DIR_PATH)
 
         # load each file from disk and extract coord and data vectors
         for file in files:
