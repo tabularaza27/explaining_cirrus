@@ -376,7 +376,7 @@ class DardarCloud:
         if categorical:
             vals, counts = np.unique(obs, return_counts=True)
             max_occurance = np.nanargmax(counts)
-            agg = int(vals[max_occurance])
+            agg = vals[max_occurance]
         else:
             agg = np.nanmean(obs)
 
