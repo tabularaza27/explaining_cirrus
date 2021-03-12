@@ -40,7 +40,7 @@ class DardarCloud:
     ALTLEVELS = 419
 
     SOURCE_DIR = "/wolke_scratch/nedavid/DARDAR_CLOUD"
-    TARGET_DIR = "/wolke_scratch/kjeggle/gridded"
+    TARGET_DIR = "/wolke_scratch/kjeggle/DARDAR_CLOUD/gridded"
 
     def __init__(self, date):
         self.date = date
