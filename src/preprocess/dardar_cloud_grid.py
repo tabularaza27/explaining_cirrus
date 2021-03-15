@@ -14,7 +14,6 @@ from cis.data_io.products.AProduct import ProductPluginException
 
 # setup logger - see: https://docs.python.org/3/howto/logging-cookbook.html
 logger = logging.getLogger(__name__)
-logger.setLevel(level=logging.INFO)
 # log file
 fh = logging.FileHandler("grid.log")
 fh.setLevel(logging.DEBUG)
