@@ -589,6 +589,7 @@ def run_gridding(start_date, end_date, n_workers=10):
     Args:
         start_date (str): YYYY-mm-dd
         end_date (str): YYYY-mm-dd
+        n_workers (int): nuber of cpus to use for gridding
 
     """
     pool = mp.Pool(n_workers)
@@ -604,4 +605,9 @@ def run_gridding(start_date, end_date, n_workers=10):
 
 if __name__ == "__main__":
     # todo make user friendly
-    run_gridding(sys.argv[1], sys.argv[2])
+    if len(sys.argv) == 4:
+        run_gridding(start_date=sys.argv[1], end_date=sys.argv[2],n_workers=sys.argv[3])
+    elif len(sys.argv) == 3:
+        run_gridding(start_date=sys.argv[1], end_date=sys.argv[2])
+    else:
+        raise ValueError("Provide valid arguments. E.g.: python dardar_cloud_grid '2016-01-01' '2016-01-31' <#workers>")
