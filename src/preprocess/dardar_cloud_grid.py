@@ -606,7 +606,7 @@ def run_gridding(start_date, end_date, n_workers=10):
 if __name__ == "__main__":
     # todo make user friendly
     if len(sys.argv) == 4:
-        run_gridding(start_date=sys.argv[1], end_date=sys.argv[2],n_workers=sys.argv[3])
+        run_gridding(start_date=sys.argv[1], end_date=sys.argv[2], n_workers=int(sys.argv[3]))
     elif len(sys.argv) == 3:
         run_gridding(start_date=sys.argv[1], end_date=sys.argv[2])
     else:
