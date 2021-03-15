@@ -581,15 +581,15 @@ def grid_one_day(date):
 
 
 # run method #todo make execuatble
-def run_gridding(start_date, end_date):
-    """runs gridding process for DARDAR CLOUD L2 data for given time period
+def run_gridding(start_date, end_date, n_workers=10):
+    """runs gridding process for DARDAR CLOUD L2 data for given time period in parallel
 
     Args:
         start_date (str): YYYY-mm-dd
         end_date (str): YYYY-mm-dd
 
     """
-    pool = mp.Pool(20)
+    pool = mp.Pool(n_workers)
     logger.info("++++++++++++++ Start new gridding process ++++++++++++++")
     logger.info("gridding period: {} - {}".format(start_date, end_date))
     daterange = pd.date_range(start=start_date, end=end_date)
