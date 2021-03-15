@@ -557,9 +557,9 @@ def run_gridding(start_date, end_date):
     for date in daterange:
         date = date.to_pydatetime()
         if exists(date):
-            logger.info("File already exists: ", date)
+            logger.info("File already exists: {}".format(date))
             continue
-        logger.info("Start Gridding: ", date)
+        logger.info("Start Gridding: {}".format(date))
         dc = DardarCloud(date)
         # quick'n'diget_filepathsck #todo
         if get_filepaths(date, dc.SOURCE_DIR) is None:
