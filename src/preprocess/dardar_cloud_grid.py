@@ -12,12 +12,22 @@ from copy import deepcopy
 from cis import time_util
 from cis.data_io.products.AProduct import ProductPluginException
 
-# setup logger
+# setup logger - see: https://docs.python.org/3/howto/logging-cookbook.html
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
-FORMAT = '%(asctime)-15s %(message)s'
-logging.basicConfig(format=FORMAT, level="INFO")
-
+# log file
+fh = logging.FileHandler("grid.log")
+fh.setLevel(logging.DEBUG)
+# console output
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+# format
+formatter = logging.Formatter('%(asctime)-15s %(message)s')
+fh.setFormatter(formatter)
+ch.setFormatter(formatter)
+# add handlers
+logger.addHandler(fh)
+logger.addHandler(ch)
 
 class DardarCloud:
     # variables to retrieve from DARDAR Cloud L2 Data
@@ -107,12 +117,12 @@ class DardarCloud:
         # load each file from disk and extract coord and data vectors
         for file in files:
             # 3d variable data
-            logging.debug("load {}".format(file))
+            logger.debug("load {}".format(file))
             try:
                 dardar_3d = cis.read_data_list(file, self.VARIABLES_3D,
                                                product="DARDAR_CLOUD")
             except ProductPluginException as e:
-                logging.warning("ERROR in reading 3d variables {}. i.e. this file is not readable with cis product plugin."
+                logger.warning("ERROR in reading 3d variables {}. i.e. this file is not readable with cis product plugin."
                              "skip this file and continue with next file")
             # coords
             self.latv.append(dardar_3d.coord("latitude").data)
@@ -134,7 +144,7 @@ class DardarCloud:
                 try:
                     dardar_2d = cis.read_data(file, var_2d, product="DARDAR_CLOUD")
                 except ProductPluginException as e:
-                    logging.warning(
+                    logger.warning(
                         "ERROR in reading 2D variables of {}. i.e. this file is not readable with cis product plugin."
                         "skip this file and continue with next file")
                 data_2d = dardar_2d.retrieve_raw_data(dardar_2d._data_manager[0]).data
@@ -214,7 +224,7 @@ class DardarCloud:
                 continue
 
             if (lat < self.LATMIN) | (lat >= self.LATMAX) | (lon < self.LONMIN) | (lon >= self.LONMAX):
-                # logging.info("out of area")
+                # logger.info("out of area")
                 continue
 
             # get indices
@@ -242,7 +252,7 @@ class DardarCloud:
                 continue
 
             if (lat < self.LATMIN) | (lat >= self.LATMAX) | (lon < self.LONMIN) | (lon >= self.LONMAX):
-                # logging.info("out of area")
+                # logger.info("out of area")
                 continue
 
             # calc aggregate for each variable
@@ -484,11 +494,11 @@ def get_filepaths(date, dir_path):
     prev_day_paths = get_day_files(date + datetime.timedelta(days=-1), dir_path)
 
     if filepaths.size == 0:
-        logging.info("no data available")
+        logger.info("no data available")
         return None
 
     if prev_day_paths.size == 0:
-        logging.info("no data for prev day available")
+        logger.info("no data for prev day available")
     else:
         filepaths = np.insert(filepaths, 0, prev_day_paths[-1])
 
@@ -547,24 +557,24 @@ def run_gridding(start_date, end_date):
     for date in daterange:
         date = date.to_pydatetime()
         if exists(date):
-            logging.info("File already exists: ", date)
+            logger.info("File already exists: ", date)
             continue
-        logging.info("Start Gridding: ", date)
+        logger.info("Start Gridding: ", date)
         dc = DardarCloud(date)
         # quick'n'diget_filepathsck #todo
         if get_filepaths(date, dc.SOURCE_DIR) is None:
-            logging.info("No data available for this day")
+            logger.info("No data available for this day")
             continue
         dc.load_files()
-        logging.info("loaded files")
+        logger.info("loaded files")
         dc.concatenate_file_vectors()
-        logging.info("concatenated file vectors")
+        logger.info("concatenated file vectors")
         dc.grid_and_aggregate()
-        logging.info("gridded and aggregated")
+        logger.info("gridded and aggregated")
         ds = dc.create_dataset()
-        logging.info("created dataset")
+        logger.info("created dataset")
         save_file(dc.TARGET_DIR, ds, date)
-        logging.info("saved file")
+        logger.info("saved file")
 
 
 if __name__ == "__main__":
