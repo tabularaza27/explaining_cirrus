@@ -5,6 +5,7 @@ import datetime
 import cis
 import os
 import glob
+import gc
 import logging
 import json
 import sys
@@ -577,6 +578,7 @@ def grid_one_day(date):
     logger.info("created dataset")
     save_file(dc.TARGET_DIR, ds, date)
     logger.info("saved file")
+    gc.collect() # garbage collection
     return True
 
 
