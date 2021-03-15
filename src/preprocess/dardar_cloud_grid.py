@@ -8,6 +8,7 @@ import glob
 import json
 import sys
 from copy import deepcopy
+from cis import time_util
 
 
 class DardarCloud:
@@ -51,10 +52,10 @@ class DardarCloud:
         self.intervals_per_day = int(24 / self.TEMP_RES)
         # all intervals include 1 time interval before and after the current day, cause the data in the day dir can contain also these data points
         all_intervals = np.array([self.date + temp_delta * i for i in range(1, self.intervals_per_day + 2)])
-        self.all_intervals = cis.time_util.convert_datetime_to_std_time(all_intervals)
+        self.all_intervals = time_util.convert_datetime_to_std_time(all_intervals)
         # daily intervals
         daily_intervals = np.array([self.date + temp_delta * i for i in range(1, self.intervals_per_day + 1)])
-        self.daily_intervals = cis.time_util.convert_datetime_to_std_time(daily_intervals)
+        self.daily_intervals = time_util.convert_datetime_to_std_time(daily_intervals)
 
         # horizontal
         latrange = self.LATMAX - self.LATMIN
@@ -250,7 +251,7 @@ class DardarCloud:
                 lon=(["lon"], self.longr, dar_nice.lon.attrs.copy()),
                 lat=(["lat"], self.latgr, dar_nice.lat.attrs.copy()),
                 lev=(["lev"], self.alt_levels, {"units": "m", "axis": "Z", "long_name": "Altitude Level"}),
-                time=(["time"], cis.time_util.convert_std_time_to_datetime(self.daily_intervals),
+                time=(["time"], time_util.convert_std_time_to_datetime(self.daily_intervals),
                       {"axis": "T", "long_name": "time"})
             )
         )
@@ -259,7 +260,7 @@ class DardarCloud:
         ds.time.attrs['axis'] = 'T'
         ds.time.attrs['standard_name'] = 'time'
         ds.time.attrs['long_name'] = 'time'
-        time_units = cis.time_util.cis_standard_time_unit.origin
+        time_units = time_util.cis_standard_time_unit.origin
         ds.time.encoding['units'] = time_units
 
         # level attrs
