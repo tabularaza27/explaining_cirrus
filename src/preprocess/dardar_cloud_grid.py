@@ -5,10 +5,16 @@ import datetime
 import cis
 import os
 import glob
+import logging
 import json
 import sys
 from copy import deepcopy
 from cis import time_util
+from cis.data_io.products.AProduct import ProductPluginException
+
+# setup logger
+FORMAT = '%(asctime)-15s %(message)s'
+logging.basicConfig(format=FORMAT, level="INFO")
 
 
 class DardarCloud:
@@ -96,12 +102,16 @@ class DardarCloud:
 
         # load L2 file paths
         files = get_filepaths(self.date, dir_path=self.SOURCE_DIR)
-
         # load each file from disk and extract coord and data vectors
         for file in files:
             # 3d variable data
-            dardar_3d = cis.read_data_list(file, self.VARIABLES_3D,
-                                           product="DARDAR_CLOUD")  # cis.read_data(file, 'iwc', product="DARDAR_CLOUD")
+            logging.debug("load {}".format(file))
+            try:
+                dardar_3d = cis.read_data_list(file, self.VARIABLES_3D,
+                                               product="DARDAR_CLOUD")
+            except ProductPluginException as e:
+                logging.info("ERROR in reading 3d variables {}. i.e. this file is not readable with cis product plugin."
+                             "skip this file and continue with next file")
             # coords
             self.latv.append(dardar_3d.coord("latitude").data)
             self.lonv.append(dardar_3d.coord("longitude").data)
@@ -119,9 +129,13 @@ class DardarCloud:
                     # 2d variable data
             # loading 2d variable data directly raises an error in the `post_process` method in cis. That's why we use `retrieve_raw_data`
             for var_2d in self.VARIABLES_2D:
-                dardar_2d = cis.read_data(file, var_2d, product="DARDAR_CLOUD")
+                try:
+                    dardar_2d = cis.read_data(file, var_2d, product="DARDAR_CLOUD")
+                except ProductPluginException as e:
+                    logging.info(
+                        "ERROR in reading 2D variables of {}. i.e. this file is not readable with cis product plugin."
+                        "skip this file and continue with next file")
                 data_2d = dardar_2d.retrieve_raw_data(dardar_2d._data_manager[0]).data
-
                 # make sure shapes are correct
                 assert data_2d.shape[0] == int(
                     dardar_3d[0].shape[0] / self.ALTLEVELS), "2d variable shape doesnt match 3d variable shape"
@@ -198,7 +212,7 @@ class DardarCloud:
                 continue
 
             if (lat < self.LATMIN) | (lat >= self.LATMAX) | (lon < self.LONMIN) | (lon >= self.LONMAX):
-                # print("out of area")
+                # logging.info("out of area")
                 continue
 
             # get indices
@@ -226,7 +240,7 @@ class DardarCloud:
                 continue
 
             if (lat < self.LATMIN) | (lat >= self.LATMAX) | (lon < self.LONMIN) | (lon >= self.LONMAX):
-                # print("out of area")
+                # logging.info("out of area")
                 continue
 
             # calc aggregate for each variable
@@ -468,11 +482,11 @@ def get_filepaths(date, dir_path):
     prev_day_paths = get_day_files(date + datetime.timedelta(days=-1), dir_path)
 
     if filepaths.size == 0:
-        print("no data available")
+        logging.info("no data available")
         return None
 
     if prev_day_paths.size == 0:
-        print("no data for prev day available")
+        logging.info("no data for prev day available")
     else:
         filepaths = np.insert(filepaths, 0, prev_day_paths[-1])
 
@@ -498,9 +512,28 @@ def save_file(dir_path, ds, date, complevel=4):
     ds.to_netcdf(filepath, encoding=encoding)
 
 
+def exists(date):
+    """checks if gridded file already exists
+
+    Args:
+        date (datetime.datetime):
+
+    Returns:
+        bool: True if file already exists
+
+    """
+    datestr = date.strftime("%Y_%m_%d")
+    filepath = os.path.join(DardarCloud.TARGET_DIR, "dardar_cloud_{}.nc".format(datestr))
+
+    if len(glob.glob(filepath)) > 0:
+        return True
+    else:
+        return False
+
+
 # run method #todo make execuatble
 def run_gridding(start_date, end_date):
-    """
+    """runs gridding process for DARDAR CLOUD L2 data for given time period
 
     Args:
         start_date (str): YYYY-mm-dd
@@ -510,22 +543,26 @@ def run_gridding(start_date, end_date):
     daterange = pd.date_range(start=start_date, end=end_date)
 
     for date in daterange:
-        print("Start Gridding: ", date)
+        date = date.to_pydatetime()
+        if exists(date):
+            logging.info("File already exists: ", date)
+            continue
+        logging.info("Start Gridding: ", date)
         dc = DardarCloud(date)
         # quick'n'diget_filepathsck #todo
         if get_filepaths(date, dc.SOURCE_DIR) is None:
-            print("No data available for this day")
+            logging.info("No data available for this day")
             continue
         dc.load_files()
-        print("loaded files")
+        logging.info("loaded files")
         dc.concatenate_file_vectors()
-        print("concatenated file vectors")
+        logging.info("concatenated file vectors")
         dc.grid_and_aggregate()
-        print("gridded and aggregated")
-        ds = dc.create_dateset()
-        print("created dataset")
+        logging.info("gridded and aggregated")
+        ds = dc.create_dataset()
+        logging.info("created dataset")
         save_file(dc.TARGET_DIR, ds, date)
-        print("saved file")
+        logging.info("saved file")
 
 
 if __name__ == "__main__":
