@@ -14,6 +14,7 @@ from cis.data_io.products.AProduct import ProductPluginException
 
 # setup logger - see: https://docs.python.org/3/howto/logging-cookbook.html
 logger = logging.getLogger(__name__)
+logger.setLevel(level=logging.INFO)
 # log file
 fh = logging.FileHandler("grid.log")
 fh.setLevel(logging.DEBUG)
@@ -122,7 +123,8 @@ class DardarCloud:
                                                product="DARDAR_CLOUD")
             except ProductPluginException as e:
                 logger.warning("ERROR in reading 3d variables {}. i.e. this file is not readable with cis product plugin."
-                             "skip this file and continue with next file")
+                             "skip this file and continue with next file".format(file))
+                continue
             # coords
             self.latv.append(dardar_3d.coord("latitude").data)
             self.lonv.append(dardar_3d.coord("longitude").data)
@@ -145,7 +147,8 @@ class DardarCloud:
                 except ProductPluginException as e:
                     logger.warning(
                         "ERROR in reading 2D variables of {}. i.e. this file is not readable with cis product plugin."
-                        "skip this file and continue with next file")
+                        "skip this file and continue with next file".format(file))
+                    continue
                 data_2d = dardar_2d.retrieve_raw_data(dardar_2d._data_manager[0]).data
                 # make sure shapes are correct
                 assert data_2d.shape[0] == int(
