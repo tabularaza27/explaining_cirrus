@@ -544,6 +544,37 @@ def exists(date):
     else:
         return False
 
+def grid_one_day(date):
+    """runs gridding process for DARDAR CLOUD L2 data for 1 day
+
+    Args:
+        date (datetime.datetime):
+
+    Returns:
+        None if file doesnt exist or gridded file already exists. True if successfully gridded
+
+    """
+    if exists(date):
+        logger.info("File already exists: {}".format(date))
+        return None
+    logger.info("Start Gridding: {}".format(date))
+    dc = DardarCloud(date)
+    # quick'n'diget_filepathsck #todo
+    if get_filepaths(date, dc.SOURCE_DIR) is None:
+        logger.info("No data available for this day")
+        return None
+    dc.load_files()
+    logger.info("loaded files")
+    dc.concatenate_file_vectors()
+    logger.info("concatenated file vectors")
+    dc.grid_and_aggregate()
+    logger.info("gridded and aggregated")
+    ds = dc.create_dataset()
+    logger.info("created dataset")
+    save_file(dc.TARGET_DIR, ds, date)
+    logger.info("saved file")
+    return True
+
 
 # run method #todo make execuatble
 def run_gridding(start_date, end_date):
@@ -554,30 +585,12 @@ def run_gridding(start_date, end_date):
         end_date (str): YYYY-mm-dd
 
     """
+    logger.info("++++++++++++++ Start new gridding process ++++++++++++++")
+    logger.info("gridding period: {} - {}".format(start_date,end_date))
     daterange = pd.date_range(start=start_date, end=end_date)
-
     for date in daterange:
         date = date.to_pydatetime()
-        if exists(date):
-            logger.info("File already exists: {}".format(date))
-            continue
-        logger.info("Start Gridding: {}".format(date))
-        dc = DardarCloud(date)
-        # quick'n'diget_filepathsck #todo
-        if get_filepaths(date, dc.SOURCE_DIR) is None:
-            logger.info("No data available for this day")
-            continue
-        dc.load_files()
-        logger.info("loaded files")
-        dc.concatenate_file_vectors()
-        logger.info("concatenated file vectors")
-        dc.grid_and_aggregate()
-        logger.info("gridded and aggregated")
-        ds = dc.create_dataset()
-        logger.info("created dataset")
-        save_file(dc.TARGET_DIR, ds, date)
-        logger.info("saved file")
-
+        grid_one_day(date)
 
 if __name__ == "__main__":
     # todo make user friendly
