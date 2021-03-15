@@ -13,6 +13,8 @@ from cis import time_util
 from cis.data_io.products.AProduct import ProductPluginException
 
 # setup logger
+logger = logging.getLogger(__name__)
+logger.setLevel(level=logging.INFO)
 FORMAT = '%(asctime)-15s %(message)s'
 logging.basicConfig(format=FORMAT, level="INFO")
 
