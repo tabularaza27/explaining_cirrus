@@ -112,7 +112,7 @@ class DardarCloud:
                 dardar_3d = cis.read_data_list(file, self.VARIABLES_3D,
                                                product="DARDAR_CLOUD")
             except ProductPluginException as e:
-                logging.info("ERROR in reading 3d variables {}. i.e. this file is not readable with cis product plugin."
+                logging.warning("ERROR in reading 3d variables {}. i.e. this file is not readable with cis product plugin."
                              "skip this file and continue with next file")
             # coords
             self.latv.append(dardar_3d.coord("latitude").data)
@@ -134,7 +134,7 @@ class DardarCloud:
                 try:
                     dardar_2d = cis.read_data(file, var_2d, product="DARDAR_CLOUD")
                 except ProductPluginException as e:
-                    logging.info(
+                    logging.warning(
                         "ERROR in reading 2D variables of {}. i.e. this file is not readable with cis product plugin."
                         "skip this file and continue with next file")
                 data_2d = dardar_2d.retrieve_raw_data(dardar_2d._data_manager[0]).data
