@@ -8,6 +8,7 @@ import glob
 import logging
 import json
 import sys
+import multiprocessing as mp
 from copy import deepcopy
 from cis import time_util
 from cis.data_io.products.AProduct import ProductPluginException
@@ -28,6 +29,7 @@ ch.setFormatter(formatter)
 # add handlers
 logger.addHandler(fh)
 logger.addHandler(ch)
+
 
 class DardarCloud:
     # variables to retrieve from DARDAR Cloud L2 Data
@@ -122,8 +124,9 @@ class DardarCloud:
                 dardar_3d = cis.read_data_list(file, self.VARIABLES_3D,
                                                product="DARDAR_CLOUD")
             except ProductPluginException as e:
-                logger.warning("ERROR in reading 3d variables {}. i.e. this file is not readable with cis product plugin."
-                             "skip this file and continue with next file".format(file))
+                logger.warning(
+                    "ERROR in reading 3d variables {}. i.e. this file is not readable with cis product plugin."
+                    "skip this file and continue with next file".format(file))
                 continue
             # coords
             self.latv.append(dardar_3d.coord("latitude").data)
@@ -544,6 +547,7 @@ def exists(date):
     else:
         return False
 
+
 def grid_one_day(date):
     """runs gridding process for DARDAR CLOUD L2 data for 1 day
 
@@ -585,12 +589,16 @@ def run_gridding(start_date, end_date):
         end_date (str): YYYY-mm-dd
 
     """
+    pool = mp.Pool(20)
     logger.info("++++++++++++++ Start new gridding process ++++++++++++++")
-    logger.info("gridding period: {} - {}".format(start_date,end_date))
+    logger.info("gridding period: {} - {}".format(start_date, end_date))
     daterange = pd.date_range(start=start_date, end=end_date)
     for date in daterange:
         date = date.to_pydatetime()
-        grid_one_day(date)
+        pool.apply_async(grid_one_day, args=(date,))
+    pool.close()
+    pool.join()
+
 
 if __name__ == "__main__":
     # todo make user friendly
