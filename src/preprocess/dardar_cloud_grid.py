@@ -109,7 +109,7 @@ class DardarCloud:
             self.var_dict[var] = []
 
         # setup dataset attributes dict
-        with open("dataset_attributes.json") as json_file:
+        with open("cloud_dataset_attributes.json") as json_file:
             self.attr_dict = json.load(json_file)
 
     def load_files(self):
@@ -467,18 +467,19 @@ def get_grid_idx(longr, latgr, daily_intervals, lon, lat, timestamp=None):
 
 
 # io helpers
-def get_day_files(date, dir_path):
+def get_day_files(date, dir_path, file_format="hdf"):
     """returns sorted array of filepaths of given day
 
     Args:
         date (datetime.datetime):
         dir_path (str): path to DARDAR Files
+        file_format (str): format of L2 files, e.g. hdf, nc
 
     Returns:
         list: list of filepaths
     """
     date_str = date.strftime("%Y_%m_%d")
-    date_dir = os.path.join(dir_path, date_str, "*.hdf")
+    date_dir = os.path.join(dir_path, date_str, "*.{}".format(file_format))
     filepaths = glob.glob(date_dir)
     filepaths = np.sort(filepaths)  # sort files in ascending order
 
@@ -511,18 +512,19 @@ def get_filepaths(date, dir_path):
     return filepaths
 
 
-def save_file(dir_path, ds, date, complevel=4):
+def save_file(dir_path, file_name, ds, date, complevel=4):
     """compresses and saves file
 
     Args:
         dir_path (str): target dir to save files
+        file_name (str): file name to save the file to
         ds (xarray.Dataset):
         date (datetime.datetime):
         complevel (int): compression level
     """
 
     date_str = date.strftime("%Y_%m_%d")
-    filepath = os.path.join(dir_path, "dardar_cloud_{}.nc".format(date_str))
+    filepath = os.path.join(dir_path, "{}_{}.nc".format(file_name, date_str))
 
     # compress all data variables
     comp = dict(zlib=True, complevel=complevel)
@@ -530,18 +532,19 @@ def save_file(dir_path, ds, date, complevel=4):
     ds.to_netcdf(filepath, encoding=encoding)
 
 
-def exists(date):
+def exists(date, file_name):
     """checks if gridded file already exists
 
     Args:
         date (datetime.datetime):
+        file_name (str): file name. the full file name is `file_name`_`datestr`.nc
 
     Returns:
         bool: True if file already exists
 
     """
     datestr = date.strftime("%Y_%m_%d")
-    filepath = os.path.join(DardarCloud.TARGET_DIR, "dardar_cloud_{}.nc".format(datestr))
+    filepath = os.path.join(DardarCloud.TARGET_DIR, "{}_{}.nc".format(file_name,datestr))
 
     if len(glob.glob(filepath)) > 0:
         return True
