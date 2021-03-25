@@ -479,26 +479,32 @@ def get_day_files(date, dir_path, file_format="hdf"):
         list: list of filepaths
     """
     date_str = date.strftime("%Y_%m_%d")
-    date_dir = os.path.join(dir_path, date_str, "*.{}".format(file_format))
+    if file_format == "hdf":
+        # dardar cloud
+        date_dir = os.path.join(dir_path, date_str, "*.{}".format(file_format))
+    elif file_format == "nc":
+        # dardar nice
+        date_dir = os.path.join(dir_path, str(date.year), date_str, "*.{}".format(file_format))
     filepaths = glob.glob(date_dir)
     filepaths = np.sort(filepaths)  # sort files in ascending order
 
     return filepaths
 
 
-def get_filepaths(date, dir_path):
+def get_filepaths(date, dir_path, file_format="hdf"):
     """load filepaths for given date + last file from previous day
 
     Args:
         date (datetime.datetime): date
         dir_path (str): path to DARDAR Files
+        file_format (str): format of L2 files, e.g. hdf, nc
 
     Returns:
         list|None: list of filepaths to load. If no files exist for that day return None
     """
     # get filepaths for day and add last file from previous day
-    filepaths = get_day_files(date, dir_path)
-    prev_day_paths = get_day_files(date + datetime.timedelta(days=-1), dir_path)
+    filepaths = get_day_files(date, dir_path, file_format)
+    prev_day_paths = get_day_files(date + datetime.timedelta(days=-1), dir_path, file_format)
 
     if filepaths.size == 0:
         logger.info("no data available")
@@ -544,7 +550,7 @@ def exists(date, file_name):
 
     """
     datestr = date.strftime("%Y_%m_%d")
-    filepath = os.path.join(DardarCloud.TARGET_DIR, "{}_{}.nc".format(file_name,datestr))
+    filepath = os.path.join(DardarCloud.TARGET_DIR, "{}_{}.nc".format(file_name, datestr))
 
     if len(glob.glob(filepath)) > 0:
         return True
@@ -581,7 +587,7 @@ def grid_one_day(date):
     logger.info("created dataset")
     save_file(dc.TARGET_DIR, ds, date)
     logger.info("saved file")
-    gc.collect() # garbage collection
+    gc.collect()  # garbage collection
     return True
 
 
