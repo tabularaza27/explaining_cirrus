@@ -467,23 +467,22 @@ def get_grid_idx(longr, latgr, daily_intervals, lon, lat, timestamp=None):
 
 
 # io helpers
-def get_day_files(date, dir_path, file_format="hdf", range="day"):
+def get_day_files(date, dir_path, file_format="hdf", time_range="day"):
     """returns sorted array of filepaths of given day
 
     Args:
         date (datetime.datetime):
         dir_path (str): path to DARDAR Files
         file_format (str): format of L2 files, e.g. hdf, nc
-        range (str): ddy | month
+        time_range (str): ddy | month
 
     Returns:
         list: list of filepaths
     """
-    if range=="day":
+    if time_range== "day":
         date_str = date.strftime("%Y_%m_%d")
-    elif range=="month":
+    elif time_range== "month":
         date_str = date.strftime("%Y_%m_*")
-
     if file_format == "hdf":
         # dardar cloud
         date_dir = os.path.join(dir_path, date_str, "*.{}".format(file_format))
@@ -496,21 +495,21 @@ def get_day_files(date, dir_path, file_format="hdf", range="day"):
     return filepaths
 
 
-def get_filepaths(date, dir_path, file_format="hdf",range="day"):
-    """load filepaths for given date + last file from previous day
+def get_filepaths(date, dir_path, file_format="hdf", time_range="day"):
+    """load filepaths for given date + last file from previous day/month
 
     Args:
         date (datetime.datetime): date
         dir_path (str): path to DARDAR Files
         file_format (str): format of L2 files, e.g. hdf, nc
-        range (str): ddy | month
+        time_range (str): ddy | month
 
     Returns:
         list|None: list of filepaths to load. If no files exist for that day return None
     """
     # get filepaths for day and add last file from previous day
-    filepaths = get_day_files(date, dir_path, file_format, range)
-    prev_day_paths = get_day_files(date + datetime.timedelta(days=-1), dir_path, file_format, range)
+    filepaths = get_day_files(date, dir_path, file_format, time_range)
+    prev_day_paths = get_day_files(date + datetime.timedelta(days=-1), dir_path, file_format, time_range)
 
     if filepaths.size == 0:
         logger.info("no data available")
