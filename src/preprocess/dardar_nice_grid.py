@@ -183,7 +183,7 @@ class DardarNiceGrid:
         """aggregates whole grid"""
 
         if parallel:
-            pool = mp.Pool(15)
+            pool = mp.Pool(35)
 
         for lon, lat, timestamp in zip(self.lons_data, self.lats_data, self.times_data):
             cf_timestamp = cis.time_util.convert_std_time_to_datetime(timestamp)
