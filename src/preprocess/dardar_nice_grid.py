@@ -400,6 +400,7 @@ def calc_in_cloud_agg(l3_ds, l2_ds, var_name, data_vector_idxs, in_cloud_mask=No
 ### run gridding ###
 
 def run_gridding():
+    logger.info("++++++++++++++ Start new gridding process with workers ++++++++++++++")
     date = datetime.date(2008, 1, 1)
     l3_ds = create_empty_grid(start_date="2008-01-01", end_date="2008-01-02")
     l2_ds = load_files(date, "day")
@@ -428,7 +429,7 @@ def run_gridding():
     l3_ds = aggregate(lons_data, lats_data, times_data, l3_ds, l2_ds)
 
     save_file(TARGET_DIR, "dardar_nice",l3_ds, date=date)
-
+    logger.info("++++++++++++++ finished ++++++++++++++")
 
 if __name__ == "__main__":
     # todo make user friendly
