@@ -107,7 +107,7 @@ class DardarNiceGrid:
                     "Start Date:{}  End Date: {} Time Range: {} "
                     "Parallel: {}  #Workers: {}".format(self.start_date,self.end_date, self.time_range, self.parallel, self.n_workers))
 
-        self.l3_ds = create_empty_grid(start_date=self.start_date, end_date=self.end_date)
+        self.l3_ds = create_empty_grid(start_date=str(self.start_date), end_date=str(self.end_date))
         logger.info("created empty grid")
         self.l2_ds = load_files(date, self.time_range)
         logger.info("loaded l2 files")
@@ -466,7 +466,7 @@ def run_gridding(date, time_range, n_workers=None):
 
     """
     logger.info("++++++++++++++ Start new gridding process  ++++++++++++++")
-    date = datetime.datetime.strptime(date, "%Y-%m-%d")
+    date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
     if n_workers:
         dn = DardarNiceGrid(date, time_range, parallel=True, n_workers=35)
     else:
