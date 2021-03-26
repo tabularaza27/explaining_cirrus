@@ -80,6 +80,204 @@ SOURCE_DIR = "/wolke_scratch/kjeggle/DARDAR_NICE/DARNI_L2_PRO.v1.10"
 TARGET_DIR = "/wolke_scratch/kjeggle/DARDAR_NICE/gridded"
 
 
+class DardarNiceGrid:
+    def __init__(self, date):
+        self.l3_ds = create_empty_grid(start_date="2008-01-01", end_date="2008-01-02")
+        self.l2_ds = load_files(date, "day")
+
+        # get combinations of lat/lon/time  with observations
+        (self.lats_all, self.lons_all, self.times_all), counts_all = np.unique(
+            np.array([self.l2_ds.latr.values, self.l2_ds.lonr.values, self.l2_ds.timer.values]),
+            axis=1, return_counts=True)
+        self.lats_all = np.round(self.lats_all.astype('float64'), 4)  # float rounding errors
+        self.lons_all = np.round(self.lons_all.astype('float64'), 4)
+
+        # obervation has data if at least one vertical level contains iwc>0
+        iwc = self.l2_ds["iwc"].values
+        vertical_sum = np.nansum(iwc, 1)
+        data_mask = vertical_sum > 0
+
+        # retrieve lat lon, time combinations and how often they occur for observations with data
+        (self.lats_data, self.lons_data, self.times_data), counts_data = np.unique(
+            np.array([self.l2_ds.latr.values[data_mask], self.l2_ds.lonr.values[data_mask],
+                      self.l2_ds.timer.values[data_mask]]),
+            axis=1,
+            return_counts=True)  # lat/lon/time combo with iwc at at at least on altitude level
+        self.lats_data = np.round(self.lats_data.astype('float64'), 4)  # float rounding errors
+        self.lons_data = np.round(self.lons_data.astype('float64'), 4)
+
+        # l3_ds with empty mean tensors for each data variable
+        self.prep_l3()
+        self.aggregate()
+
+        save_file(TARGET_DIR, "dardar_nice", self.l3_ds, date=date)
+        logger.info("++++++++++++++ finished ++++++++++++++")
+
+    def prep_l3(self):
+        """fill level 3 data set with empty tensors for each variable.
+
+        all gridpoints are set to np.nan except for gridpoints with observations in the level 2 data
+        (i.e. the satellite swath) are set to 0"""
+
+        # create empty means tensor
+        means = np.empty(
+            (self.l3_ds.sizes["lon"], self.l3_ds.sizes["lat"], self.l3_ds.sizes["lev"], self.l3_ds.sizes["time"]))
+        means[:, :, :, :] = np.nan  # set all grid points to nan
+
+        # set all grid points with observations to 0 - all other gridpoints are nan. i.e. only the swath is set to 0
+        for lat, lon, timestamp in zip(self.lats_all, self.lons_all, self.times_all):
+            cf_timestamp = cis.time_util.convert_std_time_to_datetime(timestamp)
+            if cf_timestamp not in self.l3_ds.time:
+                # not from today
+                continue
+
+            if (lat < LATMIN) | (lat >= LATMAX) | (lon < LONMIN) | (lon >= LONMAX):
+                # logger.info("out of area")
+                continue
+
+            # get indices
+            lonidx, latidx, timeidx = get_grid_idx(lon, lat, cf_timestamp, self.l3_ds)
+            means[lonidx, latidx, :, timeidx] = np.zeros(shape=(self.l3_ds.sizes["lev"],), dtype=np.float64)
+
+        # for 2d variables, i.e. without height coord
+        means_2d = means[:, :, 0, :]
+
+        var_dict = {}
+        for var, var_info in self.l2_ds.items():
+            if var not in CONT_VAR_NAMES + CAT_VAR_NAMES:
+                continue
+
+            attrs = var_info.attrs
+            # add variable type
+            if var in CONT_VAR_NAMES:
+                attrs["var_type"] = CONT
+            elif var in CAT_VAR_NAMES:
+                attrs["var_type"] = CAT
+
+            # set coordinates
+            if var_info.dims == ('time',):
+                coords = ["lon", "lat", "time"]
+                values = deepcopy(means_2d)
+            elif var_info.dims == ('time', 'height'):
+                coords = ["lon", "lat", "lev", "time"]
+                values = deepcopy(means)
+            else:
+                raise ValueError("{} are unknown coords".format(var_info.dims))
+
+            # add to dict
+            var_dict[var] = (coords, values, attrs)
+
+        # add cloud cover as variable
+        cc_attrs = {"units": "1",
+                    "long_name": "cloud cover per vertical coordinate",
+                    "description": "percentage of observations in gridbox that had observations containing iwc",
+                    "var_type": CONT,
+                    "valid_range": [0, 1]
+                    }
+
+        var_dict["cloud_cover"] = (["lon", "lat", "lev", "time"], deepcopy(means), cc_attrs)
+
+        self.l3_ds = self.l3_ds.assign(var_dict)
+
+    def aggregate(self, parallel=False):
+        """aggregates whole grid"""
+
+        if parallel:
+            pool = mp.Pool(15)
+
+        for lon, lat, timestamp in zip(self.lons_data, self.lats_data, self.times_data):
+            cf_timestamp = cis.time_util.convert_std_time_to_datetime(timestamp)
+            if cf_timestamp not in self.l3_ds.time:
+                # not from today
+                continue
+
+            if (lat < LATMIN) | (lat >= LATMAX) | (lon < LONMIN) | (lon >= LONMAX):
+                # logger.info("out of area")
+                continue
+
+            # calc aggregate for each variable
+            print(lon, lat, timestamp)
+            #if parallel:
+            #    pool.apply_async(aggregate_gridbox, args=(l3_ds, l2_ds, lon, lat, timestamp,))
+            #else:
+            self.aggregate_gridbox(lon, lat, timestamp)
+
+            break
+
+    def aggregate_gridbox(self, lon, lat, timestamp):
+        # idx in l3 grid
+        lonidx, latidx, timeidx = get_grid_idx(lon, lat, cis.time_util.convert_std_time_to_datetime(timestamp), self.l3_ds)
+        # idxs of data in l2 ds
+        data_vector_idxs = get_data_vector_idxs(lon, lat, timestamp, self.l2_ds)
+        in_cloud_mask = get_in_cloud_mask(self.l2_ds, data_vector_idxs)  # needed for cont 3d aggregation
+
+        for var_name in self.l3_ds:
+            dims = len(self.l3_ds[var_name].dims)
+            if var_name == "cloud_cover":
+                obs = get_observations(self.l2_ds, "iwc", 4, data_vector_idxs)
+                nobs = obs.shape[0]
+                iwc_obs = np.count_nonzero(obs, axis=0)  # observations with iwc >=0
+                agg = iwc_obs / nobs
+            else:
+                agg = self.calc_in_cloud_agg(var_name, data_vector_idxs, in_cloud_mask)
+
+            if dims == 4:
+                self.l3_ds[var_name][lonidx, latidx, :, timeidx] = agg
+            else:
+                self.l3_ds[var_name][lonidx, latidx, timeidx] = agg
+
+        return self.l3_ds
+
+    def calc_in_cloud_agg(self, var_name, data_vector_idxs, in_cloud_mask=None):
+        """
+
+        Args:
+            in_cloud_mask (np.ndarray): only needed for continuous 3d
+        """
+        dims = len(self.l3_ds[var_name].dims)
+        var_type = self.l3_ds[var_name].attrs["var_type"]
+        # get observations
+        obs = get_observations(self.l2_ds, var_name, dims, data_vector_idxs)
+
+        # continuous 3d
+        if dims == 4 and var_type == CONT:
+            if in_cloud_mask is None:
+                raise ValueError("provide a `in_cloud_mask` for cont 3d variables")
+
+            # calculate in-cloud means
+            obs_no_data = np.all(obs == 0, 0)  # save inidices that have no data
+            obs[in_cloud_mask] = np.nan  # set all observations with 0 to nan, so we can apply nanmean
+            agg = np.nanmean(obs, axis=0)
+            agg[obs_no_data] = 0.  # replace nan with 0 where all observations were 0
+
+        # categorical 3d
+        elif dims == 4 and var_type == CAT:
+            # catergorical "mean" is value with max occurance
+            agg = np.empty(obs.shape[1], )
+            for i in range(obs.shape[1]):
+                vals, counts = np.unique(obs[:, i], return_counts=True)
+                max_occurance = np.nanargmax(counts)
+                agg[i] = vals[max_occurance]
+
+        # continuous 2d
+        elif dims == 3 and var_type == CONT:
+            agg = np.nanmean(obs)
+
+        # categorical 2d
+        elif dims == 3 and var_type == CAT:
+            # catergorical "mean" is value with max occurance
+            vals, counts = np.unique(obs, return_counts=True)
+            max_occurance = np.nanargmax(counts)
+            agg = vals[max_occurance]
+
+        else:
+            raise ValueError(
+                "variable dims needs to be in [3,4] and variable type in ['categorical','continuous']. Is dim: {}; type: {}".format(
+                    dims, var_type))
+
+        return agg
+
+
 def create_empty_grid(start_date,
                       end_date,
                       freq="3H",
@@ -139,75 +337,6 @@ def get_grid_idx(lon, lat, timestamp, ds):
     timeidx = np.where(timestamp == ds.time)[0][0]
 
     return lonidx, latidx, timeidx
-
-
-def prep_l3(l3_ds, l2_ds, l2_lons, l2_lats, l2_times):
-    """fill level 3 data set with empty tensors for each variable.
-
-    all gridpoints are set to np.nan except for gridpoints with observations in the level 2 data
-    (i.e. the satellite swath) are set to 0"""
-
-    # create empty means tensor
-    means = np.empty((l3_ds.sizes["lon"], l3_ds.sizes["lat"], l3_ds.sizes["lev"], l3_ds.sizes["time"]))
-    means[:, :, :, :] = np.nan  # set all grid points to nan
-
-    # set all grid points with observations to 0 - all other gridpoints are nan. i.e. only the swath is set to 0
-    for lat, lon, timestamp in zip(l2_lats, l2_lons, l2_times):
-        cf_timestamp = cis.time_util.convert_std_time_to_datetime(timestamp)
-        if cf_timestamp not in l3_ds.time:
-            # not from today
-            continue
-
-        if (lat < LATMIN) | (lat >= LATMAX) | (lon < LONMIN) | (lon >= LONMAX):
-            # logger.info("out of area")
-            continue
-
-        # get indices
-        lonidx, latidx, timeidx = get_grid_idx(lon, lat, cf_timestamp, l3_ds)
-
-        means[lonidx, latidx, :, timeidx] = np.zeros(shape=(l3_ds.sizes["lev"],), dtype=np.float64)
-
-    # for 2d variables, i.e. without height coord
-    means_2d = means[:, :, 0, :]
-
-    var_dict = {}
-    for var, var_info in l2_ds.items():
-        if var not in CONT_VAR_NAMES + CAT_VAR_NAMES:
-            continue
-
-        attrs = var_info.attrs
-        # add variable type
-        if var in CONT_VAR_NAMES:
-            attrs["var_type"] = CONT
-        elif var in CAT_VAR_NAMES:
-            attrs["var_type"] = CAT
-
-        # set coordinates
-        if var_info.dims == ('time',):
-            coords = ["lon", "lat", "time"]
-            values = deepcopy(means_2d)
-        elif var_info.dims == ('time', 'height'):
-            coords = ["lon", "lat", "lev", "time"]
-            values = deepcopy(means)
-        else:
-            raise ValueError("{} are unknown coords".format(var_info.dims))
-
-        # add to dict
-        var_dict[var] = (coords, values, attrs)
-
-    # add cloud cover as variable
-    cc_attrs = {"units": "1",
-                "long_name": "cloud cover per vertical coordinate",
-                "description": "percentage of observations in gridbox that had observations containing iwc",
-                "var_type": CONT,
-                "valid_range": [0, 1]
-                }
-
-    var_dict["cloud_cover"] = (["lon", "lat", "lev", "time"], deepcopy(means), cc_attrs)
-
-    l3_ds = l3_ds.assign(var_dict)
-
-    return l3_ds
 
 
 ### load l2 data + helpers ###
@@ -301,135 +430,16 @@ def get_in_cloud_mask(l2_ds, data_vector_idxs):
     return in_cloud_mask
 
 
-### aggregate ###
-
-def aggregate(lons_data, lats_data, times_data, l3_ds, l2_ds):
-    """aggregates whole grid"""
-    for lon, lat, timestamp in zip(lons_data, lats_data, times_data):
-        cf_timestamp = cis.time_util.convert_std_time_to_datetime(timestamp)
-        if cf_timestamp not in l3_ds.time:
-            # not from today
-            continue
-
-        if (lat < LATMIN) | (lat >= LATMAX) | (lon < LONMIN) | (lon >= LONMAX):
-            # logger.info("out of area")
-            continue
-
-        # calc aggregate for each variable
-        print(lon,lat,timestamp)
-        aggregate_gridbox(l3_ds, l2_ds, lon, lat, timestamp)
-        # pool.apply_async(aggregate, args=
-        break
-
-    return l3_ds
-
-
-def aggregate_gridbox(l3_ds, l2_ds, lon, lat, timestamp):
-    # idx in l3 grid
-    lonidx, latidx, timeidx = get_grid_idx(lon, lat, cis.time_util.convert_std_time_to_datetime(timestamp), l3_ds)
-    # idxs of data in l2 ds
-    data_vector_idxs = get_data_vector_idxs(lon, lat, timestamp, l2_ds)
-    in_cloud_mask = get_in_cloud_mask(l2_ds, data_vector_idxs)  # needed for cont 3d aggregation
-
-    for var_name in l3_ds:
-        dims = len(l3_ds[var_name].dims)
-        if var_name == "cloud_cover":
-            obs = get_observations(l2_ds, "iwc", 4, data_vector_idxs)
-            nobs = obs.shape[0]
-            iwc_obs = np.count_nonzero(obs, axis=0)  # observations with iwc >=0
-            agg = iwc_obs / nobs
-        else:
-            agg = calc_in_cloud_agg(l3_ds, l2_ds, var_name, data_vector_idxs, in_cloud_mask)
-
-        if dims == 4:
-            l3_ds[var_name][lonidx, latidx, :, timeidx] = agg
-        else:
-            l3_ds[var_name][lonidx, latidx, timeidx] = agg
-
-
-def calc_in_cloud_agg(l3_ds, l2_ds, var_name, data_vector_idxs, in_cloud_mask=None):
-    """
-
-    Args:
-        in_cloud_mask (np.ndarray): only needed for continuous 3d
-    """
-    dims = len(l3_ds[var_name].dims)
-    var_type = l3_ds[var_name].attrs["var_type"]
-    # get observations
-    obs = get_observations(l2_ds, var_name, dims, data_vector_idxs)
-
-    # continuous 3d
-    if dims == 4 and var_type == CONT:
-        if in_cloud_mask is None:
-            raise ValueError("provide a `in_cloud_mask` for cont 3d variables")
-
-        # calculate in-cloud means
-        obs_no_data = np.all(obs == 0, 0)  # save inidices that have no data
-        obs[in_cloud_mask] = np.nan  # set all observations with 0 to nan, so we can apply nanmean
-        agg = np.nanmean(obs, axis=0)
-        agg[obs_no_data] = 0.  # replace nan with 0 where all observations were 0
-
-    # categorical 3d
-    elif dims == 4 and var_type == CAT:
-        # catergorical "mean" is value with max occurance
-        agg = np.empty(obs.shape[1], )
-        for i in range(obs.shape[1]):
-            vals, counts = np.unique(obs[:, i], return_counts=True)
-            max_occurance = np.nanargmax(counts)
-            agg[i] = vals[max_occurance]
-
-    # continuous 2d
-    elif dims == 3 and var_type == CONT:
-        agg = np.nanmean(obs)
-
-    # categorical 2d
-    elif dims == 3 and var_type == CAT:
-        # catergorical "mean" is value with max occurance
-        vals, counts = np.unique(obs, return_counts=True)
-        max_occurance = np.nanargmax(counts)
-        agg = vals[max_occurance]
-
-    else:
-        raise ValueError(
-            "variable dims needs to be in [3,4] and variable type in ['categorical','continuous']. Is dim: {}; type: {}".format(
-                dims, var_type))
-
-    return agg
-
-
 ### run gridding ###
 
 def run_gridding():
     logger.info("++++++++++++++ Start new gridding process with workers ++++++++++++++")
     date = datetime.date(2008, 1, 1)
-    l3_ds = create_empty_grid(start_date="2008-01-01", end_date="2008-01-02")
-    l2_ds = load_files(date, "day")
-
-    # get combinations of lat/lon/time  with observations
-    (lats_all, lons_all, times_all), counts_all = np.unique(
-        np.array([l2_ds.latr.values, l2_ds.lonr.values, l2_ds.timer.values]),
-        axis=1, return_counts=True)
-    lats_all = np.round(lats_all.astype('float64'), 4)  # float rounding errors
-    lons_all = np.round(lons_all.astype('float64'), 4)
-
-    # obervation has data if at least one vertical level contains iwc>0
-    iwc = l2_ds["iwc"].values
-    vertical_sum = np.nansum(iwc, 1)
-    data_mask = vertical_sum > 0
-
-    # retrieve lat lon, time combinations and how often they occur for observations with data
-    (lats_data, lons_data, times_data), counts_data = np.unique(
-        np.array([l2_ds.latr.values[data_mask], l2_ds.lonr.values[data_mask], l2_ds.timer.values[data_mask]]), axis=1,
-        return_counts=True)  # lat/lon/time combo with iwc at at at least on altitude level
-    lats_data = np.round(lats_data.astype('float64'), 4)  # float rounding errors
-    lons_data = np.round(lons_data.astype('float64'), 4)
-
-    # l3_ds with empty mean tensors for each data variable
-    l3_ds = prep_l3(l3_ds, l2_ds, lons_all, lats_all, times_all)
-    l3_ds = aggregate(lons_data, lats_data, times_data, l3_ds, l2_ds)
-
-    save_file(TARGET_DIR, "dardar_nice",l3_ds, date=date)
+    dn = DardarNiceGrid(date)
+    dn.aggregate()
+    save_file(TARGET_DIR, "dardar_nice", dn.l3_ds, date=date)
     logger.info("++++++++++++++ finished ++++++++++++++")
+
 
 if __name__ == "__main__":
     # todo make user friendly
