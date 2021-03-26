@@ -1,0 +1,435 @@
+import numpy as np
+import pandas as pd
+import xarray as xr
+import datetime
+import cis
+import os
+import glob
+import gc
+import logging
+import json
+import sys
+import multiprocessing as mp
+from copy import deepcopy
+from cis import time_util
+from cis.data_io.products.AProduct import ProductPluginException
+
+sys.path.append("/wolke/kjeggle/Repos/cirrus/src/preprocess")
+from dardar_cloud_grid import save_file
+from dardar_cloud_grid import get_filepaths
+
+# setup logger - see: https://docs.python.org/3/howto/logging-cookbook.html
+logger = logging.getLogger(__name__)
+logger.setLevel(level=logging.INFO)
+# log file
+fh = logging.FileHandler("{}.log".format(__name__))
+fh.setLevel(logging.DEBUG)
+# console output
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+# format
+formatter = logging.Formatter('%(asctime)-15s %(message)s')
+fh.setFormatter(formatter)
+ch.setFormatter(formatter)
+# add handlers
+logger.addHandler(fh)
+logger.addHandler(ch)
+
+# meta data for spatial resolution
+# horizontal
+LATMIN = 0  # 0
+LATMAX = 60  # 60
+LONMIN = -75  # -75
+LONMAX = -15  # -15
+HOR_RES = 0.25  # horizontal resolution [degree]
+TEMP_RES = "3H"  # temporal resolution in hours
+
+# vertical; vertical resolution is kept at 60m for now
+ALTMIN = 0
+ALTMAX = 25080
+ALTINTERVAL = 60
+ALTLEVELS = 419
+
+CONT = "continuous"
+CAT = "categorical"
+
+# variables that will be gridded
+
+CONT_VAR_NAMES = ['ps',
+                  'plev',
+                  'ta',
+                  'iwc',
+                  'iwc_error',
+                  'reffcli',
+                  'icnc_5um',
+                  'icnc_100um',
+                  'icnc_5um_error',
+                  'icnc_100um_error',
+                  'dz_top',
+                  ]
+
+CAT_VAR_NAMES = [
+    'land_water_mask',
+    'clm',
+    'clm_v2',
+    'nightday_flag',
+    'mixedphase_flag',
+]
+
+SOURCE_DIR = "/wolke_scratch/kjeggle/DARDAR_NICE/DARNI_L2_PRO.v1.10"
+TARGET_DIR = "/wolke_scratch/kjeggle/DARDAR_NICE/gridded"
+
+
+def create_empty_grid(start_date,
+                      end_date,
+                      freq="3H",
+                      lonmin=LONMIN,
+                      lonmax=LONMAX,
+                      latmin=LATMIN,
+                      latmax=LATMAX,
+                      hor_res=HOR_RES,
+                      altmin=ALTMIN,
+                      altmax=ALTMAX,
+                      alt_res=ALTINTERVAL,
+                      ):
+    """create empty grid for l3 dataset
+
+    Args:
+        start_date:
+        end_date:
+        freq:
+        lonmin:
+        lonmax:
+        latmin:
+        latmax:
+        hor_res:
+        altmin:
+        altmax:
+        alt_res:
+
+    Returns:
+
+    """
+    # load dardar nice L3 dataset to copy the coordinate attributes
+    dardar_l3_files = glob.glob('/wolke_scratch/kjeggle/DARDAR_NICE/L3/2006/*')
+    dar_nice = xr.open_dataset(dardar_l3_files[3])
+
+    timegr = xr.cftime_range(start=start_date, end=end_date, freq=freq, closed="right")  # closed to the righ
+    latgr = np.round(np.arange(latmin, latmax, hor_res), 4)  # need to round for float errors
+    longr = np.round(np.arange(lonmin, lonmax, hor_res), 4)
+    altgr = np.flip(np.arange(altmin, altmax + alt_res, alt_res))  # highest hight at index 0
+
+    ds = xr.Dataset(
+        coords=dict(
+            lon=(["lon"], longr, dar_nice.lon.attrs.copy()),
+            lat=(["lat"], latgr, dar_nice.lat.attrs.copy()),
+            lev=(["lev"], altgr, {"units": "m", "axis": "Z", "long_name": "Altitude Level"}),
+            time=(["time"], timegr, {"axis": "T", "long_name": "time"})
+        )
+    )
+
+    return ds
+
+
+def get_grid_idx(lon, lat, timestamp, ds):
+    """returns indices in grid"""
+
+    lonidx = np.where(np.round(ds.lon, 4) == lon)[0][0]
+    latidx = np.where(np.round(ds.lat, 4) == lat)[0][0]
+    timeidx = np.where(timestamp == ds.time)[0][0]
+
+    return lonidx, latidx, timeidx
+
+
+def prep_l3(l3_ds, l2_ds, l2_lons, l2_lats, l2_times):
+    """fill level 3 data set with empty tensors for each variable.
+
+    all gridpoints are set to np.nan except for gridpoints with observations in the level 2 data
+    (i.e. the satellite swath) are set to 0"""
+
+    # create empty means tensor
+    means = np.empty((l3_ds.sizes["lon"], l3_ds.sizes["lat"], l3_ds.sizes["lev"], l3_ds.sizes["time"]))
+    means[:, :, :, :] = np.nan  # set all grid points to nan
+
+    # set all grid points with observations to 0 - all other gridpoints are nan. i.e. only the swath is set to 0
+    for lat, lon, timestamp in zip(l2_lats, l2_lons, l2_times):
+        cf_timestamp = cis.time_util.convert_std_time_to_datetime(timestamp)
+        if cf_timestamp not in l3_ds.time:
+            # not from today
+            continue
+
+        if (lat < LATMIN) | (lat >= LATMAX) | (lon < LONMIN) | (lon >= LONMAX):
+            # logger.info("out of area")
+            continue
+
+        # get indices
+        lonidx, latidx, timeidx = get_grid_idx(lon, lat, cf_timestamp, l3_ds)
+
+        means[lonidx, latidx, :, timeidx] = np.zeros(shape=(l3_ds.sizes["lev"],), dtype=np.float64)
+
+    # for 2d variables, i.e. without height coord
+    means_2d = means[:, :, 0, :]
+
+    var_dict = {}
+    for var, var_info in l2_ds.items():
+        if var not in CONT_VAR_NAMES + CAT_VAR_NAMES:
+            continue
+
+        attrs = var_info.attrs
+        # add variable type
+        if var in CONT_VAR_NAMES:
+            attrs["var_type"] = CONT
+        elif var in CAT_VAR_NAMES:
+            attrs["var_type"] = CAT
+
+        # set coordinates
+        if var_info.dims == ('time',):
+            coords = ["lon", "lat", "time"]
+            values = means_2d
+        elif var_info.dims == ('time', 'height'):
+            coords = ["lon", "lat", "lev", "time"]
+            values = means
+        else:
+            raise ValueError("{} are unknown coords".format(var_info.dims))
+
+        # add to dict
+        var_dict[var] = (coords, values, attrs)
+
+    # add cloud cover as variable
+    cc_attrs = {"units": "1",
+                "long_name": "cloud cover per vertical coordinate",
+                "description": "percentage of observations in gridbox that had observations containing iwc",
+                "var_type": CONT,
+                "valid_range": [0, 1]
+                }
+
+    var_dict["cloud_cover"] = (["lon", "lat", "lev", "time"], means, cc_attrs)
+
+    l3_ds = l3_ds.assign(var_dict)
+
+    return l3_ds
+
+
+### load l2 data + helpers ###
+
+def add_timestamp_coord(ds):
+    """add time timestamp as coordinate to dataset"""
+    base_time = ds.base_time.values  # reference time
+    time_deltas = pd.to_timedelta(ds.dtime.values, 's')  # dtime
+    pixel_time = base_time + time_deltas  # timestamp
+    ds = ds.assign_coords({'time': pixel_time})
+    return ds
+
+
+def sel_pos_heights(ds):
+    """returns dataset for positive heights only"""
+    return ds.sel(height=slice(25080, 0))
+
+
+def preproc_height_coord(ds):
+    """casts height coord as int
+    cause some height values are floats"""
+    ds["height"] = ds.height.values.astype(np.int)
+    return ds
+
+
+def preprocess(ds):
+    """preprocess ds"""
+    ds = add_timestamp_coord(ds)
+    ds = sel_pos_heights(ds)
+    ds = preproc_height_coord(ds)
+    return ds
+
+
+def load_files(date, time_range="day"):
+    files = get_filepaths(date, SOURCE_DIR, file_format="nc", time_range=time_range)
+
+    # use preprocess to add timestamp coordinate (this is required so we can cocatenate)
+    ds = xr.open_mfdataset(files, preprocess=preprocess, concat_dim="time")
+
+    # create data variables with rounded lat/lon/time
+    ds = ds.assign(latr=lambda x: np.round((np.round(x.lat * (1 / HOR_RES)) * HOR_RES).astype('float64'), 4))
+    ds = ds.assign(lonr=lambda x: np.round((np.round(x.lon * (1 / HOR_RES)) * HOR_RES).astype('float64'), 4))
+    ds = ds.assign(timer=ds.time.dt.ceil("3H"))
+
+    # convert timer to std datetime, so it can be used in np.unique
+    # a bit over complicated, but havent found better way so far
+    a = pd.to_datetime(ds["timer"].values)  # pandas datetime
+    b = a.to_pydatetime()  # python datetime
+    c = cis.time_util.convert_datetime_to_std_time(b)  # convert to std time, necessary for np.unique
+    ds["timer"].values = c
+
+    return ds
+
+
+def get_data_vector_idxs(lon, lat, timestamp, l2_ds):
+    """get indices of data vectors that match requested gridpoint/time combi
+
+        Args:
+            lon (float):
+            lat (float):
+            time (float): standard time
+            l2_ds (xr.Dataset): level 2 dataset
+
+        Example:
+        -------
+
+        get_vector_idxs(180.0, 80.0, 152218.0)
+
+        returns: array([False, False, False, ..., False, False, False])
+    """
+
+    data_vector_idxs = (lat == np.round(l2_ds.latr, 4)) & (lon == np.round(l2_ds.lonr, 4)) & (timestamp == l2_ds.timer)
+    return data_vector_idxs
+
+
+def get_observations(l2_ds, var_name, var_dims, data_vector_idxs):
+    # get observations
+    if var_dims == 4:
+        obs = l2_ds[var_name][data_vector_idxs, :].values  # 3d
+    elif var_dims == 3:
+        obs = l2_ds[var_name][data_vector_idxs].values  # 3d
+    return obs
+
+
+def get_in_cloud_mask(l2_ds, data_vector_idxs):
+    """True for masked values"""
+
+    obs = get_observations(l2_ds, "iwc", 4, data_vector_idxs)
+    in_cloud_mask = np.ma.masked_values(obs, 0.).mask  # create mask with all values that are 0 masked
+
+    return in_cloud_mask
+
+
+### aggregate ###
+
+def aggregate(lons_data, lats_data, times_data, l3_ds, l2_ds):
+    """aggregates whole grid"""
+    for lon, lat, timestamp in zip(lons_data, lats_data, times_data):
+        cf_timestamp = cis.time_util.convert_std_time_to_datetime(timestamp)
+        if cf_timestamp not in l3_ds.time:
+            # not from today
+            continue
+
+        if (lat < LATMIN) | (lat >= LATMAX) | (lon < LONMIN) | (lon >= LONMAX):
+            # logger.info("out of area")
+            continue
+
+        # calc aggregate for each variable
+        l3_ds = aggregate_gridbox(l3_ds, l2_ds, lon, lat, timestamp)
+        # pool.apply_async(aggregate, args=(l3_ds, l2_ds, lon, lat, timestamp,))
+
+    return l3_ds
+
+
+def aggregate_gridbox(l3_ds, l2_ds, lon, lat, timestamp):
+    # idx in l3 grid
+    lonidx, latidx, timeidx = get_grid_idx(lon, lat, cis.time_util.convert_std_time_to_datetime(timestamp), l3_ds)
+    # idxs of data in l2 ds
+    data_vector_idxs = get_data_vector_idxs(lon, lat, timestamp, l2_ds)
+    in_cloud_mask = get_in_cloud_mask(l2_ds, data_vector_idxs)  # needed for cont 3d aggregation
+
+    for var_name in l3_ds:
+        dims = len(l3_ds[var_name].dims)
+        if var_name == "cloud_cover":
+            obs = get_observations(l2_ds, "iwc", 4, data_vector_idxs)
+            nobs = obs.shape[0]
+            iwc_obs = np.count_nonzero(obs, axis=0)  # observations with iwc >=0
+            agg = iwc_obs / nobs
+        else:
+            agg = calc_in_cloud_agg(l3_ds, l2_ds, var_name, data_vector_idxs, in_cloud_mask)
+
+        if dims == 4:
+            l3_ds[var_name][lonidx, latidx, :, timeidx] = agg
+        else:
+            l3_ds[var_name][lonidx, latidx, timeidx] = agg
+
+    return l3_ds
+
+
+def calc_in_cloud_agg(l3_ds, l2_ds, var_name, data_vector_idxs, in_cloud_mask=None):
+    """
+
+    Args:
+        in_cloud_mask (np.ndarray): only needed for continuous 3d
+    """
+    dims = len(l3_ds[var_name].dims)
+    var_type = l3_ds[var_name].attrs["var_type"]
+    # get observations
+    obs = get_observations(l2_ds, var_name, dims, data_vector_idxs)
+
+    # continuous 3d
+    if dims == 4 and var_type == CONT:
+        if in_cloud_mask is None:
+            raise ValueError("provide a `in_cloud_mask` for cont 3d variables")
+
+        # calculate in-cloud means
+        obs_no_data = np.all(obs == 0, 0)  # save inidices that have no data
+        obs[in_cloud_mask] = np.nan  # set all observations with 0 to nan, so we can apply nanmean
+        agg = np.nanmean(obs, axis=0)
+        agg[obs_no_data] = 0.  # replace nan with 0 where all observations were 0
+
+    # categorical 3d
+    elif dims == 4 and var_type == CAT:
+        # catergorical "mean" is value with max occurance
+        agg = np.empty(obs.shape[1], )
+        for i in range(obs.shape[1]):
+            vals, counts = np.unique(obs[:, i], return_counts=True)
+            max_occurance = np.nanargmax(counts)
+            agg[i] = vals[max_occurance]
+
+    # continuous 2d
+    elif dims == 3 and var_type == CONT:
+        agg = np.nanmean(obs)
+
+    # categorical 2d
+    elif dims == 3 and var_type == CAT:
+        # catergorical "mean" is value with max occurance
+        vals, counts = np.unique(obs, return_counts=True)
+        max_occurance = np.nanargmax(counts)
+        agg = vals[max_occurance]
+
+    else:
+        raise ValueError(
+            "variable dims needs to be in [3,4] and variable type in ['categorical','continuous']. Is dim: {}; type: {}".format(
+                dims, var_type))
+
+    return agg
+
+
+### run gridding ###
+
+def run_gridding():
+    date = datetime.date(2008, 1, 1)
+    l3_ds = create_empty_grid(start_date="2008-01-01", end_date="2008-01-02")
+    l2_ds = load_files(date, "day")
+
+    # get combinations of lat/lon/time  with observations
+    (lats_all, lons_all, times_all), counts_all = np.unique(
+        np.array([l2_ds.latr.values, l2_ds.lonr.values, l2_ds.timer.values]),
+        axis=1, return_counts=True)
+    lats_all = np.round(lats_all.astype('float64'), 4)  # float rounding errors
+    lons_all = np.round(lons_all.astype('float64'), 4)
+
+    # obervation has data if at least one vertical level contains iwc>0
+    iwc = l2_ds["iwc"].values
+    vertical_sum = np.nansum(iwc, 1)
+    data_mask = vertical_sum > 0
+
+    # retrieve lat lon, time combinations and how often they occur for observations with data
+    (lats_data, lons_data, times_data), counts_data = np.unique(
+        np.array([l2_ds.latr.values[data_mask], l2_ds.lonr.values[data_mask], l2_ds.timer.values[data_mask]]), axis=1,
+        return_counts=True)  # lat/lon/time combo with iwc at at at least on altitude level
+    lats_data = np.round(lats_data.astype('float64'), 4)  # float rounding errors
+    lons_data = np.round(lons_data.astype('float64'), 4)
+
+    # l3_ds with empty mean tensors for each data variable
+    l3_ds = prep_l3(l3_ds, l2_ds, lons_all, lats_all, times_all)
+    l3_ds = aggregate(lons_data, lats_data, times_data, l3_ds, l2_ds)
+
+    save_file(TARGET_DIR, "dardar_nice",l3_ds, date=date)
+
+
+if __name__ == "__main__":
+    # todo make user friendly
+    run_gridding()
