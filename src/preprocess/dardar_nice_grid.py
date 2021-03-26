@@ -185,10 +185,10 @@ def prep_l3(l3_ds, l2_ds, l2_lons, l2_lats, l2_times):
         # set coordinates
         if var_info.dims == ('time',):
             coords = ["lon", "lat", "time"]
-            values = means_2d
+            values = deepcopy(means_2d)
         elif var_info.dims == ('time', 'height'):
             coords = ["lon", "lat", "lev", "time"]
-            values = means
+            values = deepcopy(means)
         else:
             raise ValueError("{} are unknown coords".format(var_info.dims))
 
@@ -203,7 +203,7 @@ def prep_l3(l3_ds, l2_ds, l2_lons, l2_lats, l2_times):
                 "valid_range": [0, 1]
                 }
 
-    var_dict["cloud_cover"] = (["lon", "lat", "lev", "time"], means, cc_attrs)
+    var_dict["cloud_cover"] = (["lon", "lat", "lev", "time"], deepcopy(means), cc_attrs)
 
     l3_ds = l3_ds.assign(var_dict)
 
