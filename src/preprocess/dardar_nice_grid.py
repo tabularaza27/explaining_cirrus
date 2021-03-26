@@ -197,12 +197,10 @@ class DardarNiceGrid:
 
             # calc aggregate for each variable
             print(lon, lat, timestamp)
-            #if parallel:
-            #    pool.apply_async(aggregate_gridbox, args=(l3_ds, l2_ds, lon, lat, timestamp,))
-            #else:
-            self.aggregate_gridbox(lon, lat, timestamp)
-
-            break
+            if parallel:
+                pool.apply_async(self.aggregate_gridbox, args=(lon, lat, timestamp,))
+            else:
+                self.aggregate_gridbox(lon, lat, timestamp)
 
     def aggregate_gridbox(self, lon, lat, timestamp):
         # idx in l3 grid
