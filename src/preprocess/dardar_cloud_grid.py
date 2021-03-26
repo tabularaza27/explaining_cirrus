@@ -502,7 +502,7 @@ def get_filepaths(date, dir_path, file_format="hdf", time_range="day"):
         date (datetime.datetime): date
         dir_path (str): path to DARDAR Files
         file_format (str): format of L2 files, e.g. hdf, nc
-        time_range (str): ddy | month
+        time_range (str): day | month
 
     Returns:
         list|None: list of filepaths to load. If no files exist for that day return None
@@ -523,7 +523,7 @@ def get_filepaths(date, dir_path, file_format="hdf", time_range="day"):
     return filepaths
 
 
-def save_file(dir_path, file_name, ds, date, complevel=4):
+def save_file(dir_path, file_name, ds, date, time_range="day", complevel=4):
     """compresses and saves file
 
     Args:
@@ -531,10 +531,16 @@ def save_file(dir_path, file_name, ds, date, complevel=4):
         file_name (str): file name to save the file to
         ds (xarray.Dataset):
         date (datetime.datetime):
+        time_range (str): day | month
         complevel (int): compression level
     """
 
-    date_str = date.strftime("%Y_%m_%d")
+    if time_range == "day":
+        date_str = date.strftime("%Y_%m_%d")
+    elif time_range == "month":
+        date_str = date.strftime("%Y_%m")
+    else:
+        raise ValueError("specify valid time range, got {}".format(time_range))
     filepath = os.path.join(dir_path, "{}_{}.nc".format(file_name, date_str))
 
     # compress all data variables
