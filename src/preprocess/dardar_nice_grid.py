@@ -316,7 +316,8 @@ def aggregate(lons_data, lats_data, times_data, l3_ds, l2_ds):
             continue
 
         # calc aggregate for each variable
-        l3_ds = aggregate_gridbox(l3_ds, l2_ds, lon, lat, timestamp)
+        print(lon,lat,timestamp)
+        aggregate_gridbox(l3_ds, l2_ds, lon, lat, timestamp)
         # pool.apply_async(aggregate, args=
         break
 
@@ -344,8 +345,6 @@ def aggregate_gridbox(l3_ds, l2_ds, lon, lat, timestamp):
             l3_ds[var_name][lonidx, latidx, :, timeidx] = agg
         else:
             l3_ds[var_name][lonidx, latidx, timeidx] = agg
-
-    return l3_ds
 
 
 def calc_in_cloud_agg(l3_ds, l2_ds, var_name, data_vector_idxs, in_cloud_mask=None):
