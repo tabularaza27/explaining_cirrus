@@ -317,7 +317,8 @@ def aggregate(lons_data, lats_data, times_data, l3_ds, l2_ds):
 
         # calc aggregate for each variable
         l3_ds = aggregate_gridbox(l3_ds, l2_ds, lon, lat, timestamp)
-        # pool.apply_async(aggregate, args=(l3_ds, l2_ds, lon, lat, timestamp,))
+        # pool.apply_async(aggregate, args=
+        break
 
     return l3_ds
 
