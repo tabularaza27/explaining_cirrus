@@ -97,9 +97,9 @@ class DardarNiceGrid:
         self.start_date = date
 
         if time_range=="day":
-            self.end_date==date + relativedelta(days=1)
+            self.end_date=date + relativedelta(days=1)
         elif time_range=="month":
-            self.end_date==date + relativedelta(months=1)
+            self.end_date=date + relativedelta(months=1)
         else:
             raise ValueError("Specify correct timerange. got {}".format(time_range))
 
