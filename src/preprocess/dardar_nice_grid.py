@@ -103,7 +103,7 @@ class DardarNiceGrid:
         else:
             raise ValueError("Specify correct timerange. got {}".format(time_range))
 
-        logger.info("Created Gridder with following specs"
+        logger.info("Created Gridder with following specs "
                     "Start Date:{}  End Date: {} Time Range: {} "
                     "Parallel: {}  #Workers: {}".format(self.start_date,self.end_date, self.time_range, self.parallel, self.n_workers))
 
@@ -220,7 +220,7 @@ class DardarNiceGrid:
                 continue
 
             # calc aggregate for each variable
-            print(lon, lat, timestamp)
+            logger.info("Grid: {} , {} , {}".format(lon, lat, timestamp))
             if self.parallel:
                 pool.apply_async(self.aggregate_gridbox, args=(lon, lat, timestamp,))
             else:
