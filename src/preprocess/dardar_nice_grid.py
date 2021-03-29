@@ -82,8 +82,10 @@ CAT_VAR_NAMES = [
 # if executed on iac high performance cluster n2o directories can be accessed via /net/n2o
 hostname = socket.gethostname()
 if hostname == "iacdipl-6":
+    logger.info("XXXX")
     ROOT_DIR = "/net/n2o"
 else:
+    logger.info("YYYY")
     ROOT_DIR = "/"
 
 SOURCE_DIR = os.path.join(ROOT_DIR, "/wolke_scratch/kjeggle/DARDAR_NICE/DARNI_L2_PRO.v1.10")
