@@ -27,7 +27,7 @@ from io_helpers import save_file
 from io_helpers import get_filepaths
 from io_helpers import exists
 
-warnings.filterwarnings('ignore')
+warnings.filterwarnings('ignore') # because of zero/nan divide warnings
 
 # setup logger - see: https://docs.python.org/3/howto/logging-cookbook.html
 logger = logging.getLogger(__name__)
@@ -545,6 +545,7 @@ def run_gridding(start_date, end_date, n_workers=10):
     """
 
     pool = mp.Pool(n_workers)
+    logger.info(hostname, SOURCE_DIR, TARGET_DIR)
     logger.info("++++++++++++++ Start new gridding process with {} workers ++++++++++++++".format(n_workers))
     logger.info("gridding period: {} - {}".format(start_date, end_date))
     daterange = pd.date_range(start=start_date, end=end_date)
