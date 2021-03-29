@@ -16,9 +16,9 @@ from dateutil.relativedelta import relativedelta
 import warnings
 
 sys.path.append("/wolke/kjeggle/Repos/cirrus/src/preprocess")
-from dardar_cloud_grid import save_file
-from dardar_cloud_grid import get_filepaths
-from dardar_cloud_grid import exists
+from io_helpers import save_file
+from io_helpers import get_filepaths
+from io_helpers import exists
 
 warnings.filterwarnings('ignore')
 
@@ -26,7 +26,7 @@ warnings.filterwarnings('ignore')
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
 # log file
-fh = logging.FileHandler("{}.log".format(__name__))
+fh = logging.FileHandler("{}.log".format("dardar_nice"))
 fh.setLevel(logging.DEBUG)
 # console output
 ch = logging.StreamHandler()
@@ -108,7 +108,9 @@ class DardarNiceGrid:
         logger.info("created empty grid")
         self.l2_ds = load_files(date, self.time_range)
         if self.l2_ds is None:
-            raise NoDataError("No Level 2 data found in specified source dir {} for Gridder with specs: {}".format(SOURCE_DIR, self.get_specs()))
+            raise NoDataError(
+                "No Level 2 data found in specified source dir {} for Gridder with specs: {}".format(SOURCE_DIR,
+                                                                                                     self.get_specs()))
         logger.info("loaded l2 files")
         # get combinations of lat/lon/time  with observations
         (self.lats_all, self.lons_all, self.times_all), counts_all = np.unique(
@@ -139,8 +141,8 @@ class DardarNiceGrid:
     def get_specs(self):
         """returns string with specifications of this gridder"""
         specs_string = "Start Date:{}  End Date: {} Time Range: {} ".format(self.start_date,
-                                                                                                      self.end_date,
-                                                                                                      self.time_range)
+                                                                            self.end_date,
+                                                                            self.time_range)
         return specs_string
 
     def prep_l3(self):
@@ -210,7 +212,8 @@ class DardarNiceGrid:
         self.l3_ds = self.l3_ds.assign(var_dict)
 
     def aggregate(self):
-        """aggregates whole grid"""
+        """aggregates whole lon/lat/timestamp data for each gridbox that contains at least
+         one altitude level with positive iwc"""
 
         for lon, lat, timestamp in zip(self.lons_data, self.lats_data, self.times_data):
             cf_timestamp = cis.time_util.convert_std_time_to_datetime(timestamp)
@@ -227,6 +230,16 @@ class DardarNiceGrid:
             self.aggregate_gridbox(lon, lat, timestamp)
 
     def aggregate_gridbox(self, lon, lat, timestamp):
+        """aggregates l2 data for given lon/lat/timestamp
+
+        Args:
+            lon (float):
+            lat (float):
+            timestamp (float): std time
+
+        Returns:
+
+        """
         # idx in l3 grid
         lonidx, latidx, timeidx = get_grid_idx(lon, lat, cis.time_util.convert_std_time_to_datetime(timestamp),
                                                self.l3_ds)
@@ -248,8 +261,6 @@ class DardarNiceGrid:
                 self.l3_ds[var_name][lonidx, latidx, :, timeidx] = agg
             else:
                 self.l3_ds[var_name][lonidx, latidx, timeidx] = agg
-
-        return self.l3_ds
 
     def calc_in_cloud_agg(self, var_name, data_vector_idxs, in_cloud_mask=None):
         """
@@ -391,7 +402,10 @@ def preproc_height_coord(ds):
 
 
 def preprocess(ds):
-    """preprocess ds"""
+    """preprocess dataset
+
+    function is passed as argument in xr.open_mfdataset()
+    """
     ds = add_timestamp_coord(ds)
     ds = sel_pos_heights(ds)
     ds = preproc_height_coord(ds)
@@ -399,6 +413,15 @@ def preprocess(ds):
 
 
 def load_files(date, time_range="day"):
+    """loads l2 files of dardar nice dataset for given date
+
+    Args:
+        date (datetime.datetime):
+        time_range (str): day|month. If month, then load all files for the month. date is still specified as "%Y_%m_%d"
+
+    Returns:
+
+    """
     files = get_filepaths(date, SOURCE_DIR, file_format="nc", time_range=time_range)
 
     if files is None:
@@ -444,6 +467,17 @@ def get_data_vector_idxs(lon, lat, timestamp, l2_ds):
 
 
 def get_observations(l2_ds, var_name, var_dims, data_vector_idxs):
+    """get observations for variable from l2 data set for specifies indices
+
+    Args:
+        l2_ds (xr.Dataset): l2 data set
+        var_name (str):
+        var_dims (int): 4 if variable has three spatial and one temporal dimension, 3 for 2 spatial dimenstions
+        data_vector_idxs (np.array): array with True/False values indicating which values to return
+
+    Returns:
+        np.array: observations of
+    """
     # get observations
     if var_dims == 4:
         obs = l2_ds[var_name][data_vector_idxs, :].values  # 3d
@@ -453,7 +487,9 @@ def get_observations(l2_ds, var_name, var_dims, data_vector_idxs):
 
 
 def get_in_cloud_mask(l2_ds, data_vector_idxs):
-    """True for masked values"""
+    """returns vector that has all values masked that are 0.
+
+    True for masked values"""
 
     obs = get_observations(l2_ds, "iwc", 4, data_vector_idxs)
     in_cloud_mask = np.ma.masked_values(obs, 0.).mask  # create mask with all values that are 0 masked
@@ -489,7 +525,8 @@ def grid_one_day(date):
 
 
 def run_gridding(start_date, end_date, n_workers=10):
-    """runs gridding process for DARDAR CLOUD L2 data for given time period in parallel
+    """runs gridding process for DARDAR CLOUD L2 data for given time period in parallel, starts one gridding process
+    per day
 
     Args:
         start_date (str): YYYY-mm-dd
