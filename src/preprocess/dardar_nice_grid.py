@@ -15,15 +15,6 @@ from cis import time_util
 from dateutil.relativedelta import relativedelta
 import warnings
 import socket
-
-# if executed on iac high performance cluster n2o directories can be accessed via /net/n2o
-hostname = socket.gethostname()
-if hostname == "iacdipl-6":
-    ROOT_DIR = "/net/n2o"
-else:
-    ROOT_DIR = "/"
-
-sys.path.append(os.path.join(ROOT_DIR, "/wolke/kjeggle/Repos/cirrus/src/preprocess"))
 from io_helpers import save_file
 from io_helpers import get_filepaths
 from io_helpers import exists
@@ -87,6 +78,13 @@ CAT_VAR_NAMES = [
     'nightday_flag',
     'mixedphase_flag',
 ]
+
+# if executed on iac high performance cluster n2o directories can be accessed via /net/n2o
+hostname = socket.gethostname()
+if hostname == "iacdipl-6":
+    ROOT_DIR = "/net/n2o"
+else:
+    ROOT_DIR = "/"
 
 SOURCE_DIR = os.path.join(ROOT_DIR, "/wolke_scratch/kjeggle/DARDAR_NICE/DARNI_L2_PRO.v1.10")
 TARGET_DIR = os.path.join(ROOT_DIR, "/wolke_scratch/kjeggle/DARDAR_NICE/gridded")
