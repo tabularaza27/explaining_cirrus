@@ -110,15 +110,16 @@ class DardarNiceGrid:
             raise ValueError("Specify correct timerange. got {}".format(time_range))
 
         logger.info("Created Gridder with following specs {}".format(self.get_specs()))
-
-        self.l3_ds = create_empty_grid(start_date=str(self.start_date), end_date=str(self.end_date))
-        logger.info("created empty grid")
         self.l2_ds = load_files(date, self.time_range)
         if self.l2_ds is None:
             raise NoDataError(
                 "No Level 2 data found in specified source dir {} for Gridder with specs: {}".format(SOURCE_DIR,
                                                                                                      self.get_specs()))
         logger.info("loaded l2 files")
+
+        self.l3_ds = create_empty_grid(start_date=str(self.start_date), end_date=str(self.end_date))
+        logger.info("created empty grid")
+
         # get combinations of lat/lon/time  with observations
         (self.lats_all, self.lons_all, self.times_all), counts_all = np.unique(
             np.array([self.l2_ds.latr.values, self.l2_ds.lonr.values, self.l2_ds.timer.values]),
@@ -523,6 +524,7 @@ def grid_one_day(date):
     try:
         dn = DardarNiceGrid(date, "day")
     except NoDataError as err:
+        logger.info(err)
         print(err)
     dn.aggregate()
     save_file(TARGET_DIR, "dardar_nice", dn.l3_ds, date=date)
