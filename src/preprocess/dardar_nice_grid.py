@@ -18,6 +18,7 @@ import warnings
 sys.path.append("/wolke/kjeggle/Repos/cirrus/src/preprocess")
 from dardar_cloud_grid import save_file
 from dardar_cloud_grid import get_filepaths
+from dardar_cloud_grid import exists
 
 warnings.filterwarnings('ignore')
 
@@ -84,15 +85,13 @@ TARGET_DIR = "/wolke_scratch/kjeggle/DARDAR_NICE/gridded"
 
 
 class DardarNiceGrid:
-    def __init__(self, date, time_range="day", parallel=False, n_workers=None):
+    def __init__(self, date, time_range="day"):
         """
 
         Args:
             date (datetime.datetime):
             time_range (str): day | month
         """
-        self.parallel = parallel
-        self.n_workers = n_workers
         self.time_range = time_range
         self.start_date = date
 
@@ -139,11 +138,9 @@ class DardarNiceGrid:
 
     def get_specs(self):
         """returns string with specifications of this gridder"""
-        specs_string = "Start Date:{}  End Date: {} Time Range: {} Parallel: {}  #Workers: {}".format(self.start_date,
+        specs_string = "Start Date:{}  End Date: {} Time Range: {} ".format(self.start_date,
                                                                                                       self.end_date,
-                                                                                                      self.time_range,
-                                                                                                      self.parallel,
-                                                                                                      self.n_workers)
+                                                                                                      self.time_range)
         return specs_string
 
     def prep_l3(self):
@@ -215,9 +212,6 @@ class DardarNiceGrid:
     def aggregate(self):
         """aggregates whole grid"""
 
-        if self.parallel:
-            pool = mp.Pool(self.n_workers)
-
         for lon, lat, timestamp in zip(self.lons_data, self.lats_data, self.times_data):
             cf_timestamp = cis.time_util.convert_std_time_to_datetime(timestamp)
             if cf_timestamp not in self.l3_ds.time:
@@ -230,10 +224,7 @@ class DardarNiceGrid:
 
             # calc aggregate for each variable
             logger.debug("Grid: {} , {} , {}".format(lon, lat, timestamp))
-            if self.parallel:
-                pool.apply_async(self.aggregate_gridbox, args=(lon, lat, timestamp,))
-            else:
-                self.aggregate_gridbox(lon, lat, timestamp)
+            self.aggregate_gridbox(lon, lat, timestamp)
 
     def aggregate_gridbox(self, lon, lat, timestamp):
         # idx in l3 grid
@@ -472,33 +463,57 @@ def get_in_cloud_mask(l2_ds, data_vector_idxs):
 
 ### run gridding ###
 
-def run_gridding(date, time_range, n_workers=None):
-    """
+def grid_one_day(date):
+    """runs gridding process for DARDAR NICE L2 data for 1 day
 
     Args:
-        date (str): %Y-%m-%d
-        time_range:
-        n_workers (int): number of workers, if non specified run withou parallelization
+        date (datetime.datetime):
 
     Returns:
+        None if file doesnt exist or gridded file already exists. True if successfully gridded
 
     """
-    logger.info("++++++++++++++ Start new gridding process  ++++++++++++++")
-    date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
-    if n_workers:
-        dn = DardarNiceGrid(date, time_range, parallel=True, n_workers=35)
-    else:
-        dn = DardarNiceGrid(date, time_range, parallel=False)
+    if exists(date):
+        logger.info("File already exists for: {}".format(date))
+        return None
+    logger.info("Start Gridding: {}".format(date))
+    try:
+        dn = DardarNiceGrid(date, "day")
+    except NoDataError as err:
+        print(err)
     dn.aggregate()
-    save_file(TARGET_DIR, "dardar_nice", dn.l3_ds, date=date)
-    logger.info("++++++++++++++ finished ++++++++++++++")
+    save_file(TARGET_DIR, dn.l3_ds, date=date)
+    logger.info("saved file")
+    gc.collect()  # garbage collection
+    return True
+
+
+def run_gridding(start_date, end_date, n_workers=10):
+    """runs gridding process for DARDAR CLOUD L2 data for given time period in parallel
+
+    Args:
+        start_date (str): YYYY-mm-dd
+        end_date (str): YYYY-mm-dd
+        n_workers (int): nuber of cpus to use for gridding
+
+    """
+
+    pool = mp.Pool(n_workers)
+    logger.info("++++++++++++++ Start new gridding process with {} workers ++++++++++++++".format(n_workers))
+    logger.info("gridding period: {} - {}".format(start_date, end_date))
+    daterange = pd.date_range(start=start_date, end=end_date)
+    for date in daterange:
+        date = date.to_pydatetime()
+        pool.apply_async(grid_one_day, args=(date,))
+    pool.close()
+    pool.join()
 
 
 if __name__ == "__main__":
     # todo make user friendly
     if len(sys.argv) == 4:
-        run_gridding(date=sys.argv[1], time_range=sys.argv[2], n_workers=int(sys.argv[3]))
+        run_gridding(start_date=sys.argv[1], end_date=sys.argv[2], n_workers=int(sys.argv[3]))
     elif len(sys.argv) == 3:
-        run_gridding(date=sys.argv[1], time_range=sys.argv[2])
+        run_gridding(start_date=sys.argv[1], end_date=sys.argv[2])
     else:
-        raise ValueError("Provide valid arguments. E.g.: python dardar_nice_grid '2016-01-01' 'day' <#workers>")
+        raise ValueError("Provide valid arguments. E.g.: python dardar_nice_grid '2016-01-01' '2016-01-31' <#workers>")

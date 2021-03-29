@@ -549,19 +549,20 @@ def save_file(dir_path, file_name, ds, date, time_range="day", complevel=4):
     ds.to_netcdf(filepath, encoding=encoding)
 
 
-def exists(date, file_name):
+def exists(date, file_name, dir):
     """checks if gridded file already exists
 
     Args:
         date (datetime.datetime):
         file_name (str): file name. the full file name is `file_name`_`datestr`.nc
+        dir (str): str of directory in which ii will be checked
 
     Returns:
         bool: True if file already exists
 
     """
     datestr = date.strftime("%Y_%m_%d")
-    filepath = os.path.join(DardarCloud.TARGET_DIR, "{}_{}.nc".format(file_name, datestr))
+    filepath = os.path.join(dir, "{}_{}.nc".format(file_name, datestr))
 
     if len(glob.glob(filepath)) > 0:
         return True
@@ -579,7 +580,7 @@ def grid_one_day(date):
         None if file doesnt exist or gridded file already exists. True if successfully gridded
 
     """
-    if exists(date):
+    if exists(date, "dardar_cloud", DardarCloud.TARGET_DIR):
         logger.info("File already exists: {}".format(date))
         return None
     logger.info("Start Gridding: {}".format(date))
