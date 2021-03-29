@@ -33,7 +33,7 @@ warnings.filterwarnings('ignore') # because of zero/nan divide warnings
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
 # log file
-fh = logging.FileHandler("{}.log".format("dardar_nice"))
+fh = logging.FileHandler("{}.log".format("dardar_nice"), mode="w")
 fh.setLevel(logging.DEBUG)
 # console output
 ch = logging.StreamHandler()
