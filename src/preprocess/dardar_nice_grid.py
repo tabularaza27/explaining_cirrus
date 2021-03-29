@@ -20,7 +20,7 @@ import socket
 hostname = socket.gethostname()
 ROOT_DIR = "/"
 if hostname=="iacdipl-6":
-    ROOT_DIR == "/net/n2o"
+    ROOT_DIR = "/net/n2o"
 
 sys.path.append(os.path.join(ROOT_DIR,"/wolke/kjeggle/Repos/cirrus/src/preprocess"))
 from io_helpers import save_file
