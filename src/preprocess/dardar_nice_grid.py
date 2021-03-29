@@ -84,7 +84,7 @@ TARGET_DIR = "/wolke_scratch/kjeggle/DARDAR_NICE/gridded"
 
 
 class DardarNiceGrid:
-    def __init__(self, date, time_range="day",parallel=False,n_workers=None):
+    def __init__(self, date, time_range="day", parallel=False, n_workers=None):
         """
 
         Args:
@@ -96,20 +96,20 @@ class DardarNiceGrid:
         self.time_range = time_range
         self.start_date = date
 
-        if time_range=="day":
-            self.end_date=date + relativedelta(days=1)
-        elif time_range=="month":
-            self.end_date=date + relativedelta(months=1)
+        if time_range == "day":
+            self.end_date = date + relativedelta(days=1)
+        elif time_range == "month":
+            self.end_date = date + relativedelta(months=1)
         else:
             raise ValueError("Specify correct timerange. got {}".format(time_range))
 
-        logger.info("Created Gridder with following specs "
-                    "Start Date:{}  End Date: {} Time Range: {} "
-                    "Parallel: {}  #Workers: {}".format(self.start_date,self.end_date, self.time_range, self.parallel, self.n_workers))
+        logger.info("Created Gridder with following specs {}".format(self.get_specs()))
 
         self.l3_ds = create_empty_grid(start_date=str(self.start_date), end_date=str(self.end_date))
         logger.info("created empty grid")
         self.l2_ds = load_files(date, self.time_range)
+        if self.l2_ds is None:
+            raise NoDataError("No Level 2 data found in specified source dir {} for Gridder with specs: {}".format(SOURCE_DIR, self.get_specs()))
         logger.info("loaded l2 files")
         # get combinations of lat/lon/time  with observations
         (self.lats_all, self.lons_all, self.times_all), counts_all = np.unique(
@@ -136,6 +136,15 @@ class DardarNiceGrid:
         self.prep_l3()
         logger.info("filled l3 files with empty tensors")
         self.aggregate()
+
+    def get_specs(self):
+        """returns string with specifications of this gridder"""
+        specs_string = "Start Date:{}  End Date: {} Time Range: {} Parallel: {}  #Workers: {}".format(self.start_date,
+                                                                                                      self.end_date,
+                                                                                                      self.time_range,
+                                                                                                      self.parallel,
+                                                                                                      self.n_workers)
+        return specs_string
 
     def prep_l3(self):
         """fill level 3 data set with empty tensors for each variable.
@@ -228,7 +237,8 @@ class DardarNiceGrid:
 
     def aggregate_gridbox(self, lon, lat, timestamp):
         # idx in l3 grid
-        lonidx, latidx, timeidx = get_grid_idx(lon, lat, cis.time_util.convert_std_time_to_datetime(timestamp), self.l3_ds)
+        lonidx, latidx, timeidx = get_grid_idx(lon, lat, cis.time_util.convert_std_time_to_datetime(timestamp),
+                                               self.l3_ds)
         # idxs of data in l2 ds
         data_vector_idxs = get_data_vector_idxs(lon, lat, timestamp, self.l2_ds)
         in_cloud_mask = get_in_cloud_mask(self.l2_ds, data_vector_idxs)  # needed for cont 3d aggregation
@@ -298,6 +308,11 @@ class DardarNiceGrid:
                     dims, var_type))
 
         return agg
+
+
+class NoDataError(Exception):
+    """Raised when no L2 data exists"""
+    pass
 
 
 def create_empty_grid(start_date,
@@ -394,6 +409,9 @@ def preprocess(ds):
 
 def load_files(date, time_range="day"):
     files = get_filepaths(date, SOURCE_DIR, file_format="nc", time_range=time_range)
+
+    if files is None:
+        return None
 
     # use preprocess to add timestamp coordinate (this is required so we can cocatenate)
     ds = xr.open_mfdataset(files, preprocess=preprocess, concat_dim="time")
