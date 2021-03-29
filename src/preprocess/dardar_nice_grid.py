@@ -545,7 +545,7 @@ def run_gridding(start_date, end_date, n_workers=10):
     """
 
     pool = mp.Pool(n_workers)
-    logger.info("{} {} {}",format(hostname, SOURCE_DIR, TARGET_DIR))
+    logger.info("{} {} {}".format(hostname, SOURCE_DIR, TARGET_DIR))
     logger.info("++++++++++++++ Start new gridding process with {} workers ++++++++++++++".format(n_workers))
     logger.info("gridding period: {} - {}".format(start_date, end_date))
     daterange = pd.date_range(start=start_date, end=end_date)
