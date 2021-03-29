@@ -597,7 +597,7 @@ def grid_one_day(date):
     logger.info("gridded and aggregated")
     ds = dc.create_dataset()
     logger.info("created dataset")
-    save_file(dc.TARGET_DIR, ds, date)
+    save_file(dc.TARGET_DIR,"dardar_cloud", ds, date)
     logger.info("saved file")
     gc.collect()  # garbage collection
     return True

@@ -428,7 +428,7 @@ def get_data_vector_idxs(lon, lat, timestamp, l2_ds):
         Args:
             lon (float):
             lat (float):
-            time (float): standard time
+            timestamp (float): standard time
             l2_ds (xr.Dataset): level 2 dataset
 
         Example:
@@ -473,7 +473,7 @@ def grid_one_day(date):
         None if file doesnt exist or gridded file already exists. True if successfully gridded
 
     """
-    if exists(date):
+    if exists(date, "dardar_nice", TARGET_DIR):
         logger.info("File already exists for: {}".format(date))
         return None
     logger.info("Start Gridding: {}".format(date))
@@ -482,7 +482,7 @@ def grid_one_day(date):
     except NoDataError as err:
         print(err)
     dn.aggregate()
-    save_file(TARGET_DIR, dn.l3_ds, date=date)
+    save_file(TARGET_DIR, "dardar_nice", dn.l3_ds, date=date)
     logger.info("saved file")
     gc.collect()  # garbage collection
     return True
