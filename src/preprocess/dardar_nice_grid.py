@@ -229,7 +229,7 @@ class DardarNiceGrid:
                 continue
 
             # calc aggregate for each variable
-            logger.info("Grid: {} , {} , {}".format(lon, lat, timestamp))
+            logger.debug("Grid: {} , {} , {}".format(lon, lat, timestamp))
             if self.parallel:
                 pool.apply_async(self.aggregate_gridbox, args=(lon, lat, timestamp,))
             else:
