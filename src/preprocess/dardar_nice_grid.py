@@ -14,8 +14,15 @@ from copy import deepcopy
 from cis import time_util
 from dateutil.relativedelta import relativedelta
 import warnings
+import socket
 
-sys.path.append("/wolke/kjeggle/Repos/cirrus/src/preprocess")
+# if executed on iac high performance cluster n2o directories can be accessed via /net/n2o
+hostname = socket.gethostname()
+ROOT_DIR = "/"
+if hostname=="iacdipl-6":
+    ROOT_DIR == "/net/n2o"
+
+sys.path.append(os.path.join(ROOT_DIR,"/wolke/kjeggle/Repos/cirrus/src/preprocess"))
 from io_helpers import save_file
 from io_helpers import get_filepaths
 from io_helpers import exists
@@ -80,8 +87,8 @@ CAT_VAR_NAMES = [
     'mixedphase_flag',
 ]
 
-SOURCE_DIR = "/wolke_scratch/kjeggle/DARDAR_NICE/DARNI_L2_PRO.v1.10"
-TARGET_DIR = "/wolke_scratch/kjeggle/DARDAR_NICE/gridded"
+SOURCE_DIR = os.path.join(ROOT_DIR,"/wolke_scratch/kjeggle/DARDAR_NICE/DARNI_L2_PRO.v1.10")
+TARGET_DIR = os.path.join(ROOT_DIR, "/wolke_scratch/kjeggle/DARDAR_NICE/gridded")
 
 
 class DardarNiceGrid:
@@ -348,7 +355,7 @@ def create_empty_grid(start_date,
 
     """
     # load dardar nice L3 dataset to copy the coordinate attributes
-    dardar_l3_files = glob.glob('/wolke_scratch/kjeggle/DARDAR_NICE/L3/2006/*')
+    dardar_l3_files = glob.glob(os.path.join(ROOT_DIR,'/wolke_scratch/kjeggle/DARDAR_NICE/L3/2006/*'))
     dar_nice = xr.open_dataset(dardar_l3_files[3])
 
     timegr = xr.cftime_range(start=start_date, end=end_date, freq=freq, closed="right")  # closed to the righ
