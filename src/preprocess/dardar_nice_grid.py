@@ -81,15 +81,12 @@ CAT_VAR_NAMES = [
 
 # if executed on iac high performance cluster n2o directories can be accessed via /net/n2o
 hostname = socket.gethostname()
+ROOT_DIR = "/"
 if hostname == "iacdipl-6":
-    logger.info("XXXX")
     ROOT_DIR = "/net/n2o"
-else:
-    logger.info("YYYY")
-    ROOT_DIR = "/"
 
-SOURCE_DIR = os.path.join(ROOT_DIR, "/wolke_scratch/kjeggle/DARDAR_NICE/DARNI_L2_PRO.v1.10")
-TARGET_DIR = os.path.join(ROOT_DIR, "/wolke_scratch/kjeggle/DARDAR_NICE/gridded")
+SOURCE_DIR = os.path.join(ROOT_DIR, "wolke_scratch/kjeggle/DARDAR_NICE/DARNI_L2_PRO.v1.10")
+TARGET_DIR = os.path.join(ROOT_DIR, "wolke_scratch/kjeggle/DARDAR_NICE/gridded")
 
 
 class DardarNiceGrid:
@@ -357,7 +354,7 @@ def create_empty_grid(start_date,
 
     """
     # load dardar nice L3 dataset to copy the coordinate attributes
-    dardar_l3_files = glob.glob(os.path.join(ROOT_DIR, '/wolke_scratch/kjeggle/DARDAR_NICE/L3/2006/*'))
+    dardar_l3_files = glob.glob(os.path.join(ROOT_DIR, 'wolke_scratch/kjeggle/DARDAR_NICE/L3/2006/*'))
     dar_nice = xr.open_dataset(dardar_l3_files[3])
 
     timegr = xr.cftime_range(start=start_date, end=end_date, freq=freq, closed="right")  # closed to the righ
