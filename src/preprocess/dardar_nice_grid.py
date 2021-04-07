@@ -145,7 +145,6 @@ class DardarNiceGrid:
         # l3_ds with empty mean tensors for each data variable
         self.prep_l3()
         logger.info("filled l3 files with empty tensors")
-        self.aggregate()
 
     def get_specs(self):
         """returns string with specifications of this gridder"""
