@@ -45,7 +45,7 @@ LATMAX = 60  # 60
 LONMIN = -75  # -75
 LONMAX = -15  # -15
 HOR_RES = 0.25  # horizontal resolution [degree]
-TEMP_RES = "3H"  # temporal resolution in hours
+TEMP_RES = "1H"  # temporal resolution in hours
 
 # vertical; vertical resolution is kept at 60m for now
 ALTMIN = 0
@@ -86,7 +86,7 @@ if hostname == "iacdipl-6":
     ROOT_DIR = "/net/n2o"
 
 SOURCE_DIR = os.path.join(ROOT_DIR, "wolke_scratch/kjeggle/DARDAR_NICE/DARNI_L2_PRO.v1.10")
-TARGET_DIR = os.path.join(ROOT_DIR, "wolke_scratch/kjeggle/DARDAR_NICE/gridded")
+TARGET_DIR = os.path.join(ROOT_DIR, "wolke_scratch/kjeggle/DARDAR_NICE/gridded/hourly")
 
 
 class DardarNiceGrid:
