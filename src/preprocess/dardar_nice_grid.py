@@ -115,6 +115,9 @@ class DardarNiceGrid:
                                                                                                      self.get_specs()))
         logger.info("loaded l2 files")
 
+        self.l2_ds = remove_bad_quality_data(self.l2_ds)
+        logger.info("removed bad quality retrievals")
+
         self.l3_ds = create_empty_grid(start_date=str(self.start_date), end_date=str(self.end_date))
         logger.info("created empty grid")
 
@@ -451,6 +454,26 @@ def load_files(date, time_range="day"):
     return ds
 
 
+def remove_bad_quality_data(l2_ds):
+    """remove retrievals with bad quality flags
+
+    The number of iteration is used here as a proxy to avoid any strong influence of a priori assumptions on the
+    retrievals; cloud products associated with niter < 2 are excluded from this study [Sourdeval et al. 2018]
+
+    quality Flag is `iteration_flag`
+
+    Args:
+        l2_ds:
+
+    Returns:
+        xr.Dataset: l2 data set with only good quality retrievals
+    """
+    good_mask = l2_ds.iteration_flag == 1
+    good_l2_ds = l2_ds.isel(time=good_mask)
+
+    return good_l2_ds
+
+
 def get_data_vector_idxs(lon, lat, timestamp, l2_ds):
     """get indices of data vectors that match requested gridpoint/time combi
 
@@ -543,7 +566,7 @@ def run_gridding(start_date, end_date, n_workers=10):
     """
 
     pool = mp.Pool(n_workers)
-    logger.info("{} {} {} {}".format(hostname,ROOT_DIR, SOURCE_DIR, TARGET_DIR))
+    logger.info("{} {} {} {}".format(hostname, ROOT_DIR, SOURCE_DIR, TARGET_DIR))
     logger.info("++++++++++++++ Start new gridding process with {} workers ++++++++++++++".format(n_workers))
     logger.info("gridding period: {} - {}".format(start_date, end_date))
     daterange = pd.date_range(start=start_date, end=end_date)
