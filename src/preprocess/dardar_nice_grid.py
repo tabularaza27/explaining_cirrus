@@ -334,7 +334,7 @@ class NoDataError(Exception):
 
 def create_empty_grid(start_date,
                       end_date,
-                      freq="3H",
+                      freq=TEMP_RES,
                       lonmin=LONMIN,
                       lonmax=LONMAX,
                       latmin=LATMIN,
@@ -448,7 +448,7 @@ def load_files(date, time_range="day"):
     # create data variables with rounded lat/lon/time
     ds = ds.assign(latr=lambda x: np.round((np.round(x.lat * (1 / HOR_RES)) * HOR_RES).astype('float64'), 4))
     ds = ds.assign(lonr=lambda x: np.round((np.round(x.lon * (1 / HOR_RES)) * HOR_RES).astype('float64'), 4))
-    ds = ds.assign(timer=ds.time.dt.ceil("3H"))
+    ds = ds.assign(timer=ds.time.dt.ceil(TEMP_RES))
 
     # convert timer to std datetime, so it can be used in np.unique
     # a bit over complicated, but havent found better way so far
