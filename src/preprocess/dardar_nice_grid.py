@@ -265,6 +265,7 @@ class DardarNiceGrid:
             else:
                 agg = self.calc_in_cloud_agg(var_name, data_vector_idxs, in_cloud_mask)
 
+            # write result in l3 grid
             if dims == 4:
                 self.l3_ds[var_name][lonidx, latidx, :, timeidx] = agg
             else:
@@ -286,11 +287,17 @@ class DardarNiceGrid:
             if in_cloud_mask is None:
                 raise ValueError("provide a `in_cloud_mask` for cont 3d variables")
 
+            # for environmental variables we want the average of the whole gridcell and especially all levels
+            # not the incloud mean
+            if var_name in ["plev", "ta"]:
+                agg = np.nanmean(obs, axis=0)
+
             # calculate in-cloud means
-            obs_no_data = np.all(obs == 0, 0)  # save inidices that have no data
-            obs[in_cloud_mask] = np.nan  # set all observations with 0 to nan, so we can apply nanmean
-            agg = np.nanmean(obs, axis=0)
-            agg[obs_no_data] = 0.  # replace nan with 0 where all observations were 0
+            else:
+                obs_no_data = np.all(obs == 0, 0)  # save inidices that have no data
+                obs[in_cloud_mask] = np.nan  # set all observations with 0 iwc to nan, so we can apply nanmean
+                agg = np.nanmean(obs, axis=0)
+                agg[obs_no_data] = 0.  # replace nan with 0 where all observations were 0
 
         # categorical 3d
         elif dims == 4 and var_type == CAT:
