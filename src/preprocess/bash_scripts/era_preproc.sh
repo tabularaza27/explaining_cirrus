@@ -8,7 +8,7 @@ MAX_LAT=60
 Source_File_Directory='/net/n2o/wolke_scratch/kjeggle/ERA5/ECMWF_incoming'
 Intermediate_File_Directory='/net/n2o/wolke_scratch/kjeggle/ERA5/intermediate'
 Preproc_File_Directory='/net/n2o/wolke_scratch/kjeggle/ERA5/preproc'
-Grid_Spec_Path='/home/kjeggle/
+Grid_Spec_Path='/home/kjeggle/cirrus/src/preprocess/bash_scripts/gridspec'
 
 for filename in $(ls ${Source_File_Directory}/era5_date_*_time_*.grb)
 do
@@ -24,7 +24,7 @@ do
 BREAK
 
         cdo chname,var157,rh ${Intermediate_File_Directory}/rh_era5_date_${d}_time_${t}.nc ${Intermediate_File_Directory}/rh_chname_era5_date_${d}_time_${t}.nc # change variable name
-        cdo setgrid,mygrid template.nc template.nc # template grid has an offset for some reason, force correct starting point
+        cdo setgrid,${Grid_Spec_Path} template.nc template.nc # template grid has an offset for some reason, force correct starting point
         ncatted -a standard_name,rh,o,c,"relative_humidity" ${Intermediate_File_Directory}/rh_chname_era5_date_${d}_time_${t}.nc ${Intermediate_File_Directory}/rh_ncatted_era5_date_${d}_time_${t}.nc # set standard name according to cf con$
 
         # 3. Interpolate to 0.25x0.25 grid
