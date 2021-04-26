@@ -24,11 +24,11 @@ do
 BREAK
 
         cdo chname,var157,rh ${Intermediate_File_Directory}/rh_era5_date_${d}_time_${t}.nc ${Intermediate_File_Directory}/rh_chname_era5_date_${d}_time_${t}.nc # change variable name
-        cdo setgrid,${Grid_Spec_Path} template.nc template.nc # template grid has an offset for some reason, force correct starting point
         ncatted -a standard_name,rh,o,c,"relative_humidity" ${Intermediate_File_Directory}/rh_chname_era5_date_${d}_time_${t}.nc ${Intermediate_File_Directory}/rh_ncatted_era5_date_${d}_time_${t}.nc # set standard name according to cf con$
 
         # 3. Interpolate to 0.25x0.25 grid
         cdo -f nc -sellonlatbox,-180,180,-90,90 -random,r1440x720 template.nc # create target grid
+        cdo setgrid,${Grid_Spec_Path} template.nc template.nc # template grid has an offset for some reason, force correct starting point
         cdo setgrid,mygrid template.nc template.nc # template grid has an offset for some reason, force correct starting point
         cdo -remapcon,template.nc ${Intermediate_File_Directory}/rh_ncatted_era5_date_${d}_time_${t}.nc ${Intermediate_File_Directory}/rh_remap_era5_date_${d}_time_${t}.nc # rh is extensive variable: conservative interp
         cdo -remapbil,template.nc ${Intermediate_File_Directory}/era5_date_${d}_time_${t}.nc ${Intermediate_File_Directory}/remap_era5_date_${d}_time_${t}.nc # other variables are intensive variables:  bilinear interp
