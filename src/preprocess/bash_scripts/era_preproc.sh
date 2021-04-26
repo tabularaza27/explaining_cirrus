@@ -15,6 +15,13 @@ do
         d=`echo $filename | grep -E -o '[0-9]{4}_[0-9]{2}_[0-9]{2}'`
         t=`echo $filename | grep -E -o 'time_[0-9]{2}_[0-9]{2}_[0-9]{2}' | cut -f2- -d'_'`
 
+        ech "Start Processing $d $t"
+
+        FINAL_FILE=${Preproc_File_Directory}/all_era5_date_${d}_time_${t}.nc
+        if test -f "$FINAL_FILE"; then
+          echo "$FINAL_FILE already exists."
+          continue
+        fi
         # 1. Rename r,q,t parameters (needed for afterburner), convert spectral to gaussian grid, set from  reduced gaussian to regular grid type
         cdo -f nc -chparam,0.0.0,130,0.1.0,133,25.3.0,152 -sp2gpl -setgridtype,regular $filename ${Intermediate_File_Directory}/era5_date_${d}_time_${t}.nc
 
@@ -38,5 +45,5 @@ BREAK
         cdo sellonlatbox,$MIN_LON,$MAX_LON,$MIN_LAT,$MAX_LAT ${Intermediate_File_Directory}/remap_era5_date_${d}_time_${t}.nc ${Intermediate_File_Directory}/sellatlon_era5_date_${d}_time_${t}.nc
 
         # 5. Merge relative humidity and other variables
-        cdo merge ${Intermediate_File_Directory}/rh_sellatlon_era5_date_${d}_time_${t}.nc ${Intermediate_File_Directory}/sellatlon_era5_date_${d}_time_${t}.nc ${Preproc_File_Directory}/all_era5_date_${d}_time_${t}.nc
+        cdo merge ${Intermediate_File_Directory}/rh_sellatlon_era5_date_${d}_time_${t}.nc ${Intermediate_File_Directory}/sellatlon_era5_date_${d}_time_${t}.nc ${FINAL_FILE}
 done
