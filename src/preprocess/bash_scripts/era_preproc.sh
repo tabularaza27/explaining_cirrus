@@ -19,7 +19,7 @@ do
 
         # 2. calculate rh with r,q,t via the cdo afterburner. Bash script Here document Limit string must be at beginning of line (https://tldp.org/LDP/abs/html/here-docs.html)
         cdo after ${Intermediate_File_Directory}/era5_date_${d}_time_${t}.nc ${Intermediate_File_Directory}/rh_era5_date_${d}_time_${t}.nc << BREAK
-            CODE=157 TYPE=2
+            CODE=157 TYPE=20
 BREAK
 
         cdo chname,var157,rh ${Intermediate_File_Directory}/rh_era5_date_${d}_time_${t}.nc ${Intermediate_File_Directory}/rh_era5_date_${d}_time_${t}.nc # change variable name
