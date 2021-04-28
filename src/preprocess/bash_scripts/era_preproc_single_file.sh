@@ -19,6 +19,8 @@ Grid_Spec_Path='/home/kjeggle/cirrus/src/preprocess/bash_scripts/gridspec'
 d=`echo $filename | grep -E -o '[0-9]{4}_[0-9]{2}_[0-9]{2}'`
 t=`echo $filename | grep -E -o 'time_[0-9]{2}_[0-9]{2}_[0-9]{2}' | cut -f2- -d'_'`
 
+cd $Source_File_Directory
+
 echo "Start Processing $d $t"
 
 FINAL_FILE=${Preproc_File_Directory}/all_era5_date_${d}_time_${t}.nc

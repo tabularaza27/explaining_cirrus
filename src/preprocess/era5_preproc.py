@@ -36,6 +36,6 @@ if __name__ == "__main__":
     elif len(sys.argv) == 1:
         filepaths = glob.glob("{}/era5_date_*_time_*.grb".format(Source_File_Directory))
         print(filepaths[0])
-        process_singlefile(filepaths[0])
+        process_singlefile(filepaths[0].split("/")[-1])
     else:
         raise ValueError("Provide valid arguments. E.g.: python era5_preproc.py <#workers>")
