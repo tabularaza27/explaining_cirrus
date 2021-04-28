@@ -4,7 +4,7 @@
 # scripts that calls this bash scrip
 
 # filepath needs to be specified as first positional cmd argument when calling this file
-filepath=$1
+filename=$1
 
 MIN_LON=-75
 MAX_LON=-15
