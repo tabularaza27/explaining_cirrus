@@ -5,6 +5,7 @@ import multiprocessing as mp
 import subprocess
 import glob
 import sys
+import os
 
 Source_File_Directory = '/net/n2o/wolke_scratch/kjeggle/ERA5/ECMWF_incoming'
 Script_Path = '/home/kjeggle/cirrus/src/preprocess/bash_scripts/era_preproc_single_file.sh'
@@ -13,7 +14,7 @@ Script_Path = '/home/kjeggle/cirrus/src/preprocess/bash_scripts/era_preproc_sing
 def process_singlefile(filepath):
     """call preprocessing bash script for given file pTH"""
     print("Call Bash Script for file {}".format(filepath))
-    subprocess.call([Script_Path, "{}".format(filepath)])
+    os.system("{} {}".format(Source_File_Directory,filepath))
 
 
 def parallel_preproc(n_workers=8):
