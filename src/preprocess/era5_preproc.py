@@ -34,6 +34,6 @@ if __name__ == "__main__":
         parallel_preproc(n_workers=int(sys.argv[1]))
     elif len(sys.argv) == 1:
         filepaths = glob.glob("{}/era5_date_*_time_*.grb".format(Source_File_Directory))
-        subprocess.call([Script_Path, filepath[0]], shell=True)
+        subprocess.call([Script_Path, filepaths[0]], shell=True)
     else:
         raise ValueError("Provide valid arguments. E.g.: python era5_preproc.py <#workers>")
