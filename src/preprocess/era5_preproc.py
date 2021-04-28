@@ -14,7 +14,7 @@ Script_Path = '/home/kjeggle/cirrus/src/preprocess/bash_scripts/era_preproc_sing
 def process_singlefile(filepath):
     """call preprocessing bash script for given file pTH"""
     print("Call Bash Script for file {}".format(filepath))
-    os.system("{} {}".format(Source_File_Directory,filepath))
+    os.system("{} {}".format(Script_Path,filepath))
 
 
 def parallel_preproc(n_workers=8):
@@ -36,6 +36,6 @@ if __name__ == "__main__":
     elif len(sys.argv) == 1:
         filepaths = glob.glob("{}/era5_date_*_time_*.grb".format(Source_File_Directory))
         print(filepaths[0])
-        process_singlefile(filepaths[0].split("/")[-1])
+        process_singlefile(filepaths[0])
     else:
         raise ValueError("Provide valid arguments. E.g.: python era5_preproc.py <#workers>")
