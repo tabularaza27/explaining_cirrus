@@ -23,10 +23,9 @@ echo "Start Processing $d $t"
 
 FINAL_FILE=${Preproc_File_Directory}/all_era5_date_${d}_time_${t}.nc
 if test -f "$FINAL_FILE"; then
-  echo "$FINAL_FILE already exists."
+  echo "Processed File already exists already exists."
   exit
 fi
-
 
 # 1. Rename r,q,t parameters (needed for afterburner), convert spectral to gaussian grid, set from  reduced gaussian to regular grid type
 cdo -f nc -chparam,0.0.0,130,0.1.0,133,25.3.0,152 -sp2gpl -setgridtype,regular $filename ${Intermediate_File_Directory}/era5_date_${d}_time_${t}.nc
