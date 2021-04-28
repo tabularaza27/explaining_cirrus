@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# runs preprocessing steps for all grb files in Source_File_Directory, if a processed file of that date doesnt exist in 
+# Preproc_File_Directory yet
+
+
 MIN_LON=-75
 MAX_LON=-15
 MIN_LAT=0
