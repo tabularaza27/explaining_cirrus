@@ -13,7 +13,7 @@ Script_Path = '/home/kjeggle/cirrus/src/preprocess/bash_scripts/era_preproc_sing
 def process_singlefile(filepath):
     """call preprocessing bash script for given file pTH"""
     print("Call Bash Script for file {}".format(filepath))
-    subprocess.call([Script_Path, filepath], shell=True)
+    subprocess.call([Script_Path, "{}".format(filepath)], shell=True)
 
 
 def parallel_preproc(n_workers=8):
