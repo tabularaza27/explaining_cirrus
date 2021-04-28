@@ -10,7 +10,7 @@ Intermediate_File_Directory='/net/n2o/wolke_scratch/kjeggle/ERA5/intermediate'
 Preproc_File_Directory='/net/n2o/wolke_scratch/kjeggle/ERA5/preproc'
 Grid_Spec_Path='/home/kjeggle/cirrus/src/preprocess/bash_scripts/gridspec'
 
-Threads=16
+Threads=3
 
 for filename in $(ls ${Source_File_Directory}/era5_date_*_time_*.grb)
 do
