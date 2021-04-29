@@ -52,5 +52,4 @@ cdo sellonlatbox,$MIN_LON,$MAX_LON,$MIN_LAT,$MAX_LAT ${Intermediate_File_Directo
 cdo merge ${Intermediate_File_Directory}/rh_sellatlon_era5_date_${d}_time_${t}.nc ${Intermediate_File_Directory}/sellatlon_era5_date_${d}_time_${t}.nc ${FINAL_FILE}
 
 # 6. Delete intermediate files
-rm -r $Intermediate_File_Directory
-mkdir $Intermediate_File_Directory
+rm  ${Intermediate_File_Directory}/*_date_${d}_time_${t}.nc
