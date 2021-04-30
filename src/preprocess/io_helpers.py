@@ -35,7 +35,7 @@ def get_day_files(date, dir_path, file_format="hdf", time_range="day"):
 
 
 def get_filepaths(date, dir_path, file_format="hdf", time_range="day"):
-    """load filepaths for given date + last file from previous day/month
+    """load filepaths for given date + last file from previous/next day/month
 
     Args:
         date (datetime.datetime): date
@@ -46,9 +46,10 @@ def get_filepaths(date, dir_path, file_format="hdf", time_range="day"):
     Returns:
         list|None: list of filepaths to load. If no files exist for that day return None
     """
-    # get filepaths for day and add last file from previous day
+    # get filepaths for day and add last file from previous day and first file from next day
     filepaths = get_day_files(date, dir_path, file_format, time_range)
     prev_day_paths = get_day_files(date + datetime.timedelta(days=-1), dir_path, file_format, time_range)
+    next_day_paths = get_day_files(date + datetime.timedelta(days=1), dir_path, file_format, time_range)
 
     if filepaths.size == 0:
         return None
@@ -57,6 +58,11 @@ def get_filepaths(date, dir_path, file_format="hdf", time_range="day"):
         print("info: no data for prev day available")
     else:
         filepaths = np.insert(filepaths, 0, prev_day_paths[-1])
+
+    if next_day_paths.size == 0:
+        print("info: not data for next day available")
+    else:
+        filepaths = np.insert(filepaths, filepaths.shape[0], next_day_paths[0])
 
     return filepaths
 

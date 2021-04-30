@@ -366,7 +366,7 @@ def create_empty_grid(start_date,
     dardar_l3_files = glob.glob(os.path.join(ROOT_DIR, 'wolke_scratch/kjeggle/DARDAR_NICE/L3/2006/*'))
     dar_nice = xr.open_dataset(dardar_l3_files[3])
 
-    timegr = xr.cftime_range(start=start_date, end=end_date, freq=freq, closed="right")  # closed to the righ
+    timegr = xr.cftime_range(start=start_date, end=end_date, freq=freq, closed="left")  # closed to the left 00 - 23
     latgr = np.round(np.arange(latmin, latmax, hor_res), 4)  # need to round for float errors
     longr = np.round(np.arange(lonmin, lonmax, hor_res), 4)
     altgr = np.flip(np.arange(altmin, altmax + alt_res, alt_res))  # highest hight at index 0
@@ -448,7 +448,7 @@ def load_files(date, time_range="day"):
     # create data variables with rounded lat/lon/time
     ds = ds.assign(latr=lambda x: np.round((np.round(x.lat * (1 / HOR_RES)) * HOR_RES).astype('float64'), 4))
     ds = ds.assign(lonr=lambda x: np.round((np.round(x.lon * (1 / HOR_RES)) * HOR_RES).astype('float64'), 4))
-    ds = ds.assign(timer=ds.time.dt.ceil(TEMP_RES))
+    ds = ds.assign(timer=ds.time.dt.round(TEMP_RES))
 
     # convert timer to std datetime, so it can be used in np.unique
     # a bit over complicated, but havent found better way so far
