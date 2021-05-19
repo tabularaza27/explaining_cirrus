@@ -13,7 +13,7 @@ MAX_LAT=60
 
 Intermediate_File_Directory='/net/n2o/wolke_scratch/kjeggle/ERA5/intermediate'
 Preproc_File_Directory='/net/n2o/wolke_scratch/kjeggle/ERA5/preproc'
-Template_Path='/home/kjeggle/cirrus/src/config_files/gridspec/template.nc'
+Template_Path='/home/kjeggle/cirrus/src/config_files/template.nc'
 
 d=`echo $filename | grep -E -o '[0-9]{4}_[0-9]{2}_[0-9]{2}'`
 t=`echo $filename | grep -E -o 'time_[0-9]{2}_[0-9]{2}_[0-9]{2}' | cut -f2- -d'_'`

@@ -5,7 +5,7 @@
 Source_File_Directory='/net/n2o/wolke_scratch/kjeggle/ERA5/ECMWF_incoming'
 Intermediate_File_Directory='/net/n2o/wolke_scratch/kjeggle/ERA5/intermediate'
 Preproc_File_Directory='/net/n2o/wolke_scratch/kjeggle/ERA5/preproc'
-Template_Path='/home/kjeggle/cirrus/src/config_files/gridspec/template.nc'
+Template_Path='/home/kjeggle/cirrus/src/config_files/template.nc'
 
 
 Threads=3

@@ -1,21 +1,23 @@
+"""
+Preprocess MERRA2 files that have already been preprocessed with cdo (i.e. horizontal remapping)
+
+Steps:
+1. Calculate pressure levels of layer edges using PTOP=1 Pa + DELP (pressure thickness) as described in 4.2 of [Merra Spec Files](https://gmao.gsfc.nasa.gov/pubs/docs/Bosilovich785.pdf)
+2. Calculate height levels with hypsometric equation
+3. Unit Transformation from mass mixing ratio to volume mixing ratio
+4. Interpolate to Height Levels
+5. Resample to hourly grid (optional)
+"""
+
 import xarray as xr
 import xgcm
 import numpy as np
 import pandas as pd
 
+from helpers.common_helpers import check_for_nans
 
-# check that there are no nan values
-def file_checks(ds):
-    """Checks if loaded data set complies requirements"""
-
-    # checks for nan values
-    for var in ds.data_vars:
-        contains_nans = ds[var].isnull().any()
-        if contains_nans:
-            raise ValueError("{} contains nan values".format(var))
-
-
-PTOP = 1  # pressure at top of atmosphere is fixed constant 0.01 hPa = 1 Pa
+# pressure at top of atmosphere is fixed constant 0.01 hPa = 1 Pa
+PTOP = 1
 
 # variables of our interest
 VARIABLES = ["DU00{}".format(i) for i in range(1, 6)]
@@ -186,9 +188,11 @@ def run_preprocess_pipeline(filepath):
         filepath: filepath to horizontally regridded file
 
     Returns:
+        xr.Dataset: vertically regridded and to hourly upsampled dataset
 
     """
     ds = xr.open_dataset(filepath)
+    check_for_nans(ds)
     ds = calc_plevs(ds)
     ds = calc_hlevs(ds)
     ds = calc_vol_mixing_ratio(ds)
