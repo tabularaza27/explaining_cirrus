@@ -40,8 +40,8 @@ BREAK
         cdo -P $Threads -remapbil,$Template_Path ${Intermediate_File_Directory}/era5_date_${d}_time_${t}.nc ${Intermediate_File_Directory}/remap_era5_date_${d}_time_${t}.nc # other variables are intensive variables:  bilinear interp
 
         # 4. Select our target domain
-        #cdo sellonlatbox,$MIN_LON,$MAX_LON,$MIN_LAT,$MAX_LAT ${Intermediate_File_Directory}/rh_remap_era5_date_${d}_time_${t}.nc ${Intermediate_File_Directory}/rh_sellatlon_era5_date_${d}_time_${t}.nc
-        #cdo sellonlatbox,$MIN_LON,$MAX_LON,$MIN_LAT,$MAX_LAT ${Intermediate_File_Directory}/remap_era5_date_${d}_time_${t}.nc ${Intermediate_File_Directory}/sellatlon_era5_date_${d}_time_${t}.nc
+        cdo sellonlatbox,$MIN_LON,$MAX_LON,$MIN_LAT,$MAX_LAT ${Intermediate_File_Directory}/rh_remap_era5_date_${d}_time_${t}.nc ${Intermediate_File_Directory}/rh_sellatlon_era5_date_${d}_time_${t}.nc
+        cdo sellonlatbox,$MIN_LON,$MAX_LON,$MIN_LAT,$MAX_LAT ${Intermediate_File_Directory}/remap_era5_date_${d}_time_${t}.nc ${Intermediate_File_Directory}/sellatlon_era5_date_${d}_time_${t}.nc
 
         # 5. Merge relative humidity and other variables
         cdo merge ${Intermediate_File_Directory}/rh_sellatlon_era5_date_${d}_time_${t}.nc ${Intermediate_File_Directory}/sellatlon_era5_date_${d}_time_${t}.nc ${FINAL_FILE}
