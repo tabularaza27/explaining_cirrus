@@ -3,7 +3,6 @@ import pandas as pd
 import xarray as xr
 import datetime
 import cis
-import os
 import glob
 import gc
 import logging
@@ -15,9 +14,9 @@ from cis import time_util
 from cis.data_io.products.AProduct import ProductPluginException
 
 sys.path.append("/wolke/kjeggle/Repos/cirrus/src/preprocess")
-from io_helpers import save_file
-from io_helpers import get_filepaths
-from io_helpers import exists
+from src.preprocess.helpers.io_helpers import save_file
+from src.preprocess.helpers.io_helpers import get_filepaths
+from src.preprocess.helpers.io_helpers import exists
 
 # setup logger - see: https://docs.python.org/3/howto/logging-cookbook.html
 logger = logging.getLogger(__name__)
