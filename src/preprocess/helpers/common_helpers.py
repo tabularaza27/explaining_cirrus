@@ -10,4 +10,4 @@ def check_for_nans(ds):
         if contains_nans:
             raise ValueError("{} contains nan values".format(var))
 
-    print("No nan values detected in this dataset")
+    # print("All Good - No nan values detected in this dataset")

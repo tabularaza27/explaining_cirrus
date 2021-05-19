@@ -32,11 +32,12 @@ temperature_file=${Temperature_Directory}/MERRA2_400.inst3_3d_asm_Nv.${d}.nc4.nc
 cdo remapcon,$Template_Path $filename ${Intermediate_File_Directory}/remap_merra2_date_${d}.nc
 cdo remapbil,$Template_Path $temperature_file ${Intermediate_File_Directory}/remap_temp_merra2_date_${d}.nc
 
-# 2. Join aerosol data with temperature data
-cdo merge ${Intermediate_File_Directory}/remap_merra2_date_${d}.nc ${Intermediate_File_Directory}/remap_temp_merra2_date_${d}.nc ${Intermediate_File_Directory}/merged_remap_merra2_date_${d}.nc
-
 # 2. select domain
-cdo sellonlatbox,$MIN_LON,$MAX_LON,$MIN_LAT,$MAX_LAT ${Intermediate_File_Directory}/merged_remap_merra2_date_${d}.nc $FINAL_FILE
+cdo sellonlatbox,$MIN_LON,$MAX_LON,$MIN_LAT,$MAX_LAT ${Intermediate_File_Directory}/remap_merra2_date_${d}.nc ${Intermediate_File_Directory}/sel_remap_merra2_date_${d}.nc
+cdo sellonlatbox,$MIN_LON,$MAX_LON,$MIN_LAT,$MAX_LAT ${Intermediate_File_Directory}/remap_temp_merra2_date_${d}.nc ${Intermediate_File_Directory}/sel_remap_temp_merra2_date_${d}.nc
+
+# 3. Join aerosol data with temperature data
+cdo merge ${Intermediate_File_Directory}/sel_remap_merra2_date_${d}.nc ${Intermediate_File_Directory}/sel_remap_temp_merra2_date_${d}.nc $FINAL_FILE
 
 # 6. Delete intermediate files
 # rm  ${Intermediate_File_Directory}/*_date_${d}_time_${t}.nc
