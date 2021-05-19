@@ -9,3 +9,5 @@ def check_for_nans(ds):
         contains_nans = ds[var].isnull().any()
         if contains_nans:
             raise ValueError("{} contains nan values".format(var))
+
+    print("No nan values detected in this dataset")
