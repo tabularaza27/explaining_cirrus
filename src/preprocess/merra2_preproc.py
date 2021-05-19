@@ -28,7 +28,7 @@ TARGET_LEVEL_CENTER = HLEVS["lev"].dropna()
 TARGET_LEVEL_EDGE = HLEVS["lev_edge"]
 
 
-def load_file(date):
+def load_ds(date):
     """loads file for given date and adds first timestamp of next day (needed for the hourly upsampling)
 
     Args:
@@ -216,7 +216,7 @@ def run_preprocess_pipeline(date):
 
     """
     # load datases
-    ds = load_file(date)
+    ds = load_ds(date)
     # checks for nans
     check_for_nans(ds)
     # calculate pressure levels
@@ -229,5 +229,8 @@ def run_preprocess_pipeline(date):
     ds_hlev = vert_trafo(ds)
     # temporal upsampling to hourly data
     ds_hourly = temporal_upsampling(ds_hlev)
+    # select only specified day (right now also 0 of following day is in dataset)
+    dt_str = pd.to_datetime(str(date)).strftime("%Y-%m-%d")
+    final_ds = ds_hourly.sel(time=dt_str)
 
     return ds_hourly

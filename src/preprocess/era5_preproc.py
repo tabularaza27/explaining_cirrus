@@ -19,6 +19,20 @@ HLEVS = pd.read_csv("/home/kjeggle/cirrus/src/config_files/height_levels.csv", i
 TARGET_LEVEL_CENTER = HLEVS["lev"].dropna()
 
 
+def load_ds(date):
+    """loads file for given date and adds first timestamp of next day (needed for the hourly upsampling)
+
+    Args:
+        date (numpy.datetime64):
+    """
+    date_str = pd.to_datetime(str(date)).strftime("%Y_%m_%d")
+    path = "/net/n2o/wolke_scratch/kjeggle/ERA5/preproc/all_era5_date_{}_time_*.nc".format(date_str)
+    ds = xr.open_mfdataset(path)
+    ds = ds.load()  # load from dask arrays into memory
+
+    return ds
+
+
 def calc_plevs(ds):
     """calculate pressures at level center and level edges via hybrid model level constants a and b"""
 
@@ -192,21 +206,20 @@ def vert_trafo(ds):
     return ds_hlev
 
 
-def run_preprocess_pipeline(filepath):
+def run_preprocess_pipeline(date):
     """
 
     Args:
-        filepath: filepath to horizontally regridded file
-
+        date (numpy.datetime64):
     Returns:
         xr.Dataset: vertically regridded dataset
 
     """
-    ds = xr.open_dataset(filepath)
+    ds = load_ds(date)
     check_for_nans(ds)
     ds = calc_plevs(ds)
     ds = calc_hlevs(ds)
-    ds["rh_ice"] = calc_rh_ice(ds.rh,ds.t)
+    ds["rh_ice"] = calc_rh_ice(ds.rh, ds.t)
     ds_hlev = vert_trafo(ds)
 
     return ds_hlev
