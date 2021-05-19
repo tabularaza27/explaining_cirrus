@@ -39,4 +39,4 @@ if __name__ == "__main__":
         #print(filepaths[0])
         #process_singlefile(filepaths[0])
     else:
-        raise ValueError("Provide valid arguments. E.g.: python era5_preproc.py <#workers>")
+        raise ValueError("Provide valid arguments. E.g.: python era5_preproc_cdo.py <#workers>")
