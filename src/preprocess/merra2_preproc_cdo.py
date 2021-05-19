@@ -9,7 +9,7 @@ import sys
 import os
 
 Source_File_Directory = '/net/n2o/wolke_scratch/kjeggle/MERRA2/incoming'
-Script_Path = '/home/kaijeggle/dev/DataAnalysis/cirrus/src/preprocess/bash_scripts/merra_horizontal_remap.sh'
+Script_Path = '/home/kjeggle/cirrus/src/preprocess/bash_scripts/merra_horizontal_remap.sh'
 
 
 def process_singlefile(filepath):
