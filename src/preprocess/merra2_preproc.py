@@ -8,7 +8,7 @@ Steps:
 4. Interpolate to Height Levels
 5. Resample to hourly grid (optional)
 """
-
+import os
 import xarray as xr
 import xgcm
 import numpy as np
@@ -26,6 +26,31 @@ VARIABLES += ["SO4", "SO2"]
 HLEVS = pd.read_csv("/home/kjeggle/cirrus/src/config_files/height_levels.csv", index_col=0)
 TARGET_LEVEL_CENTER = HLEVS["lev"].dropna()
 TARGET_LEVEL_EDGE = HLEVS["lev_edge"]
+
+
+def load_file(date):
+    """loads file for given date and adds first timestamp of next day (needed for the hourly upsampling)
+
+    Args:
+        date (numpy.datetime64):
+    """
+    sourcepath = "/net/n2o/wolke_scratch/kjeggle/MERRA2/preproc"
+    next_day = date + np.timedelta64(1, "D")
+
+    date_str = "%Y%m%d"
+    day_str = pd.to_datetime(str(date)).strftime(
+        date_str)  # convert to pandas datetime first to be able to use strftime
+    next_day_str = pd.to_datetime(str(next_day)).strftime(date_str)
+
+    day_ds = xr.open_dataset(os.path.join(sourcepath, "all_merra2_date_{}.nc".format(day_str)))
+    next_day_ds = xr.open_dataset(os.path.join(sourcepath, "all_merra2_date_{}.nc".format(next_day_str)))
+
+    ds = xr.concat([day_ds, next_day_ds.isel(time=0)], dim="time")
+
+    assert ds.dims["time"] == 9, "time dim of dataset needs to have length 9 to cover whole day, has {}".format(
+        ds.dims["time"])
+
+    return ds
 
 def calc_plevs(ds):
     """Calculate pressure levels of layer edges using PTOP=1 Pa + DELP (pressure thickness) as described in 4.2 of Merra Spec Files."""
@@ -181,22 +206,28 @@ def temporal_upsampling(ds):
     return ds_hourly
 
 
-def run_preprocess_pipeline(filepath):
-    """
+def run_preprocess_pipeline(date):
+    """run preprocessing pipeline for given day
 
     Args:
-        filepath: filepath to horizontally regridded file
-
+        date (numpy.datetime64):
     Returns:
         xr.Dataset: vertically regridded and to hourly upsampled dataset
 
     """
-    ds = xr.open_dataset(filepath)
+    # load datases
+    ds = load_file(date)
+    # checks for nans
     check_for_nans(ds)
+    # calculate pressure levels
     ds = calc_plevs(ds)
+    # calculate height levels
     ds = calc_hlevs(ds)
+    # calculate volume mixing ratio
     ds = calc_vol_mixing_ratio(ds)
+    # vertical regrid to height levels
     ds_hlev = vert_trafo(ds)
+    # temporal upsampling to hourly data
     ds_hourly = temporal_upsampling(ds_hlev)
 
     return ds_hourly
