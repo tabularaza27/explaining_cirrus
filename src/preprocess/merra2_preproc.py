@@ -23,7 +23,7 @@ PTOP = 1
 VARIABLES = ["DU00{}".format(i) for i in range(1, 6)]
 VARIABLES += ["SO4", "SO2"]
 
-HLEVS = pd.read_csv("src/data/height_levels.csv", index_col=0)
+HLEVS = pd.read_csv("/home/kjeggle/cirrus/src/config_files/height_levels.csv", index_col=0)
 TARGET_LEVEL_CENTER = HLEVS["lev"].dropna()
 TARGET_LEVEL_EDGE = HLEVS["lev_edge"]
 
