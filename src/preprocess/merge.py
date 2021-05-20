@@ -7,6 +7,7 @@ import glob
 import merra2_preproc
 import era5_preproc
 
+MIN_LON=-75
 MAX_LON=-15.25
 MIN_LAT=0
 MAX_LAT=59.75
@@ -137,10 +138,10 @@ def run_merging(date):
     # datestrings
     min_date_str = str(date)
     max_date_str = str(date + datetime.timedelta(hours=23))
-    np_dt = np.datetime64(date)
+    np_dt = np.datetime64(date) # numpy date time
 
     # load dardar data for given data + next day ( for vicinity mask )
-    paths = get_file_paths([dt, dt + datetime.timedelta(days=1)], DARDAR_SOURCE_DIR)
+    paths = get_file_paths([date, date + datetime.timedelta(days=1)], DARDAR_SOURCE_DIR)
     dardar_ds = xr.open_mfdataset(paths, concat_dim="time")
     dardar_ds = dardar_ds.transpose("time", "lev", "lat", "lon")
 
@@ -151,7 +152,7 @@ def run_merging(date):
     dardar_ds = crop_ds(dardar_ds, min_date_str, max_date_str)
 
     # retrieve and transform reanalysis data online
-    era = era5_preproc.run_preprocess_pipeline(dt)
+    era = era5_preproc.run_preprocess_pipeline(np_dt)
     era = crop_ds(era)
     merra = merra2_preproc.run_preprocess_pipeline(np_dt)
     merra = crop_ds(merra)
