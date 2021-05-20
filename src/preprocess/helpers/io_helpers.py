@@ -94,7 +94,7 @@ def save_file(dir_path, file_name, ds, date, time_range="day", complevel=4):
 
 
 def exists(date, file_name, dir):
-    """checks if gridded file already exists
+    """checks if file already exists
 
     Args:
         date (datetime.datetime):

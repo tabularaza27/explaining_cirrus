@@ -6,15 +6,19 @@ import os
 import glob
 import merra2_preproc
 import era5_preproc
+from helpers.io_helpers import exists,save_file
 
-MIN_LON=-75
-MAX_LON=-15.25
-MIN_LAT=0
-MAX_LAT=59.75
-MIN_LEV=1020
-MAX_LEV=20040
+MIN_LON = -75
+MAX_LON = -15.25
+MIN_LAT = 0
+MAX_LAT = 59.75
+MIN_LEV = 1020
+MAX_LEV = 20040
 
-DARDAR_SOURCE_DIR="/net/n2o/wolke_scratch/kjeggle/DARDAR_NICE/gridded/hourly"
+DARDAR_SOURCE_DIR = "/net/n2o/wolke_scratch/kjeggle/DARDAR_NICE/gridded/hourly"
+DESTINATION_DIR = "/net/n2o/wolke_scratch/kjeggle/DATA_CUBE/pre_proc"
+DATA_CUBE_FILESTUMPY = "data_cube_perproc"
+
 
 def get_file_paths(dates, source_dir, date_str="%Y_%m_%d", file_format="nc"):
     """get filepaths for given date
@@ -65,8 +69,8 @@ def create_dardar_masks(ds):
     data_mask = obs > 0
     ds.coords["data_mask"] = (("time", "lat", "lon"), data_mask)
     ds.observation_mask.attrs.update({
-                                         "long_name": "1 for grid cells (time,lat,lon) where there is a calipso/cloudsat observation with observed iwc, 0 else"
-                                         })
+        "long_name": "1 for grid cells (time,lat,lon) where there is a calipso/cloudsat observation with observed iwc, 0 else"
+    })
 
     # observation vicinity mask (gridpoint that are an observation or where an observation will be in the next 3 hours)
     observation_vicinity_mask = np.zeros(obs.shape)
@@ -80,8 +84,8 @@ def create_dardar_masks(ds):
     # add mask as coordniate, so I can easily apply `where()`
     ds.coords["observation_vicinity_mask"] = (("time", "lat", "lon"), observation_vicinity_mask)
     ds.observation_vicinity_mask.attrs.update({
-                                                  "long_name": "1 for grid cells (time,lat,lon) where there is a calipso/cloudsat observation or where an observation will be in the next 3 hours, 0 else"
-                                                  })
+        "long_name": "1 for grid cells (time,lat,lon) where there is a calipso/cloudsat observation or where an observation will be in the next 3 hours, 0 else"
+    })
 
     # timestep mask
     # create mask for timesteps (timestep with at least one observations: 1, timestep with no observations:0)
@@ -93,7 +97,9 @@ def create_dardar_masks(ds):
 
     return ds
 
-def crop_ds(ds,min_date,max_date, min_lon=MIN_LON,max_lon=MAX_LON,min_lat=MIN_LAT,max_lat=MAX_LAT,min_lev=MIN_LEV,max_lev=MAX_LEV):
+
+def crop_ds(ds, min_date, max_date, min_lon=MIN_LON, max_lon=MAX_LON, min_lat=MIN_LAT, max_lat=MAX_LAT, min_lev=MIN_LEV,
+            max_lev=MAX_LEV):
     """crops dataset to given dimensions
 
     Args:
@@ -110,8 +116,10 @@ def crop_ds(ds,min_date,max_date, min_lon=MIN_LON,max_lon=MAX_LON,min_lat=MIN_LA
     Returns:
 
     """
-    ds = ds.sel(time=slice(min_date,max_date),lon=slice(min_lon,max_lon), lat=slice(min_lat,max_lat), lev=slice(max_lev,min_lev))
+    ds = ds.sel(time=slice(min_date, max_date), lon=slice(min_lon, max_lon), lat=slice(min_lat, max_lat),
+                lev=slice(max_lev, min_lev))
     return ds
+
 
 def check_dimensions(dardar, era, merra):
     for dim in ["time", "lat", "lon", "lev"]:
@@ -126,7 +134,8 @@ def check_dimensions(dardar, era, merra):
             raise ValueError(
                 "Dimension {} has different lengths and potentially different contents for datasets".format(dim))
 
-def run_merging(date):
+
+def merge_one_day(date):
     """merge data sources for given date
 
     Args:
@@ -135,10 +144,11 @@ def run_merging(date):
     Returns:
 
     """
+    print("Start merging for", str(date))
     # datestrings
     min_date_str = str(date)
     max_date_str = str(date + datetime.timedelta(hours=23))
-    np_dt = np.datetime64(date) # numpy date time
+    np_dt = np.datetime64(date)  # numpy date time
 
     # load dardar data for given data + next day ( for vicinity mask )
     paths = get_file_paths([date, date + datetime.timedelta(days=1)], DARDAR_SOURCE_DIR)
@@ -173,10 +183,50 @@ def run_merging(date):
     print("added observation vicinity mask and dropped all unnecessary data from reanalysis data")
 
     # check if all dimensions are the same
-    check_dimensions(dardar_ds,era_reduced,merra_reduced)
+    check_dimensions(dardar_ds, era_reduced, merra_reduced)
 
     # merge datasets
     merged = xr.merge([dardar_ds, era_reduced, merra_reduced])
     print("merged datasets")
 
-    return merged, dardar_ds, era_reduced, merra_reduced
+    return merged # , dardar_ds, era_reduced, merra_reduced
+
+def merge_and_save(date):
+    """merges and saves for one day
+
+    Args:
+        date:
+
+    Returns:
+
+    """
+    # run merging
+    merged = merge_one_day(date)
+
+    # load into memory
+    merged = merged.load()
+    print("loaded into memory")
+
+    save_file(DESTINATION_DIR, DATA_CUBE_FILESTUMPY, merged, date, complevel=4)
+    print("saved file")
+
+def run_merging()
+    files = glob.glob("{}/*.nc".format(DARDAR_SOURCE_DIR))
+
+    for file in files:
+        # extract date string from file
+        date_str = file.split("dardar_nice_")[-1].split(".")[0]
+        date = datetime.datetime.strptime(date_str, "%Y_%m_%d")
+
+        # check if file already exists
+        if exists(date, DATA_CUBE_FILESTUMPY, DESTINATION_DIR):
+            logger.info("File already exists for: {}".format(date))
+
+        merge_and_save(date)
+
+
+if __name__ == "__main__":
+    run_merging()
+
+
+
