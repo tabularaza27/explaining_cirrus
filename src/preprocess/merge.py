@@ -112,7 +112,7 @@ def crop_ds(ds,min_date,max_date, min_lon=MIN_LON,max_lon=MAX_LON,min_lat=MIN_LA
     ds = ds.sel(time=slice(min_date,max_date),lon=slice(min_lon,max_lon), lat=slice(min_lat,max_lat), lev=slice(max_lev,min_lev))
     return ds
 
-def check_dimensions(dardar, era, merra)
+def check_dimensions(dardar, era, merra):
     for dim in ["time", "lat", "lon", "lev"]:
         # check for same length
         if np.logical_and(dardar.dims[dim] == era.dims[dim], era.dims[dim] == merra.dims[dim]):
