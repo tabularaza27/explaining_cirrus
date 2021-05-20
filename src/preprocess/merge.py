@@ -153,9 +153,9 @@ def run_merging(date):
 
     # retrieve and transform reanalysis data online
     era = era5_preproc.run_preprocess_pipeline(np_dt)
-    era = crop_ds(era)
+    era = crop_ds(era, min_date_str, max_date_str)
     merra = merra2_preproc.run_preprocess_pipeline(np_dt)
-    merra = crop_ds(merra)
+    merra = crop_ds(merra, min_date_str, max_date_str)
 
     # add observation vicinity mask
     era.coords["observation_vicinity_mask"] = (("time", "lat", "lon"), dardar_ds.observation_vicinity_mask)
@@ -171,4 +171,4 @@ def run_merging(date):
     # merge datasets
     merged = xr.merge([dardar_ds, era_reduced, merra_reduced])
 
-    return merged
+    return merged, dardar_ds, era_reduced, merra_reduced
