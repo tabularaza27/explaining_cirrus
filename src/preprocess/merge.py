@@ -243,7 +243,7 @@ def run_merging(n_workers=4):
 
 if __name__ == "__main__":
     if len(sys.argv) == 2:
-        run_merging(n_workers=sys.argv[1])
+        run_merging(n_workers=int(sys.argv[1]))
     elif len(sys.argv) == 1:
         run_merging()
     else:
