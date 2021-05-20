@@ -243,4 +243,4 @@ def run_preprocess_pipeline(date):
     # select data variables
     final_ds = final_ds[VARIABLES]
 
-    return ds_hourly
+    return final_ds
