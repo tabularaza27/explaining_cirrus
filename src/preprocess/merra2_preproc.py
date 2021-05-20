@@ -121,9 +121,16 @@ def calc_vol_mixing_ratio(ds):
     return ds
 
 
-def vert_trafo(ds):
+def vert_trafo(ds, linear=False):
     """vertical coordinate transformation from model to height levels
     all variables are conservative for MERRA2
+
+    Args:
+        ds:
+        linear (bool): If True also transform linearly
+
+    Returns:
+        xr.Dataset: dataset on height levels
 
     Target Levels need to be in ascending order for conservative regrid (seems to be some bug in xgcm)
     """
@@ -184,18 +191,18 @@ def vert_trafo(ds):
         ds_hlev[var].attrs.update({"units": "kg m**-3"})
 
     ### linear regridding - just for fun ###
-
-    for var_name in VARIABLES:
-        da = grid.transform(
-            ds[var_name],
-            'Z',
-            np.flip(TARGET_LEVEL_CENTER),
-            target_data=ds.hlev_center,
-        )
-        # da = da.reindex(hlev_center=np.flip(da.hlev_center))
-        da.attrs.update(ds[var_name].attrs)
-        da = da.rename({"hlev_center": "lev"})
-        ds_hlev["{}_lin".format(var_name)] = da
+    if linear:
+        for var_name in VARIABLES:
+            da = grid.transform(
+                ds[var_name],
+                'Z',
+                np.flip(TARGET_LEVEL_CENTER),
+                target_data=ds.hlev_center,
+            )
+            # da = da.reindex(hlev_center=np.flip(da.hlev_center))
+            da.attrs.update(ds[var_name].attrs)
+            da = da.rename({"hlev_center": "lev"})
+            ds_hlev["{}_lin".format(var_name)] = da
 
     return ds_hlev
 
