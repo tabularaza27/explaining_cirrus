@@ -144,31 +144,39 @@ def run_merging(date):
     paths = get_file_paths([date, date + datetime.timedelta(days=1)], DARDAR_SOURCE_DIR)
     dardar_ds = xr.open_mfdataset(paths, concat_dim="time")
     dardar_ds = dardar_ds.transpose("time", "lev", "lat", "lon")
+    print("loaded dardar data")
 
     # create observation,data mask etc
     dardar_ds = create_dardar_masks(dardar_ds)
+    print("created masks on dardar data")
 
     # crop dardar dataset
     dardar_ds = crop_ds(dardar_ds, min_date_str, max_date_str)
+    print("cropped dardar data")
 
     # retrieve and transform reanalysis data online
     era = era5_preproc.run_preprocess_pipeline(np_dt)
+    print("loaded  and transformed era data")
     era = crop_ds(era, min_date_str, max_date_str)
+    print("cropped era data")
     merra = merra2_preproc.run_preprocess_pipeline(np_dt)
+    print("loaded  and transformed merra data")
     merra = crop_ds(merra, min_date_str, max_date_str)
+    print("cropped merra data")
 
     # add observation vicinity mask
     era.coords["observation_vicinity_mask"] = (("time", "lat", "lon"), dardar_ds.observation_vicinity_mask)
     merra.coords["observation_vicinity_mask"] = (("time", "lat", "lon"), dardar_ds.observation_vicinity_mask)
-
     # mask all values with nan that don't have an observation in their vicinity (cause we do not need them)
     era_reduced = era.where(era.observation_vicinity_mask == 1)
     merra_reduced = merra.where(merra.observation_vicinity_mask == 1)
+    print("added observation vicinity mask and dropped all unnecessary data from reanalysis data")
 
     # check if all dimensions are the same
     check_dimensions(dardar_ds,era_reduced,merra_reduced)
 
     # merge datasets
     merged = xr.merge([dardar_ds, era_reduced, merra_reduced])
+    print("merged datasets")
 
     return merged, dardar_ds, era_reduced, merra_reduced
