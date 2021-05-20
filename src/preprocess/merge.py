@@ -210,7 +210,7 @@ def merge_and_save(date):
     save_file(DESTINATION_DIR, DATA_CUBE_FILESTUMPY, merged, date, complevel=4)
     print("saved file")
 
-def run_merging()
+def run_merging():
     files = glob.glob("{}/*.nc".format(DARDAR_SOURCE_DIR))
 
     for file in files:
