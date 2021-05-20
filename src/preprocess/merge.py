@@ -234,6 +234,8 @@ def run_merging(n_workers=4):
         # check if file already exists
         if exists(date, DATA_CUBE_FILESTUMPY, DESTINATION_DIR):
             print("File already exists for: {}".format(date))
+            continue
+
 
         pool.apply_async(merge_and_save, args=(date,))
 
