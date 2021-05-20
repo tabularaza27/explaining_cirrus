@@ -4,9 +4,10 @@ import xarray as xr
 import datetime
 import os
 import glob
+import multiprocessing as mp
 import merra2_preproc
 import era5_preproc
-from helpers.io_helpers import exists,save_file
+from helpers.io_helpers import exists, save_file
 
 MIN_LON = -75
 MAX_LON = -15.25
@@ -189,7 +190,8 @@ def merge_one_day(date):
     merged = xr.merge([dardar_ds, era_reduced, merra_reduced])
     print("merged datasets")
 
-    return merged # , dardar_ds, era_reduced, merra_reduced
+    return merged  # , dardar_ds, era_reduced, merra_reduced
+
 
 def merge_and_save(date):
     """merges and saves for one day
@@ -210,7 +212,17 @@ def merge_and_save(date):
     save_file(DESTINATION_DIR, DATA_CUBE_FILESTUMPY, merged, date, complevel=4)
     print("saved file")
 
-def run_merging():
+
+def run_merging(n_workers=4):
+    """run merging process in parallel
+
+    Args:
+        n_workers:
+
+    Returns:
+    """
+    pool = mp.Pool(n_workers)
+
     files = glob.glob("{}/*.nc".format(DARDAR_SOURCE_DIR))
 
     for file in files:
@@ -222,11 +234,16 @@ def run_merging():
         if exists(date, DATA_CUBE_FILESTUMPY, DESTINATION_DIR):
             logger.info("File already exists for: {}".format(date))
 
-        merge_and_save(date)
+        pool.apply_async(merge_and_save, args=(date,))
+
+    pool.close()
+    pool.join()
 
 
 if __name__ == "__main__":
-    run_merging()
-
-
-
+    if len(sys.argv) == 2:
+        run_merging(n_workers=sys.argv[1])
+    elif len(sys.argv) == 1:
+        run_merging()
+    else:
+        raise ValueError("Provide valid arguments. E.g.: python merge.py <#workers>")
