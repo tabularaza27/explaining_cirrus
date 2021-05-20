@@ -3,6 +3,7 @@ import pandas as pd
 import xarray as xr
 import datetime
 import os
+import sys
 import glob
 import multiprocessing as mp
 import merra2_preproc
