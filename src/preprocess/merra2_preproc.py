@@ -233,4 +233,7 @@ def run_preprocess_pipeline(date):
     dt_str = pd.to_datetime(str(date)).strftime("%Y-%m-%d")
     final_ds = ds_hourly.sel(time=dt_str)
 
+    # select data variables
+    final_ds = final_ds[VARIABLES]
+
     return ds_hourly
