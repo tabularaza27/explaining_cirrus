@@ -9,6 +9,7 @@ import multiprocessing as mp
 import merra2_preproc
 import era5_preproc
 from helpers.io_helpers import exists, save_file
+import this
 
 MIN_LON = -75
 MAX_LON = -15.25
