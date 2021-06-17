@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 
 from helpers.common_helpers import check_for_nans
+from helpers.constants import R, g
 
 HLEVS = pd.read_csv("/home/kjeggle/cirrus/src/config_files/height_levels.csv", index_col=0)
 TARGET_LEVEL_CENTER = HLEVS["lev"].dropna()
@@ -76,9 +77,6 @@ def calc_hlevs(ds):
 
     [source](http://tornado.sfsu.edu/Geosciences/classes/e260/Hypsometric/Hypsometric%20Equation.pdf)
     """
-
-    R = 287.058
-    g = 9.806
 
     # calculate 𝑙𝑛(𝑝1𝑝2), where p1 is pressure at lower interface of level an p2 is pressure at upper interface of level
     rolling = ds.plev_edge.rolling(nhyi=2)
@@ -161,13 +159,36 @@ def calc_rh_ice(rh_w, tk):
     return rh_ice
 
 
+def calc_trans_w(ds):
+    """transform vertical velocity from Pa s**-1 to m s**-1
+
+    1. calculate air density: $\rho = \frac{p}{RT}$ (https://confluence.ecmwf.int/pages/viewpage.action?pageId=153391710)
+    2. calculate w_trans: $w_{trans} = - (w/ (\rho * g))$
+    """
+    ds["airdens"] = ds.plev_center / (R * ds.t)
+
+    ds.airdens.attrs.update({"units": "kg m**-3",
+                             "standard_name": "air_density",
+                             "long_name": "air density at level center"
+                             })
+
+    ds["w_trans"] = -ds.w / (ds.airdens * g)
+
+    ds.airdens.attrs.update({"units": "m s**-1",
+                             "standard_name": "upward_air_velocity",
+                             "long_name": "vertical velocity"
+                             })
+
+    return ds
+
+
 def vert_trafo(ds):
     """vertical coordinate transformation from model to pressure levels
 
     all variables are transformed linear
     """
 
-    lin_vars = ["etadot", "t", "w", "u", "v", "rh", "rh_ice"]
+    lin_vars = ["etadot", "t", "w","w_trans", "u", "v", "rh", "rh_ice","plev_center"]
 
     var_dict = dict()
 

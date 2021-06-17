@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 
 from helpers.common_helpers import check_for_nans
+from helpers.constants import R, g
 
 # pressure at top of atmosphere is fixed constant 0.01 hPa = 1 Pa
 PTOP = 1
@@ -75,9 +76,6 @@ def calc_hlevs(ds):
 
     [source](http://tornado.sfsu.edu/Geosciences/classes/e260/Hypsometric/Hypsometric%20Equation.pdf)
     """
-
-    R = 287.058
-    g = 9.806
 
     # calculate 𝑙𝑛(𝑝1𝑝2), where p1 is pressure at lower interface of level an p2 is pressure at upper interface of level
     rolling = ds.plev_edge.rolling(lev_edge=2)
