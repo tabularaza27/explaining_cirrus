@@ -246,6 +246,6 @@ def run_preprocess_pipeline(date):
     final_ds = ds_hourly.sel(time=dt_str)
 
     # select data variables
-    # final_ds = final_ds[VARIABLES]
+    final_ds = final_ds[VARIABLES + ["PHIS", "PA"]]
 
     return final_ds
