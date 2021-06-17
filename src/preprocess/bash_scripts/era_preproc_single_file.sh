@@ -38,7 +38,7 @@ cdo chname,var157,rh ${Intermediate_File_Directory}/rh_era5_date_${d}_time_${t}.
 ncatted -a standard_name,rh,o,c,"relative_humidity" ${Intermediate_File_Directory}/rh_chname_era5_date_${d}_time_${t}.nc ${Intermediate_File_Directory}/rh_ncatted_era5_date_${d}_time_${t}.nc # set standard name according to cf con$
 
 # 3. Interpolate to 0.25x0.25 grid
-cdo -remapcon,$Template_Path ${Intermediate_File_Directory}/rh_ncatted_era5_date_${d}_time_${t}.nc ${Intermediate_File_Directory}/rh_remap_era5_date_${d}_time_${t}.nc # rh is extensive variable: conservative interp
+cdo -remapbil,$Template_Path ${Intermediate_File_Directory}/rh_ncatted_era5_date_${d}_time_${t}.nc ${Intermediate_File_Directory}/rh_remap_era5_date_${d}_time_${t}.nc # rh is extensive variable: conservative interp
 cdo -remapbil,$Template_Path ${Intermediate_File_Directory}/era5_date_${d}_time_${t}.nc ${Intermediate_File_Directory}/remap_era5_date_${d}_time_${t}.nc # other variables are intensive variables:  bilinear interp
 
 # 4. Select our target domain
