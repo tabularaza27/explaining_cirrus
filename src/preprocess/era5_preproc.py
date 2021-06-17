@@ -239,6 +239,7 @@ def run_preprocess_pipeline(date):
     ds = load_ds(date)
     check_for_nans(ds)
     ds = calc_plevs(ds)
+    ds = calc_trans_w(ds)
     ds = calc_hlevs(ds)
     ds["rh_ice"] = calc_rh_ice(ds.rh, ds.t)
     ds_hlev = vert_trafo(ds)
