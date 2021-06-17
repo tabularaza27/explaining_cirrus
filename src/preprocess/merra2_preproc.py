@@ -96,7 +96,7 @@ def calc_hlevs(ds):
 
     # calculate heights on top of levels
     hlev_edge = np.flip(
-        np.cumsum(np.flip(delta_z), axis=1)).values  # need to flip for cumsum cause index 0 is top level in dataset
+        np.cumsum(np.flip(delta_z), axis=1))  # need to flip for cumsum cause index 0 is top level in dataset
 
     # assign to dataset
     ds = ds.assign(hlev_edge=(["time", "lev_edge", "lat", "lon"], hlev_edge))
