@@ -90,11 +90,15 @@ def calc_hlevs(ds):
     delta_z[:, 0, :, :] = np.ones((ds.dims["time"], ds.dims["lat"], ds.dims["lon"])) * 5000
     ds["delta_z"] = delta_z
 
+    # add geometric height at surface (geopotential / gravitational acceleration)
+    surface_geometric_height = np.expand_dims(ds.PHIS.values,1) / g
+    delta_z = np.append(arr=delta_z, values=surface_geometric_height, axis=1)
+
     # calculate heights on top of levels
     hlev_edge = np.flip(
         np.cumsum(np.flip(delta_z), axis=1)).values  # need to flip for cumsum cause index 0 is top level in dataset
-    # insert 0 as surface height level
-    hlev_edge = np.append(arr=hlev_edge, values=np.zeros((ds.dims["time"], 1, ds.dims["lat"], ds.dims["lon"])), axis=1)
+
+    # assign to dataset
     ds = ds.assign(hlev_edge=(["time", "lev_edge", "lat", "lon"], hlev_edge))
 
     # calculate heights at level center by taking rolling mean of heights at level interfaces
@@ -201,6 +205,9 @@ def vert_trafo(ds, linear=False):
             da.attrs.update(ds[var_name].attrs)
             da = da.rename({"hlev_center": "lev"})
             ds_hlev["{}_lin".format(var_name)] = da
+
+    ds_hlev["PHIS"] = ds["PHIS"]
+    ds_hlev["PS"] = ds["PS"]
 
     return ds_hlev
 

@@ -91,11 +91,15 @@ def calc_hlevs(ds):
     # set layer thickness of top layer to 5000 (doesnt really matter what value it is, since we are not interested in data at those heights but currently it is infinity which fucks up the cumsum)
     delta_z[:, 0, :, :] = np.ones((ds.dims["time"], ds.dims["lat"], ds.dims["lon"])) * 5000
 
+    # add geometric height at surface (geopotential / gravitational acceleration)
+    surface_geometric_height = (ds.z / g).values
+    delta_z = np.append(arr=delta_z, values=surface_geometric_height, axis=1)
+
     # calculate heights on top of levels
     hlev_edge = np.flip(
-        np.cumsum(np.flip(delta_z), axis=1)).values  # need to flip for cumsum cause index 0 is top level in dataset
-    # insert 0 as surface height level
-    hlev_edge = np.append(arr=hlev_edge, values=np.zeros((ds.dims["time"], 1, ds.dims["lat"], ds.dims["lon"])), axis=1)
+        np.cumsum(np.flip(delta_z), axis=1))  # need to flip for cumsum cause index 0 is top level in dataset
+    
+    # assign to dataset
     ds = ds.assign(hlev_edge=(["time", "nhyi", "lat", "lon"], hlev_edge[:, :, :, :]))
 
     # calculate heights at level center by taking rolling mean of heights at level interfaces
