@@ -174,7 +174,7 @@ def calc_trans_w(ds):
 
     ds["w_trans"] = -ds.w / (ds.airdens * g)
 
-    ds.airdens.attrs.update({"units": "m s**-1",
+    ds.w_trans.attrs.update({"units": "m s**-1",
                              "standard_name": "upward_air_velocity",
                              "long_name": "vertical velocity"
                              })
