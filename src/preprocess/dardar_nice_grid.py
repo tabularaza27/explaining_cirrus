@@ -76,6 +76,7 @@ CAT_VAR_NAMES = [
     'clm_v2',
     'nightday_flag',
     'mixedphase_flag',
+    'instrument_flag'
 ]
 
 # if executed on iac high performance cluster n2o directories can be accessed via /net/n2o
