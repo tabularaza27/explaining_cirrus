@@ -17,10 +17,10 @@ def process_singlefile(filepath):
     os.system("{} {}".format(Script_Path,filepath))
 
 
-def parallel_preproc(n_workers=8):
+def parallel_preproc(n_workers, year):
     """call bash script that preprocesses era5 data with cdo in parallel using python multiprocessing"""
-    print("Start parallel preprocessing with {} workers".format(n_workers))
-    filepaths = glob.glob("{}/era5_date_*_time_*.grb".format(Source_File_Directory))
+    print("Start parallel preprocessing for year {} with {} workers".format(year, n_workers))
+    filepaths = glob.glob("{}/era5_date_{}_*_time_*.grb".format(Source_File_Directory, year))
 
     pool = mp.Pool(n_workers)
     for filepath in filepaths:
@@ -31,12 +31,7 @@ def parallel_preproc(n_workers=8):
 
 if __name__ == "__main__":
     # todo make user friendly
-    if len(sys.argv) == 2:
-        parallel_preproc(n_workers=int(sys.argv[1]))
-    elif len(sys.argv) == 1:
-        parallel_preproc()
-        #filepaths = glob.glob("{}/era5_date_*_time_*.grb".format(Source_File_Directory))
-        #print(filepaths[0])
-        #process_singlefile(filepaths[0])
+    if len(sys.argv) == 3:
+        parallel_preproc(n_workers=int(sys.argv[1]), year=int(sys.argv[2]))
     else:
-        raise ValueError("Provide valid arguments. E.g.: python era5_preproc_cdo.py <#workers>")
+        raise ValueError("Provide valid arguments. E.g.: python era5_preproc_cdo.py <#workers> <year>")
