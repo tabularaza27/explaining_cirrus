@@ -35,4 +35,4 @@ if __name__ == "__main__":
     if len(sys.argv) == 3:
         parallel_preproc(n_workers=int(sys.argv[1]), year=int(sys.argv[2]))
     else:
-        raise ValueError("Provide valid arguments. E.g.: python merra2_preproc_cdo.py <#workers>")
+        raise ValueError("Provide valid arguments. E.g.: python merra2_preproc_cdo.py <#workers> <year>")
