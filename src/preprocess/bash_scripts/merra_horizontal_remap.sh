@@ -27,7 +27,7 @@ if test -f "$FINAL_FILE"; then
 fi
 
 # Merra files are called different based on year see https://gmao.gsfc.nasa.gov/pubs/docs/Bosilovich785.pdf p.13
-year=`echo $filename | grep -E -o '[0-9]{4}'`
+year=`echo $filename | grep -E -o '[0-9]{4}'| head -1`
 if ((year<2011))
 then
   meteo_file=${Meteo_Directory}/MERRA2_300.inst3_3d_asm_Nv.${d}.nc4.nc4
