@@ -9,11 +9,12 @@ filename=$1
 Intermediate_File_Directory='/net/n2o/wolke_scratch/kjeggle/IC_CIR/intermediate'
 Template_Path='/home/kjeggle/cirrus/src/config_files/template.nc'
 
-d=`echo $filename | grep -E -o '[0-9]{8}'`
+year=`echo $filename | grep -E -o '[0-9]{4}'`
+day=`echo $filename | grep -E -o '[0-9]{3}'` | tail -n1
 
 echo "Start Horizontal remapping $d"
 
-FINAL_FILE=${Intermediate_File_Directory}/remapped_${filename}.nc
+FINAL_FILE=${Intermediate_File_Directory}/remapped_ic_cir_${year}_${day}.nc
 if test -f "$FINAL_FILE"; then
   echo "Processed File already exists already exists."
   exit
