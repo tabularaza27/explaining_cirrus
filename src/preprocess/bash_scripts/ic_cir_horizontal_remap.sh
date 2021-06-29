@@ -12,7 +12,7 @@ Template_Path='/home/kjeggle/cirrus/src/config_files/template.nc'
 year=`echo $filename | grep -E -o '[0-9]{4}'`
 day=`echo $filename | grep -E -o '[0-9]{3}'` | tail -n1
 
-echo "Start Horizontal remapping $d"
+echo "Start Horizontal remapping $year $day"
 
 FINAL_FILE=${Intermediate_File_Directory}/remapped_ic_cir_${year}_${day}.nc
 if test -f "$FINAL_FILE"; then
