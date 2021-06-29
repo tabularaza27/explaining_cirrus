@@ -208,8 +208,8 @@ def merge_and_save(date):
     merged = merge_one_day(date)
 
     # load into memory
-    # merged = merged.load()
-    print("loaded into memory")
+    # amerged = merged.load()
+    # print("loaded into memory")
 
     save_file(DESTINATION_DIR, DATA_CUBE_FILESTUMPY, merged, date, complevel=4)
     print("saved file")
