@@ -215,17 +215,24 @@ def merge_and_save(date):
     print("saved file")
 
 
-def run_merging(n_workers=4):
+def run_merging(n_workers=4,year=None):
     """run merging process in parallel
 
     Args:
         n_workers:
+        year (int): if none run for all available dardar files
 
     Returns:
     """
     pool = mp.Pool(n_workers)
 
-    files = glob.glob("{}/*.nc".format(DARDAR_SOURCE_DIR))
+    if year:
+        print("run merging for {}".format(year))
+        files = glob.glob("{}/*{}*.nc".format(DARDAR_SOURCE_DIR,year))
+    else:
+        print("run merging for all available dardar data")
+        files = glob.glob("{}/*.nc".format(DARDAR_SOURCE_DIR))
+
 
     for file in files:
         # extract date string from file
@@ -245,9 +252,11 @@ def run_merging(n_workers=4):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) == 3:
+        run_merging(n_workers=int(sys.argv[1]),year=int(sys.argv[2]))
     if len(sys.argv) == 2:
         run_merging(n_workers=int(sys.argv[1]))
     elif len(sys.argv) == 1:
         run_merging()
     else:
-        raise ValueError("Provide valid arguments. E.g.: python merge.py <#workers>")
+        raise ValueError("Provide valid arguments. E.g.: python merge.py <#workers> or python merge.py <#workers> <year>")
