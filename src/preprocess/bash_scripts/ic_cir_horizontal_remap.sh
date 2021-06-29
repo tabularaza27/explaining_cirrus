@@ -1,12 +1,9 @@
 #!/bin/bash
 
-# runs preprocessing steps for a single given filepath, check if processed file already exists needs to be done by outer
-# scripts that calls this bash scrip
+# runs horizontal interpolation to template (0.25x0.25) grid and given domain
 
-# filepath needs to be specified as first positional cmd argument when calling this file
+# year needs to be specified as first positional cmd argument when calling this file
 year=$1
-
-echo $filename
 
 Source_File_Directory='/net/n2o/wolke_scratch/kjeggle/IC_CIR/incoming'
 Intermediate_File_Directory='/net/n2o/wolke_scratch/kjeggle/IC_CIR/intermediate'
