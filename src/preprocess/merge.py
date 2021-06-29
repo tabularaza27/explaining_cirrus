@@ -199,7 +199,7 @@ def merge_and_save(date):
     """merges and saves for one day
 
     Args:
-        date:
+        date (datetime.datetime):
 
     Returns:
 
