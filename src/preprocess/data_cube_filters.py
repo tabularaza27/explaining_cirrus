@@ -71,7 +71,7 @@ def filter_and_save_months(year, months):
 
     initial_month_str = str(months[0]).zfill(2)
     df_filename = "{}/ice_in_cloud_df_{}_{}.pickle".format(DF_FINAL_DIR, year, initial_month_str)
-    data_only_filename = "{}/data_only_{}_{}.pickle".format(year, initial_month_str)
+    data_only_filename = "{}/data_only_{}_{}.pickle".format(FILTERED_DF_FINAL_DIR, year, initial_month_str)
 
     # check if file already exists
     if len(glob.glob(df_filename)) > 0:
