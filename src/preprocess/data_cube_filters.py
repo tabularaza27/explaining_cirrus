@@ -132,7 +132,8 @@ def run_year(year):
 
     """
 
-    month_ranges = np.arange(1, 13, 1).reshape(4, 3)
+    #month_ranges = np.arange(1, 13, 1).reshape(4, 3)
+    month_ranges = np.arange(7,13,1).reshape(6,1)
 
     cluster = LocalCluster()
     with Client(cluster) as client:
