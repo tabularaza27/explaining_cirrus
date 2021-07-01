@@ -138,7 +138,7 @@ def run_year(year):
     cluster = LocalCluster(processes=True,
                            threads_per_worker=4,
                            n_workers=2,
-                           memory_limit='500GB')
+                           memory_limit='600GB')
     with Client(cluster) as client:
         dashboard_port = client.scheduler_info()['services']['dashboard']
         print("execute on local terminal to connect to dashboard: \n`ssh -L 8787:localhost:{} n2o`".format(
