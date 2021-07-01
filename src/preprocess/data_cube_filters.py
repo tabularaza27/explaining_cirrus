@@ -87,6 +87,7 @@ def filter_and_save_months(year, months):
     drop_vars = get_drop_vars()
     with dask.config.set(**{'array.slicing.split_large_chunks': True}):
         ds = xr.open_mfdataset(files, parallel=True, concat_dim="time", drop_variables=drop_vars)
+        print("loaded ds")
 
     # stack time lat lon to multiindex
     ds_stack = ds.stack(mul=["time", "lat", "lon"])
