@@ -86,7 +86,20 @@ def filter_and_save_months(year, months):
     # load into xarray
     drop_vars = get_drop_vars()
     with dask.config.set(**{'array.slicing.split_large_chunks': True}):
-        ds = xr.open_mfdataset(files, parallel=True, concat_dim="time", drop_variables=drop_vars)
+        ds = xr.open_mfdataset(files,
+                               parallel=True,
+                               concat_dim="time",
+                               drop_variables=drop_vars,
+                               chunks={'lat': 241, 'lon': 241, 'time': 24},
+                               # Attempt to auto-magically combine the given datasets into one by using dimension
+                               # coordinates.
+                               combine="by_coords",
+                               # Only data variables in which the dimension already appears are included.
+                               data_vars="minimal",
+                               # Only coordinates in which the dimension already appears are included.
+                               coords="minimal",
+                               # Skip comparing and pick variable from first dataset.
+                               compat="override")
         print("loaded ds")
 
     # stack time lat lon to multiindex
@@ -136,10 +149,7 @@ def run_year(year):
     month_ranges = np.arange(1, 13, 1).reshape(4, 3)
     # month_ranges = np.arange(7,13,1).reshape(6,1)
 
-    cluster = LocalCluster(processes=True,
-                           threads_per_worker=7,
-                           n_workers=6,
-                           memory_limit='220GB')
+    cluster = LocalCluster(processes=True)
     with Client(cluster) as client:
         dashboard_port = client.scheduler_info()['services']['dashboard']
         print("execute on local terminal to connect to dashboard: \n`ssh -L 8787:localhost:{} n2o`".format(
