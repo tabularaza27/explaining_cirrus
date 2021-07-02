@@ -112,10 +112,9 @@ def filter_and_save_months(year, months):
     print("computed")
 
     # filter for ice cloud
-    ice_in_cloud = data_only.where(data_only.clm_v2.isin(ICE_CLOUD_MASKS))
 
     # create dataframe
-    df = ice_in_cloud.to_dataframe()
+    df = data_only.to_dataframe()
     # reset multiindex, i.e. flatten data
     df = df.reset_index()
 
@@ -126,10 +125,10 @@ def filter_and_save_months(year, months):
     drop = ["lev_2", "observation_mask", "data_mask", "observation_vicinity_mask", "timestep_observation_mask"]
     df.drop(columns=drop, inplace=True)
 
-    # filter data frame
-    df = df[df.clm_v2.isin(ICE_CLOUD_MASKS)]
-    df = df.query("ta <= {}".format(TEMP_THRES))
+    # filter data frame for cloud masks v1 and v2
+    df = df[(df.clm_v2.isin(ICE_CLOUD_MASKS)) | (df.clm == 1)]
 
+    # write dataframe and data only ds to pickle
     df.to_pickle(df_filename)
 
     with open(data_only_filename, 'wb') as handle:
