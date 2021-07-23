@@ -1,6 +1,12 @@
 import pandas as pd
 import numpy as np
+from sklearn.model_selection import train_test_split
 
+CAT_VARS = ["season","lat_region","IC_CIR","clm_v2",'nightday_flag','land_water_mask','instrument_flag']
+LOG_TRANS_VARS = ['DU',"SO4", 'DU001','DU002','DU003','DU004','DU005']
+BASE_PREDICTORS = [ 't', 'w', 'u', 'v', 'rh_ice','SO4','season','lat_region','dz_top',"IC_CIR",] # DU, clm_v2
+
+# other predictor variables: 'DU001','DU002','DU003','DU004','DU005','DU','clm_v2', 'nightday_flag','land_water_mask','instrument_flag'
 
 def create_filter_string(filters):
     # add brackets
@@ -112,3 +118,65 @@ def log_transform(df, column_names, zero_handling="add_constant", drop_original=
             df.drop(col, axis=1, inplace=True)
 
     return df
+
+
+def select_columns(df, predictors, predictand, add_grid_cell=True):
+    sel = predictors + BASE_PREDICTORS
+    sel.append(predictand)
+    if add_grid_cell:
+        sel.append("grid_cell")
+    df = df[sel]
+
+    return df
+
+
+def run_preprocessing_steps(df, preproc_steps, predictand):
+    # outliers
+    if preproc_steps["kickout_outliers"]:
+        df = kickout_outliers(df, predictand)
+
+    # log transforms
+    if preproc_steps["x_log_trans"]:
+        x_log_vars = [var for var in df.columns if var in LOG_TRANS_VARS]
+        df = log_transform(df, x_log_vars, zero_handling="add_constant")
+
+    if preproc_steps["y_log_trans"]:
+        df = log_transform(df, [predictand], zero_handling="error")
+
+    # oh encoding
+    if preproc_steps["oh_encoding"]:
+        oh_vars = [var for var in df.columns if var in CAT_VARS]
+        df = oh_encoding(df, oh_vars)
+
+    return df
+
+
+def split_train_test(df, predictand, random_state, test_size=0.2):
+    X = df.drop(predictand, 1)
+    y = df[predictand]
+
+    ### split train / test data
+    unique_gridcell = X["grid_cell"].unique()
+    train_cells, test_cells = train_test_split(unique_gridcell, test_size=test_size, random_state=random_state)
+    X_train, X_test = X[X.grid_cell.isin(train_cells)], X[X.grid_cell.isin(test_cells)]
+    y_train, y_test = y[y.index.isin(X_train.index)], y[y.index.isin(X_test.index)]
+    X_train.drop("grid_cell", inplace=True, axis=1)
+    X_test.drop("grid_cell", inplace=True, axis=1)
+
+    return X_train, X_test, y_train, y_test
+
+
+def create_dataset(df, filters, predictors, predictand, preproc_steps, random_state=123):
+    # filter dataset on conditions
+    df = filter_df(df, filters)
+    # select columns
+    df = select_columns(df, predictors, predictand)
+    # pre processing steps #
+    df = run_preprocessing_steps(df, preproc_steps, predictand)
+
+    # split train / test data set
+    if preproc_steps["y_log_trans"]:
+        predictand = "{}_log".format(predictand)
+    X_train, X_test, y_train, y_test = split_train_test(df, predictand, random_state)
+
+    return X_train, X_test, y_train, y_test
