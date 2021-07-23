@@ -75,29 +75,31 @@ def kickout_outliers(df, predictand, iqr_multiple=1.5):
     return outlier_cleaned_df
 
 
-def log_transform(df, column_names, zero_handling="add_constant", drop_original=False):
+def log_transform(df, column_names, zero_handling="add_constant", drop_original=True):
     """log transforms given columns of dataframe
 
     Args:
         df (pd.DataFrame):
         column_names (list):
-        zero_handling (str): strategy to handle zero values, either `drop` or `add_constant`
+        zero_handling (str): strategy to handle zero values, either `drop`, `add_constant`, `error`
         drop_original (bool): if True, drop original column
 
     Returns:
         pd.DataFrame
     """
-    assert zero_handling in ["add_constant", "drop"]
+    assert zero_handling in ["add_constant", "drop", "error"]
 
     for col in column_names:
 
         if df.query("{} == 0".format(col))[col].count() > 0:
-            print("{} contains zero values")
+            print("{} contains zero values".format(col))
             if zero_handling == "add_constant":
                 df["{}_log".format(col)] = (df[col] + 1e-25).transform(np.log)
             elif zero_handling == "drop":
                 df = df.query("{} > 0".format(col))
                 df["{}_log".format(col)] = (df[col]).transform(np.log)
+            elif zero_handling == "error":
+                raise ValueError("zero values not allowed for this variable")
 
         elif df.query("{} < 0".format(col))[col].count() > 0:
             raise ValueError("{} contains negative values values")
