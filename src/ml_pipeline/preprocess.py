@@ -96,7 +96,7 @@ def log_transform(df, column_names, zero_handling="add_constant", drop_original=
     assert zero_handling in ["add_constant", "drop", "error"]
 
     for col in column_names:
-
+        # check if column contain 0 values
         if df.query("{} == 0".format(col))[col].count() > 0:
             print("{} contains zero values".format(col))
             if zero_handling == "add_constant":
@@ -107,9 +107,11 @@ def log_transform(df, column_names, zero_handling="add_constant", drop_original=
             elif zero_handling == "error":
                 raise ValueError("zero values not allowed for this variable")
 
+        # raise error if column contains negative values
         elif df.query("{} < 0".format(col))[col].count() > 0:
             raise ValueError("{} contains negative values values")
 
+        # only positive values
         else:
             print("{} contains positive values only".format(col))
             df["{}_log".format(col)] = (df[col]).transform(np.log)
@@ -121,6 +123,17 @@ def log_transform(df, column_names, zero_handling="add_constant", drop_original=
 
 
 def select_columns(df, predictors, predictand, add_grid_cell=True):
+    """select predictors and predictand of dataframe
+
+    Args:
+        df:
+        predictors (list):
+        predictand (str):
+        add_grid_cell (bool): if True, add column `grid_cell`. It is needed for splitting into train and test sets
+
+    Returns:
+
+    """
     sel = predictors + BASE_PREDICTORS
     sel.append(predictand)
     if add_grid_cell:
@@ -131,6 +144,16 @@ def select_columns(df, predictors, predictand, add_grid_cell=True):
 
 
 def run_preprocessing_steps(df, preproc_steps, predictand):
+    """returns preprocessed dataframe
+
+    Args:
+        df:
+        preproc_steps (dict):
+        predictand (str):
+
+    Returns:
+
+    """
     # outliers
     if preproc_steps["kickout_outliers"]:
         df = kickout_outliers(df, predictand)
@@ -152,6 +175,17 @@ def run_preprocessing_steps(df, preproc_steps, predictand):
 
 
 def split_train_test(df, predictand, random_state, test_size=0.2):
+    """
+
+    Args:
+        df:
+        predictand:
+        random_state:
+        test_size:
+
+    Returns:
+
+    """
     X = df.drop(predictand, 1)
     y = df[predictand]
 
@@ -167,6 +201,19 @@ def split_train_test(df, predictand, random_state, test_size=0.2):
 
 
 def create_dataset(df, filters, predictors, predictand, preproc_steps, random_state=123):
+    """runs all steps for creating train test sets from config dict
+
+    Args:
+        df:
+        filters:
+        predictors:
+        predictand:
+        preproc_steps:
+        random_state:
+
+    Returns:
+
+    """
     # filter dataset on conditions
     df = filter_df(df, filters)
     # select columns
