@@ -237,7 +237,7 @@ def split_train_val_test(df, predictand, random_state, train_size=0.8):
     return X_train, X_val, X_test, y_train, y_val, y_test
 
 
-def create_dataset(df, filters, predictors, predictand, preproc_steps, random_state=123):
+def create_dataset(df, filters, predictors, predictand, preproc_steps, random_state=123, validation_set=True):
     """runs all steps for creating train test sets from config dict
 
     Args:
@@ -247,6 +247,7 @@ def create_dataset(df, filters, predictors, predictand, preproc_steps, random_st
         predictand:
         preproc_steps:
         random_state:
+        validation_set (bool): If True, split also validation set
 
     Returns:
 
@@ -261,6 +262,12 @@ def create_dataset(df, filters, predictors, predictand, preproc_steps, random_st
     # split train / test data set
     if preproc_steps["y_log_trans"]:
         predictand = "{}_log".format(predictand)
-    X_train, X_test, y_train, y_test = split_train_test(df, predictand, random_state)
 
-    return X_train, X_test, y_train, y_test
+    if validation_set:
+        X_train, X_val, X_test, y_train, y_val, y_test = split_train_val_test(df, predictand, random_state)
+
+        return X_train, X_val, X_test, y_train, y_val, y_test
+    else:
+        X_train, X_test, y_train, y_test = split_train_test(df, predictand, random_state)
+
+        return X_train, X_test, y_train, y_test
