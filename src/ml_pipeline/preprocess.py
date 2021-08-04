@@ -175,7 +175,9 @@ def run_preprocessing_steps(df, preproc_steps, predictand):
 
 
 def split_train_test(df, predictand, random_state, test_size=0.2):
-    """
+    """splits between training and test set
+
+    rows of the same atmospheric column always belong to the same set
 
     Args:
         df:
@@ -198,6 +200,41 @@ def split_train_test(df, predictand, random_state, test_size=0.2):
     X_test.drop("grid_cell", inplace=True, axis=1)
 
     return X_train, X_test, y_train, y_test
+
+def split_train_val_test(df, predictand, random_state, train_size=0.8):
+    """splits between training, validation and test set
+
+    rows of the same atmospheric column always belong to the same set
+
+
+    Args:
+        df:
+        predictand:
+        random_state:
+        train_size:
+
+    Returns:
+
+    """
+    X = df.drop(predictand, 1)
+    y = df[predictand]
+
+    ### split train / test data
+    unique_gridcell = X["grid_cell"].unique()
+
+    # split between training and remaining data
+    train_cells, rem_cells = train_test_split(unique_gridcell, train_size=train_size, random_state=random_state)
+
+    # split between validate and test data for remaining cells
+    val_cells, test_cells = train_test_split(rem_cells, test_size=0.5, random_state=random_state)
+
+    X_train, X_val, X_test = X[X.grid_cell.isin(train_cells)], X[X.grid_cell.isin(val_cells)], X[X.grid_cell.isin(test_cells)]
+    y_train, y_val, y_test = y[y.index.isin(X_train.index)], y[y.index.isin(X_val.index)], y[y.index.isin(X_test.index)]
+    X_train.drop("grid_cell", inplace=True, axis=1)
+    X_val.drop("grid_cell", inplace=True, axis=1)
+    X_test.drop("grid_cell", inplace=True, axis=1)
+
+    return X_train, X_val, X_test, y_train, y_val, y_test
 
 
 def create_dataset(df, filters, predictors, predictand, preproc_steps, random_state=123):
