@@ -154,10 +154,6 @@ def run_preprocessing_steps(df, preproc_steps, predictand):
     Returns:
 
     """
-    # outliers
-    if preproc_steps["kickout_outliers"]:
-        df = kickout_outliers(df, predictand)
-
     # log transforms
     if preproc_steps["x_log_trans"]:
         x_log_vars = [var for var in df.columns if var in LOG_TRANS_VARS]
@@ -165,11 +161,16 @@ def run_preprocessing_steps(df, preproc_steps, predictand):
 
     if preproc_steps["y_log_trans"]:
         df = log_transform(df, [predictand], zero_handling="error")
+        predictand = "{}_log".format(predictand)
 
     # oh encoding
     if preproc_steps["oh_encoding"]:
         oh_vars = [var for var in df.columns if var in CAT_VARS]
         df = oh_encoding(df, oh_vars)
+
+    # outliers
+    if preproc_steps["kickout_outliers"]:
+        df = kickout_outliers(df, predictand)
 
     return df
 
