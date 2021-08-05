@@ -84,7 +84,7 @@ def run_experiment(df, xgboost_config, experiment_config, comet_project_name="ic
     return xg_reg, validate_df, experiment
 
 
-def get_experiment_assets(experiment_name, project_name="icnc_xgboost"):
+def get_experiment_assets(experiment_name, project_name="icnc-xgboost"):
     """returns config and model of experiment
 
     Args:
