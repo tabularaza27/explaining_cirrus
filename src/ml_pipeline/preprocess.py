@@ -170,7 +170,7 @@ def run_preprocessing_steps(df, preproc_steps, predictand):
 
     # outliers
     if preproc_steps["kickout_outliers"]:
-        df = kickout_outliers(df, predictand)
+        df = kickout_outliers(df, predictand, iqr_multiple=3)
 
     return df
 
