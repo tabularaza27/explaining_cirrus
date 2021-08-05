@@ -77,3 +77,5 @@ def run_experiment(df, xgboost_config, experiment_config, comet_project_name="ic
     experiment.log_asset_data(data=experiment_config, name="config")
 
     experiment.end()
+
+    return xg_reg, validate_df, experiment
