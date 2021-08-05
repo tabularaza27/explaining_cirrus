@@ -1,4 +1,6 @@
 import sys
+import json
+import tempfile
 import pandas as pd
 import numpy as np
 import xgboost as xgb
@@ -12,6 +14,7 @@ from ml_pipeline.preprocess import create_dataset
 
 COMET_API_KEY = "Rrwj142Sk080T0Qth3KNdPQg5"
 COMET_WORKSPACE = "tabularaza27"
+
 
 def create_tags(config):
     tags = []
@@ -79,3 +82,43 @@ def run_experiment(df, xgboost_config, experiment_config, comet_project_name="ic
     experiment.end()
 
     return xg_reg, validate_df, experiment
+
+
+def get_experiment_assets(experiment_name, project_name="icnc_xgboost"):
+    """returns config and model of experiment
+
+    Args:
+        experiment_name:
+        project_name:
+
+    Returns:
+        config (dict), ml_model
+    """
+    comet_api_endpoint = comet_ml.api.API(api_key=COMET_API_KEY)
+    experiment = comet_api_endpoint.get("{}/{}/{}".format(COMET_WORKSPACE, project_name, experiment_name))
+
+    # download model json from comet
+    experiment_assets = experiment.get_asset_list()
+
+    # get experiment config
+    asset_id = next((asset["assetId"] for asset in experiment_assets if asset["fileName"] == "config"), None)
+    experiment_config = experiment.get_asset(asset_id, return_type="json")
+
+    # get and load ml model
+    asset_id = next((asset["assetId"] for asset in experiment_assets if asset["type"] == "model-element"), None)
+    model_json = experiment.get_asset(asset_id, return_type="json")
+
+    # create temporary file for json
+    fo = tempfile.NamedTemporaryFile(suffix=".json")
+    fo.name
+
+    with open(fo.name, "w") as file:
+        json.dump(model_json, file)
+
+    # load model into xgboost
+    xg_reg = xgb.Booster()
+    xg_reg.load_model(fo.name)
+
+    fo.close()
+
+    return experiment_config, xg_reg
