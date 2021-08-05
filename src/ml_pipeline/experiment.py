@@ -23,7 +23,7 @@ def create_tags(config):
     return tags
 
 
-def evaluate_model(model, experiment, X_test, y_test):
+def evaluate_model(model, X_test, y_test, experiment=None):
     # evaluate
     preds = model.predict(X_test)
     validate_df = pd.DataFrame([preds, y_test], ["predictions", "ground_truth"]).T
@@ -31,17 +31,20 @@ def evaluate_model(model, experiment, X_test, y_test):
     # test performance
     rmse = np.sqrt(mean_squared_error(validate_df.predictions, validate_df.ground_truth))
     print("rmse", rmse)
-    experiment.log_metric("test_rmse", rmse)
 
     # correlation coefficient
     r = validate_df.corr().values[0][1]
     print("R", r)
-    experiment.log_metric("R", r)
 
     # r2 score
     r2 = r2_score(validate_df["ground_truth"], validate_df["predictions"])
     print("R2", r2)
-    experiment.log_metric("R2", r2)
+
+    # log to experiment if exists
+    if experiment:
+        experiment.log_metric("test_rmse", rmse)
+        experiment.log_metric("R", r)
+        experiment.log_metric("R2", r2)
 
     return validate_df
 
@@ -72,7 +75,7 @@ def run_experiment(df, xgboost_config, experiment_config, comet_project_name="ic
                eval_metric="rmse", early_stopping_rounds=10)
 
     # evaluate performance
-    validate_df = evaluate_model(xg_reg, experiment, X_test, y_test)
+    validate_df = evaluate_model(xg_reg, X_test, y_test, experiment)
 
     # save model to comet
     xg_reg.save_model("xgboost_model.json")
