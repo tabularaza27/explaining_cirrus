@@ -138,6 +138,11 @@ def load_experiment(experiment_name, project_name="icnc-xgboost"):
     return experiment
 
 
+def get_asset_id(experiment_asset_dict, asset_key, asset_value):
+    asset_id = next((asset["assetId"] for asset in experiment_asset_dict if asset[asset_key] == asset_value), None)
+    return asset_id
+
+
 def get_experiment_assets(experiment_name, project_name="icnc-xgboost"):
     """returns config and model of experiment
 
@@ -154,11 +159,11 @@ def get_experiment_assets(experiment_name, project_name="icnc-xgboost"):
     experiment_assets = experiment.get_asset_list()
 
     # get experiment config
-    asset_id = next((asset["assetId"] for asset in experiment_assets if asset["fileName"] == "config"), None)
+    asset_id = get_asset_id(experiment_assets, "fileName", "config")
     experiment_config = experiment.get_asset(asset_id, return_type="json")
 
     # get and load ml model
-    asset_id = next((asset["assetId"] for asset in experiment_assets if asset["type"] == "model-element"), None)
+    asset_id = get_asset_id(experiment_assets, "type", "model-element")
     model_json = experiment.get_asset(asset_id, return_type="json")
 
     # create temporary file for json
