@@ -60,13 +60,13 @@ def log_figures_to_experiment(validate_df, experiment):
     axes_lims = (validate_df["ground_truth"].min(), validate_df["ground_truth"].max())
     figures.append(
         validate_df.hvplot.hexbin(x="predictions", y="ground_truth", xlim=axes_lims, ylim=axes_lims, width=750,
-                                  height=500, title="test"))
+                                  height=500, title="ground_truth vs. predictions"))
 
     # distributions ground_truth vs. predictions
-    figures.append(validate_df.hvplot.hist(y=["ground_truth", "predictions"], bins=100, alpha=0.5))
+    figures.append(validate_df.hvplot.hist(y=["ground_truth", "predictions"], bins=100, alpha=0.5, title="ground_truth vs. predictions"))
 
     # distributions of prediction differences
-    figures.append(validate_df.hvplot.hist(y=["abs_diff", "diff"], bins=100, alpha=0.5))
+    figures.append(validate_df.hvplot.hist(y=["abs_diff", "diff"], bins=100, alpha=0.5,title="diff between ground truth and prediction"))
 
     for fig in figures:
         fo = tempfile.NamedTemporaryFile(suffix=".png")
