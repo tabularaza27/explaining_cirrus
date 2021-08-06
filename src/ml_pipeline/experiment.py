@@ -63,10 +63,12 @@ def log_figures_to_experiment(validate_df, experiment):
                                   height=500, title="ground_truth vs. predictions"))
 
     # distributions ground_truth vs. predictions
-    figures.append(validate_df.hvplot.hist(y=["ground_truth", "predictions"], bins=100, alpha=0.5, title="ground_truth vs. predictions"))
+    figures.append(validate_df.hvplot.hist(y=["ground_truth", "predictions"], bins=100, alpha=0.5,
+                                           title="ground_truth vs. predictions"))
 
     # distributions of prediction differences
-    figures.append(validate_df.hvplot.hist(y=["abs_diff", "diff"], bins=100, alpha=0.5,title="diff between ground truth and prediction"))
+    figures.append(validate_df.hvplot.hist(y=["abs_diff", "diff"], bins=100, alpha=0.5,
+                                           title="diff between ground truth and prediction"))
 
     for fig in figures:
         fo = tempfile.NamedTemporaryFile(suffix=".png")
@@ -120,6 +122,22 @@ def run_experiment(df, xgboost_config, experiment_config, comet_project_name="ic
     return xg_reg, validate_df, experiment
 
 
+def load_experiment(experiment_name, project_name="icnc-xgboost"):
+    """returns experiment object
+
+    Args:
+        experiment_name:
+        project_name:
+
+    Returns:
+
+    """
+    comet_api_endpoint = comet_ml.api.API(api_key=COMET_API_KEY)
+    experiment = comet_api_endpoint.get("{}/{}/{}".format(COMET_WORKSPACE, project_name, experiment_name))
+
+    return experiment
+
+
 def get_experiment_assets(experiment_name, project_name="icnc-xgboost"):
     """returns config and model of experiment
 
@@ -130,8 +148,7 @@ def get_experiment_assets(experiment_name, project_name="icnc-xgboost"):
     Returns:
         config (dict), ml_model
     """
-    comet_api_endpoint = comet_ml.api.API(api_key=COMET_API_KEY)
-    experiment = comet_api_endpoint.get("{}/{}/{}".format(COMET_WORKSPACE, project_name, experiment_name))
+    experiment = load_experiment(experiment_name, project_name)
 
     # download model json from comet
     experiment_assets = experiment.get_asset_list()
