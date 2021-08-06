@@ -7,6 +7,7 @@ import xgboost as xgb
 import comet_ml
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_squared_log_error, r2_score
+import holoviews as hv
 from pprint import pprint
 
 sys.path.append("/net/n2o/wolke/kjeggle/Repos/cirrus/src")
@@ -27,6 +28,9 @@ def evaluate_model(model, X_test, y_test, experiment=None):
     # evaluate
     preds = model.predict(X_test)
     validate_df = pd.DataFrame([preds, y_test], ["predictions", "ground_truth"]).T
+    validate_df["abs_diff"] = np.abs(validate_df.predictions - validate_df.ground_truth)
+    validate_df["diff"] = validate_df.predictions - validate_df.ground_truth
+    validate_df["diff_round"] = np.round(validate_df["diff"], 0)
 
     # test performance
     rmse = np.sqrt(mean_squared_error(validate_df.predictions, validate_df.ground_truth))
@@ -49,7 +53,29 @@ def evaluate_model(model, X_test, y_test, experiment=None):
     return validate_df
 
 
-def run_experiment(df, xgboost_config, experiment_config, comet_project_name="icnc-xgboost"):
+def log_figures_to_experiment(validate_df, experiment):
+    figures = []
+
+    # hex plot ground_truth vs. predictions
+    axes_lims = (validate_df["ground_truth"].min(), validate_df["ground_truth"].max())
+    figures.append(
+        validate_df.hvplot.hexbin(x="predictions", y="ground_truth", xlim=axes_lims, ylim=axes_lims, width=750,
+                                  height=500))
+
+    # distributions ground_truth vs. predictions
+    figures.append(validate_df.hvplot.hist(y=["ground_truth", "predictions"], bins=100, alpha=0.5))
+
+    # distributions of prediction differences
+    figures.append(validate_df.hvplot.hist(y=["abs_diff", "diff"], bins=100, alpha=0.5))
+
+    for fig in figures:
+        fo = tempfile.NamedTemporaryFile(suffix=".png")
+        hv.save(fig, fo.name, fmt="png")
+        experiment.log_image(fo.name)
+        fo.close()
+
+
+def run_experiment(df, xgboost_config, experiment_config, comet_project_name="icnc-xgboost", log_figures=True):
     tags = create_tags(experiment_config)
     pprint(experiment_config)
 
@@ -81,6 +107,9 @@ def run_experiment(df, xgboost_config, experiment_config, comet_project_name="ic
     xg_reg.save_model("xgboost_model.json")
     experiment.log_model("XGBoost Model", "xgboost_model.json")
     experiment.log_asset_data(data=experiment_config, name="config")
+
+    if log_figures:
+        log_figures_to_experiment(validate_df, experiment)
 
     experiment.end()
 
