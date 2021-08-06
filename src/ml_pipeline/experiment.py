@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import xgboost as xgb
 import comet_ml
+import shap
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_squared_log_error, r2_score
 import holoviews as hv
@@ -12,6 +13,7 @@ from pprint import pprint
 
 sys.path.append("/net/n2o/wolke/kjeggle/Repos/cirrus/src")
 from ml_pipeline.preprocess import create_dataset
+from preprocess.helpers.constants import TEMP_THRES
 
 COMET_API_KEY = "Rrwj142Sk080T0Qth3KNdPQg5"
 COMET_WORKSPACE = "tabularaza27"
@@ -180,3 +182,43 @@ def get_experiment_assets(experiment_name, project_name="icnc-xgboost"):
     fo.close()
 
     return experiment_config, xg_reg
+
+
+def calculate_and_log_shap_values(experiment_name, project_name, log=True, interaction_values=False):
+    """return explainer object and shap values
+
+    Args:
+        experiment_name:
+        project_name:
+        log:
+        interaction_values:
+
+    Returns:
+
+    """
+    experiment_config, xg_reg = get_experiment_assets(experiment_name, project_name)
+    experiment = load_experiment(experiment_name, project_name)
+
+    # load and create dataset
+    df = pd.read_pickle("df_pre_filtering.pickle")
+    # Drop NaN
+    df = df.dropna()
+    # Filter for Temperature
+    df = df.query("ta <= {}".format(TEMP_THRES))
+    X_train, X_val, X_test, y_train, y_val, y_test = create_dataset(df, **experiment_config)
+
+    # calculate shap_values
+    explainer = shap.TreeExplainer(xg_reg)
+    shap_values = explainer.shap_values(X_test)  # , check_additivity=False)
+
+    if log:
+        # log shap values to experiment
+        fo = tempfile.NamedTemporaryFile(suffix=".npy")
+
+        with open(fo.name, "wb") as f:
+            np.save(f, shap_values)
+
+        experiment.log_asset(fo.name, ftype="shap_values")
+        fo.close()
+
+    return explainer, shap_values
