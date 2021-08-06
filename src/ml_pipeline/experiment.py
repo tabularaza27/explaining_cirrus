@@ -60,7 +60,7 @@ def log_figures_to_experiment(validate_df, experiment):
     axes_lims = (validate_df["ground_truth"].min(), validate_df["ground_truth"].max())
     figures.append(
         validate_df.hvplot.hexbin(x="predictions", y="ground_truth", xlim=axes_lims, ylim=axes_lims, width=750,
-                                  height=500))
+                                  height=500, title="test"))
 
     # distributions ground_truth vs. predictions
     figures.append(validate_df.hvplot.hist(y=["ground_truth", "predictions"], bins=100, alpha=0.5))
@@ -108,8 +108,12 @@ def run_experiment(df, xgboost_config, experiment_config, comet_project_name="ic
     experiment.log_model("XGBoost Model", "xgboost_model.json")
     experiment.log_asset_data(data=experiment_config, name="config")
 
+    print(type(experiment))
+
     if log_figures:
         log_figures_to_experiment(validate_df, experiment)
+
+    print(type(experiment))
 
     experiment.end()
 
