@@ -1,12 +1,10 @@
 import pandas as pd
 import sys
 
-from pprint import pprint
-
 sys.path.append("/net/n2o/wolke/kjeggle/Repos/cirrus/src")
-
 from ml_pipeline.experiment import run_experiment
-from preprocess.helpers.constants import TEMP_THRES
+# from preprocess.helpers.constants import TEMP_THRES
+TEMP_THRES = 235.15
 
 experiment_configs = [
 #     {"filters": ["clm == 1","lat_region=='lat_50'"],
