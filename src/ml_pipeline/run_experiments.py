@@ -3,8 +3,7 @@ import sys
 
 sys.path.append("/net/n2o/wolke/kjeggle/Repos/cirrus/src")
 from ml_pipeline.experiment import run_experiment
-# from preprocess.helpers.constants import TEMP_THRES
-TEMP_THRES = 235.15
+from preprocess.helpers.constants import TEMP_THRES
 
 experiment_configs = [
 #     {"filters": ["clm == 1","lat_region=='lat_50'"],

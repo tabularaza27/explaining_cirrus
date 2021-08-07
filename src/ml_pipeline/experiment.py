@@ -12,7 +12,7 @@ import holoviews as hv
 from pprint import pprint
 
 sys.path.append("/net/n2o/wolke/kjeggle/Repos/cirrus/src")
-from ml_pipeline.preprocess import create_dataset
+from ml_pipeline.ml_preprocess import create_dataset
 from preprocess.helpers.constants import TEMP_THRES
 
 COMET_API_KEY = "Rrwj142Sk080T0Qth3KNdPQg5"
