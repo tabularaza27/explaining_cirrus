@@ -1,5 +1,5 @@
 import pandas as pd
-import import sys
+import sys
 
 from pprint import pprint
 
