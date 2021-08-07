@@ -325,9 +325,8 @@ xgboost_config = {"objective":"reg:squarederror",'subsample': 0.4,"colsample_byt
           'max_depth': 15, 'alpha': 38,'lambda': 7,'n_estimators':500,"n_jobs":50}
 
 def load_dataframe():
-    df = pd.read_pickle("df_pre_filtering.pickle")
+    df = pd.read_pickle("/net/n2o/wolke/kjeggle/Notebooks/DataCube/df_pre_filtering.pickledf_pre_filtering.pickle")
     ### Drop NaN
-    df = df.dropna()
     ### Filter for Temperature
     df = df.query("ta <= {}".format(TEMP_THRES))
 
