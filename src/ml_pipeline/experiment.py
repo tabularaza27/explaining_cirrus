@@ -3,6 +3,7 @@ import json
 import tempfile
 import comet_ml
 import pandas as pd
+import hvplot.pandas  # noqa
 import numpy as np
 import xgboost as xgb
 import shap
