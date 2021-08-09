@@ -252,17 +252,17 @@ experiment_configs = [
 #              "oh_encoding": True
 #         }
 #     },
-    {
-    "filters": ["clm == 1"],
-    "predictors": ["DU",'nightday_flag','land_water_mask','instrument_flag',"clm_v2",'cloud_thickness'],
-    "predictand": "icnc_100um",
-    "preproc_steps": {
-         "x_log_trans": True,
-         "y_log_trans": False,
-         "kickout_outliers": True,
-         "oh_encoding": True
-    }
-    },
+#     {
+#     "filters": ["clm == 1"],
+#     "predictors": ["DU",'nightday_flag','land_water_mask','instrument_flag',"clm_v2",'cloud_thickness'],
+#     "predictand": "icnc_100um",
+#     "preproc_steps": {
+#          "x_log_trans": True,
+#          "y_log_trans": False,
+#          "kickout_outliers": True,
+#          "oh_encoding": True
+#     }
+#     },
     {
     "filters": ["clm == 1"],
     "predictors": ["DU",'nightday_flag','land_water_mask','instrument_flag',"clm_v2",'cloud_thickness'],
@@ -321,7 +321,7 @@ experiment_configs = [
 ]
 
 xgboost_config = {"objective":"reg:squarederror",'subsample': 0.4,"colsample_bytree": 0.8,'learning_rate': 0.02,
-          'max_depth': 15, 'alpha': 38,'lambda': 7,'n_estimators':500,"n_jobs":50}
+          'max_depth': 15, 'alpha': 38,'lambda': 7,'n_estimators':5,"n_jobs":40}
 
 def load_dataframe():
     df = pd.read_pickle("/net/n2o/wolke/kjeggle/Notebooks/DataCube/df_pre_filtering.pickle")
