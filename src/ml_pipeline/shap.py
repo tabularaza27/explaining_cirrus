@@ -72,11 +72,15 @@ def calculate_and_log_shap_values(experiment_name, project_name, sample_size=Non
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--exp_names", nargs="+", required=True)
-    parser.add_argument("--n", type=int, default=None)
+    parser.add_argument("--n", type=int, default=None, help="specifies # of rows to be selected for shap value calc")
 
-    arguments = parser.parse_args()
-    experiment_names = arguments.exp_names
-    sample_size = arguments.n
+    try:
+        arguments = parser.parse_args()
+        experiment_names = arguments.exp_names
+        sample_size = arguments.n
+    except BaseException as exc:
+        print("correct usage: python src/ml_pipeline/shap.py --exp_names test1 test2 --n 1000")
+        raise
 
     for experiment_name in experiment_names:
         print(experiment_name)
