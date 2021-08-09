@@ -53,7 +53,7 @@ def calculate_and_log_shap_values(experiment_name, project_name, sample_size=Non
         with open(fo.name, "wb") as f:
             np.save(f, shap_values)
 
-        experiment.log_asset(fo.name, ftype="shap_values")
+        experiment.log_asset(fo.name, ftype="shap_values", overwrite=True)
         fo.close()
 
         # log indices of predictions for which shap values were calculated
@@ -64,7 +64,7 @@ def calculate_and_log_shap_values(experiment_name, project_name, sample_size=Non
             shap_idx = np.array(X_test.index)
             np.save(f, shap_idx)
 
-        experiment.log_asset(fo.name, ftype="shap_idx")
+        experiment.log_asset(fo.name, ftype="shap_idx", overwrite=True)
         fo.close()
         print("saved shap indices")
 
