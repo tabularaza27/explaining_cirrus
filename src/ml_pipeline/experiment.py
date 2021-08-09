@@ -110,12 +110,8 @@ def run_experiment(df, xgboost_config, experiment_config, comet_project_name="ic
     experiment.log_model("XGBoost Model", "xgboost_model.json")
     experiment.log_asset_data(data=experiment_config, name="config")
 
-    print(type(experiment))
-
     if log_figures:
         log_figures_to_experiment(validate_df, experiment)
-
-    print(type(experiment))
 
     experiment.end()
 
