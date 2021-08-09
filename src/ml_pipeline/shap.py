@@ -1,5 +1,6 @@
 import tempfile
 import sys
+import argparse
 
 import shap
 import numpy as np
@@ -69,13 +70,14 @@ def calculate_and_log_shap_values(experiment_name, project_name, sample_size=Non
     return explainer, shap_values, shap_idx
 
 if __name__ == "__main__":
-    if len(sys.argv) == 2:
-        experiment_names = list(sys.argv[1].split(','))
-    if len(sys.argv) == 3:
-        experiment_names = list(sys.argv[1].split(','))
-        sample_size = int(sys.argv[2])
-        for experiment_name in experiment_names:
-            print(experiment_name)
-        print(sample_size)
-    else:
-        raise ValueError("Provide valid arguments. E.g.: shap.py ['experiment_name','experiment_name'] <sample_size>")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--exp_names", type=list, nargs="+", required=True)
+    parser.add_argument("--n", type=int, default=None)
+
+    arguments = parser.parse_args()
+    experiment_names = arguments.exp_names
+    sample_size = arguments.n
+
+    for experiment_name in experiment_names:
+        print(experiment_name)
+    print(sample_size)
