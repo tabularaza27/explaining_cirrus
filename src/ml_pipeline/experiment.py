@@ -202,7 +202,7 @@ def calculate_and_log_shap_values(experiment_name, project_name, sample_size=Non
     experiment = load_experiment(experiment_name, project_name)
 
     # load and create dataset
-    df = pd.read_pickle("df_pre_filtering.pickle")
+    df = pd.read_pickle("/net/n2o/wolke/kjeggle/Notebooks/DataCube/df_pre_filtering.pickle")
     # Drop NaN
     df = df.dropna()
     # Filter for Temperature
