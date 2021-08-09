@@ -71,7 +71,7 @@ def calculate_and_log_shap_values(experiment_name, project_name, sample_size=Non
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--exp_names", type=list, nargs="+", required=True)
+    parser.add_argument("--exp_names", nargs="+", required=True)
     parser.add_argument("--n", type=int, default=None)
 
     arguments = parser.parse_args()
