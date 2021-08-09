@@ -6,15 +6,11 @@ import pandas as pd
 import hvplot.pandas  # noqa
 import numpy as np
 import xgboost as xgb
-import shap
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, mean_squared_log_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score
 import holoviews as hv
 from pprint import pprint
 
-sys.path.append("/net/n2o/wolke/kjeggle/Repos/cirrus/src")
-from ml_pipeline.ml_preprocess import create_dataset
-from preprocess.helpers.constants import TEMP_THRES
+from src.ml_pipeline.ml_preprocess import create_dataset
 
 COMET_API_KEY = "Rrwj142Sk080T0Qth3KNdPQg5"
 COMET_WORKSPACE = "tabularaza27"
@@ -185,60 +181,3 @@ def get_experiment_assets(experiment_name, project_name="icnc-xgboost"):
     return experiment_config, xg_reg
 
 
-def calculate_and_log_shap_values(experiment_name, project_name, sample_size=None, log=True, interaction_values=False, check_additivity=True):
-    """return explainer object and shap values and index of predictions
-
-    Args:
-        experiment_name:
-        project_name:
-        sample_size (int|None): specifies how many rows are randomly selected to calculate shap values for
-        log (bool): If True, log to comet
-        interaction_values:
-
-    Returns:
-
-    """
-    experiment_config, xg_reg = get_experiment_assets(experiment_name, project_name)
-    experiment = load_experiment(experiment_name, project_name)
-
-    # load and create dataset
-    df = pd.read_pickle("/net/n2o/wolke/kjeggle/Notebooks/DataCube/df_pre_filtering.pickle")
-    # Drop NaN
-    df = df.dropna()
-    # Filter for Temperature
-    df = df.query("ta <= {}".format(TEMP_THRES))
-    X_train, X_val, X_test, y_train, y_val, y_test = create_dataset(df, **experiment_config)
-
-    if sample_size:
-        X_test = X_test.sample(n=sample_size, axis="index", random_state=123).sort_index()
-        print("Training set after sampling: {} Datapoints".format(X_test.t.count()))
-
-    # calculate shap_values
-    explainer = shap.TreeExplainer(xg_reg)
-    print("created explainer")
-    shap_values = explainer.shap_values(X_test, check_additivity=check_additivity)
-    print("calculated shap values")
-
-    if log:
-        # log shap values to experiment
-        fo = tempfile.NamedTemporaryFile(suffix=".npy")
-
-        with open(fo.name, "wb") as f:
-            np.save(f, shap_values)
-
-        experiment.log_asset(fo.name, ftype="shap_values")
-        fo.close()
-
-        # log indices of predictions for which shap values were calculated
-        fo = tempfile.NamedTemporaryFile(suffix=".npy")
-        print("saved shap values")
-
-        with open(fo.name, "wb") as f:
-            shap_idx = np.array(X_test.index)
-            np.save(f, shap_idx)
-
-        experiment.log_asset(fo.name, ftype="shap_idx")
-        fo.close()
-        print("saved shap indices")
-
-    return explainer, shap_values, shap_idx
