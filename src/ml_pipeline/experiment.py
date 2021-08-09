@@ -215,7 +215,9 @@ def calculate_and_log_shap_values(experiment_name, project_name, sample_size=Non
 
     # calculate shap_values
     explainer = shap.TreeExplainer(xg_reg)
+    print("created explainer")
     shap_values = explainer.shap_values(X_test, check_additivity=check_additivity)
+    print("calculated shap values")
 
     if log:
         # log shap values to experiment
@@ -229,6 +231,7 @@ def calculate_and_log_shap_values(experiment_name, project_name, sample_size=Non
 
         # log indices of predictions for which shap values were calculated
         fo = tempfile.NamedTemporaryFile(suffix=".npy")
+        print("saved shap values")
 
         with open(fo.name, "wb") as f:
             shap_idx = np.array(X_test.index)
@@ -236,5 +239,6 @@ def calculate_and_log_shap_values(experiment_name, project_name, sample_size=Non
 
         experiment.log_asset(fo.name, ftype="shap_idx")
         fo.close()
+        print("saved shap indices")
 
     return explainer, shap_values, shap_idx
