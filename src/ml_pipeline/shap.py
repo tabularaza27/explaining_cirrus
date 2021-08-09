@@ -11,7 +11,8 @@ from src.ml_pipeline.experiment import get_experiment_assets, load_experiment
 from src.ml_pipeline.ml_preprocess import create_dataset
 
 
-def calculate_and_log_shap_values(experiment_name, project_name, sample_size=None, log=True, interaction_values=False, check_additivity=True):
+def calculate_and_log_shap_values(experiment_name, project_name, sample_size=None, log=True, interaction_values=False,
+                                  check_additivity=True):
     """return explainer object and shap values and index of predictions
 
     Args:
@@ -69,19 +70,25 @@ def calculate_and_log_shap_values(experiment_name, project_name, sample_size=Non
 
     return explainer, shap_values, shap_idx
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--exp_names", nargs="+", required=True)
     parser.add_argument("--n", type=int, default=None, help="specifies # of rows to be selected for shap value calc")
+    parser.add_argument("--project_name", type=str, default="icnc-xgboost")
 
     try:
         arguments = parser.parse_args()
         experiment_names = arguments.exp_names
+        project_name = arguments.project_name
         sample_size = arguments.n
     except BaseException as exc:
-        print("correct usage: python src/ml_pipeline/shap.py --exp_names test1 test2 --n 1000")
+        print("correct usage: python src/ml_pipeline/shap.py --exp_names name1 name2 --n 1000")
         raise
 
     for experiment_name in experiment_names:
-        print(experiment_name)
-    print(sample_size)
+        explainer, shap_values, shap_idx = calculate_and_log_shap_values(experiment_name,
+                                                                         project_name,
+                                                                         sample_size=sample_size,
+                                                                         log=True,
+                                                                         interaction_values=False)
