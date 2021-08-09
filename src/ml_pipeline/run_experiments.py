@@ -264,39 +264,39 @@ experiment_configs = [
     #          "oh_encoding": True
     #     }
     #     },
-    {
-        "filters": ["clm == 1"],
-        "predictors": ["DU", 'nightday_flag', 'land_water_mask', 'instrument_flag', "clm_v2", 'cloud_thickness'],
-        "predictand": "reffcli",
-        "preproc_steps": {
-            "x_log_trans": True,
-            "y_log_trans": False,
-            "kickout_outliers": True,
-            "oh_encoding": True
-        }
-    },
-    {
-        "filters": ["clm == 1", "rh_ice >= 65"],
-        "predictors": ["DU", 'nightday_flag', 'land_water_mask', 'instrument_flag', 'clm_v2', 'cloud_thickness'],
-        "predictand": "icnc_5um",
-        "preproc_steps": {
-            "x_log_trans": True,
-            "y_log_trans": True,
-            "kickout_outliers": True,
-            "oh_encoding": True
-        }
-    },
-    {
-        "filters": ["clm == 1", "t <= 223.15"],
-        "predictors": ["DU", 'nightday_flag', 'land_water_mask', 'instrument_flag', 'clm_v2', 'cloud_thickness'],
-        "predictand": "icnc_5um",
-        "preproc_steps": {
-            "x_log_trans": True,
-            "y_log_trans": True,
-            "kickout_outliers": True,
-            "oh_encoding": True
-        }
-    },
+    # {
+    #     "filters": ["clm == 1"],
+    #     "predictors": ["DU", 'nightday_flag', 'land_water_mask', 'instrument_flag', "clm_v2", 'cloud_thickness'],
+    #     "predictand": "reffcli",
+    #     "preproc_steps": {
+    #         "x_log_trans": True,
+    #         "y_log_trans": False,
+    #         "kickout_outliers": True,
+    #         "oh_encoding": True
+    #     }
+    # },
+    # {
+    #     "filters": ["clm == 1", "rh_ice >= 65"],
+    #     "predictors": ["DU", 'nightday_flag', 'land_water_mask', 'instrument_flag', 'clm_v2', 'cloud_thickness'],
+    #     "predictand": "icnc_5um",
+    #     "preproc_steps": {
+    #         "x_log_trans": True,
+    #         "y_log_trans": True,
+    #         "kickout_outliers": True,
+    #         "oh_encoding": True
+    #     }
+    # },
+    # {
+    #     "filters": ["clm == 1", "t <= 223.15"],
+    #     "predictors": ["DU", 'nightday_flag', 'land_water_mask', 'instrument_flag', 'clm_v2', 'cloud_thickness'],
+    #     "predictand": "icnc_5um",
+    #     "preproc_steps": {
+    #         "x_log_trans": True,
+    #         "y_log_trans": True,
+    #         "kickout_outliers": True,
+    #         "oh_encoding": True
+    #     }
+    # },
     {
         "filters": ["clm == 1", "t <= 223.15", "clm_v2 != 0"],
         "predictors": ["DU", 'nightday_flag', 'land_water_mask', 'instrument_flag', 'clm_v2', 'cloud_thickness'],
