@@ -185,13 +185,14 @@ def get_experiment_assets(experiment_name, project_name="icnc-xgboost"):
     return experiment_config, xg_reg
 
 
-def calculate_and_log_shap_values(experiment_name, project_name, log=True, interaction_values=False):
+def calculate_and_log_shap_values(experiment_name, project_name, sample_size=None, log=True, interaction_values=False, check_additivity=True):
     """return explainer object and shap values
 
     Args:
         experiment_name:
         project_name:
-        log:
+        sample_size (int|None): specifies how many rows are randomly selected to calculate shap values for
+        log (bool): If True, log to comet
         interaction_values:
 
     Returns:
@@ -208,9 +209,13 @@ def calculate_and_log_shap_values(experiment_name, project_name, log=True, inter
     df = df.query("ta <= {}".format(TEMP_THRES))
     X_train, X_val, X_test, y_train, y_val, y_test = create_dataset(df, **experiment_config)
 
+    if sample_size:
+        X_test = X_test.sample(n=sample_size, axis="index").sort_index()
+        print("Training set after sampling: {} Datapoints".format(X_test.t.count()))
+
     # calculate shap_values
     explainer = shap.TreeExplainer(xg_reg)
-    shap_values = explainer.shap_values(X_test)  # , check_additivity=False)
+    shap_values = explainer.shap_values(X_test, check_additivity=check_additivity)
 
     if log:
         # log shap values to experiment
