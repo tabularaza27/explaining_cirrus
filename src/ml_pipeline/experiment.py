@@ -186,7 +186,7 @@ def get_experiment_assets(experiment_name, project_name="icnc-xgboost"):
 
 
 def calculate_and_log_shap_values(experiment_name, project_name, sample_size=None, log=True, interaction_values=False, check_additivity=True):
-    """return explainer object and shap values
+    """return explainer object and shap values and index of predictions
 
     Args:
         experiment_name:
@@ -227,4 +227,14 @@ def calculate_and_log_shap_values(experiment_name, project_name, sample_size=Non
         experiment.log_asset(fo.name, ftype="shap_values")
         fo.close()
 
-    return explainer, shap_values
+        # log indices of predictions for which shap values were calculated
+        fo = tempfile.NamedTemporaryFile(suffix=".npy")
+
+        with open(fo.name, "wb") as f:
+            shap_idx = np.array(X_test.index)
+            np.save(f, shap_idx)
+
+        experiment.log_asset(fo.name, ftype="shap_idx")
+        fo.close()
+
+    return explainer, shap_values, shap_idx
