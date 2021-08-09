@@ -9,8 +9,9 @@ import xgboost as xgb
 from sklearn.metrics import mean_squared_error, r2_score
 import holoviews as hv
 from pprint import pprint
-
 from src.ml_pipeline.ml_preprocess import create_dataset
+
+hv.extension('bokeh')
 
 COMET_API_KEY = "Rrwj142Sk080T0Qth3KNdPQg5"
 COMET_WORKSPACE = "tabularaza27"
