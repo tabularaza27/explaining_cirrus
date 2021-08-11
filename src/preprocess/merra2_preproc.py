@@ -9,13 +9,23 @@ Steps:
 5. Resample to hourly grid (optional)
 """
 import os
+import datetime
+import glob
+import multiprocessing as mp
+
 import xarray as xr
 import xgcm
 import numpy as np
 import pandas as pd
 
-from helpers.common_helpers import check_for_nans
-from helpers.constants import R, g
+from src.preprocess.helpers.common_helpers import check_for_nans
+from src.preprocess.helpers.io_helpers import exists, save_file
+from src.preprocess.helpers.constants import R, g
+
+# Directories
+SOURCE_DIR = "/net/n2o/wolke_scratch/kjeggle/MERRA2/preproc"
+REGRID_DIR = "/net/n2o/wolke_scratch/kjeggle/MERRA2/regrid"
+FILESTUMPY = "merra2_regrid"
 
 # pressure at top of atmosphere is fixed constant 0.01 hPa = 1 Pa
 PTOP = 1
@@ -35,7 +45,6 @@ def load_ds(date):
     Args:
         date (numpy.datetime64):
     """
-    sourcepath = "/net/n2o/wolke_scratch/kjeggle/MERRA2/preproc"
     next_day = date + np.timedelta64(1, "D")
 
     date_str = "%Y%m%d"
@@ -43,8 +52,8 @@ def load_ds(date):
         date_str)  # convert to pandas datetime first to be able to use strftime
     next_day_str = pd.to_datetime(str(next_day)).strftime(date_str)
 
-    day_ds = xr.open_dataset(os.path.join(sourcepath, "all_merra2_date_{}.nc".format(day_str)))
-    next_day_ds = xr.open_dataset(os.path.join(sourcepath, "all_merra2_date_{}.nc".format(next_day_str)))
+    day_ds = xr.open_dataset(os.path.join(SOURCE_DIR, "all_merra2_date_{}.nc".format(day_str)))
+    next_day_ds = xr.open_dataset(os.path.join(SOURCE_DIR, "all_merra2_date_{}.nc".format(next_day_str)))
 
     ds = xr.concat([day_ds, next_day_ds.isel(time=0)], dim="time")
 
@@ -52,6 +61,7 @@ def load_ds(date):
         ds.dims["time"])
 
     return ds
+
 
 def calc_plevs(ds):
     """Calculate pressure levels of layer edges using PTOP=1 Pa + DELP (pressure thickness) as described in 4.2 of Merra Spec Files."""
@@ -91,7 +101,7 @@ def calc_hlevs(ds):
     ds["delta_z"] = delta_z
 
     # add geometric height at surface (geopotential / gravitational acceleration)
-    surface_geometric_height = np.expand_dims(ds.PHIS.values,1) / g
+    surface_geometric_height = np.expand_dims(ds.PHIS.values, 1) / g
     delta_z = np.append(arr=delta_z, values=surface_geometric_height, axis=1)
 
     # calculate heights on top of levels
@@ -249,3 +259,56 @@ def run_preprocess_pipeline(date):
     final_ds = final_ds[VARIABLES + ["PHIS", "PS"]]
 
     return final_ds
+
+
+def run_and_save(date):
+    """run preprocessing pipeline for given day and save regridded file to disk
+
+    Args:
+        date (datetime.datetime):
+
+    Returns:
+
+    """
+    np_date = np.datetime64(date)
+
+    print("start regridding for {}".format(date))
+    merra_regridded = run_preprocess_pipeline(np_date)
+
+    save_file(REGRID_DIR, FILESTUMPY, merra_regridded, date, complevel=4)
+    print("save file: {}".format(date))
+
+
+def run_parallel(n_workers=4, year=None):
+    """run regridding process in parallel year or whole directory
+
+        Args:
+            n_workers:
+            year (int): if none run for all available merra2 files
+
+        Returns:
+    """
+    pool = mp.Pool(n_workers)
+
+    if year:
+        print("run regridding for {}".format(year))
+        files = glob.glob("{}/*{}*.nc".format(SOURCE_DIR, year))
+    else:
+        print("run regridding for all available merra data")
+        files = glob.glob("{}/*.nc".format(SOURCE_DIR))
+
+    print("{} files found".format(len(files)))
+
+    for file in files:
+        # extract date string from file
+        date_str = file.split("all_merra2_date_")[-1].split(".")[0]
+        date = datetime.datetime.strptime(date_str, "%Y%m%d")
+
+        # check if file already exists
+        if exists(date, FILESTUMPY, REGRID_DIR):
+            print("File already exists for: {}".format(date))
+            continue
+        pool.apply_async(run_and_save, args=(date,))
+
+    pool.close()
+    pool.join()
