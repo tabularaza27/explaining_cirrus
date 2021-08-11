@@ -9,6 +9,7 @@ Steps:
 5. Resample to hourly grid (optional)
 """
 import os
+import sys
 import datetime
 import glob
 import multiprocessing as mp
@@ -312,3 +313,13 @@ def run_parallel(n_workers=4, year=None):
 
     pool.close()
     pool.join()
+
+if __name__ == "__main__":
+    if len(sys.argv) == 3:
+        run_parallel(n_workers=int(sys.argv[1]),year=int(sys.argv[2]))
+    if len(sys.argv) == 2:
+        run_parallel(n_workers=int(sys.argv[1]))
+    elif len(sys.argv) == 1:
+        run_parallel()
+    else:
+        raise ValueError("Provide valid arguments. E.g.: python merra2_preproc.py <#workers> or python merge.py <#workers> <year>")
