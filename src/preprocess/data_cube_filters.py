@@ -36,8 +36,8 @@ VAR_PROPERTIES = {
 }
 
 SOURCE_DIR = "/net/n2o/wolke_scratch/kjeggle/DATA_CUBE/pre_proc"
-DF_FINAL_DIR = "/net/n2o/wolke_scratch/kjeggle/DATA_CUBE/dataframes"  # 2d data frame with all ice cloud ovservations
-FILTERED_DF_FINAL_DIR = "/net/n2o/wolke_scratch/kjeggle/DATA_CUBE/filtered_cube"  # contains only entries with data mask true
+DF_DIR = "/net/n2o/wolke_scratch/kjeggle/DATA_CUBE/dataframes"  # 2d data frame with all ice cloud ovservations
+FILTERED_CUBE_DIR = "/net/n2o/wolke_scratch/kjeggle/DATA_CUBE/filtered_cube"  # contains only entries with data mask true
 
 
 def get_load_variables():
@@ -57,12 +57,16 @@ def get_month_files(year, month):
     return files
 
 
-def filter_and_save_months(year, months):
-    """create data frame and data_only dataset for given year and months
+def filter_and_save_months(year, months, filter_type):
+    """create data frame and filtered dataset for given year and months. Filters data based on observation_mask or data_mask.
+
+    observation_mask: True, where we have dardar retrievals
+    data_mask: True, where we have iwc > 0
 
     Args:
         year (int):
         months (list[int]): e.g. [1,2,3]
+        filter_type (str): one of the following ['data','observations']
 
     Returns:
 
@@ -70,8 +74,18 @@ def filter_and_save_months(year, months):
     print("start processing: ", year, str(months))
 
     initial_month_str = str(months[0]).zfill(2)
-    df_filename = "{}/ice_in_cloud_df_{}_{}.pickle".format(DF_FINAL_DIR, year, initial_month_str)
-    data_only_filename = "{}/data_only_{}_{}.pickle".format(FILTERED_DF_FINAL_DIR, year, initial_month_str)
+
+    if filter_type == "data":
+        df_filename = "{}/ice_in_cloud_df_{}_{}.pickle".format(DF_DIR, year, initial_month_str)
+        filtered_cube_filename = "{}/data_only_{}_{}.pickle".format(FILTERED_CUBE_DIR, year, initial_month_str)
+        mask_var = "data_mask"
+    elif filter_type == "observations":
+        df_filename = "{}/observations_df_{}_{}.pickle".format(DF_DIR, year, initial_month_str)
+        filtered_cube_filename = "{}/observations_{}_{}.pickle".format(FILTERED_CUBE_DIR, year, initial_month_str)
+        mask_var = "observation_mask"
+    else:
+        raise ValueError(
+            "filter_type needs to be one of the following ['data','observations'], was {}".format(filter_type))
 
     # check if file already exists
     if len(glob.glob(df_filename)) > 0:
@@ -106,15 +120,15 @@ def filter_and_save_months(year, months):
     ds_stack = ds.stack(mul=["time", "lat", "lon"])
 
     # filter for days with data
-    data_only = ds_stack.where(ds_stack.data_mask == True, drop=True)
+    filtered_cube = ds_stack.where(ds_stack[mask_var] == True, drop=True)
 
-    data_only = data_only.compute()
+    filtered_cube = filtered_cube.compute()
     print("computed")
 
     # filter for ice cloud
 
     # create dataframe
-    df = data_only.to_dataframe()
+    df = filtered_cube.to_dataframe()
     # reset multiindex, i.e. flatten data
     df = df.reset_index()
 
@@ -125,21 +139,23 @@ def filter_and_save_months(year, months):
     drop = ["lev_2", "observation_mask", "data_mask", "observation_vicinity_mask", "timestep_observation_mask"]
     df.drop(columns=drop, inplace=True)
 
-    # filter data frame for cloud masks v1 and v2
-    df = df[(df.clm_v2.isin(ICE_CLOUD_MASKS)) | (df.clm == 1)]
+    if filter_type == "data":
+        # filter data frame for cloud masks v1 and v2
+        df = df[(df.clm_v2.isin(ICE_CLOUD_MASKS)) | (df.clm == 1)]
 
     # write dataframe and data only ds to pickle
     df.to_pickle(df_filename)
 
-    with open(data_only_filename, 'wb') as handle:
-        pickle.dump(data_only, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    with open(filtered_cube_filename, 'wb') as handle:
+        pickle.dump(filtered_cube, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-def run_year(year):
+def run_year(year, filter_type):
     """create data frame and data_only dataset for given year. one file each 3 months
 
     Args:
         year:
+        filter_type (str): one of the following ['data','observations']
 
     Returns:
 
@@ -155,11 +171,11 @@ def run_year(year):
             dashboard_port))
 
         for month_range in month_ranges:
-            filter_and_save_months(year, month_range)
+            filter_and_save_months(year, month_range, filter_type)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 2:
-        run_year(year=int(sys.argv[1]))
+    if len(sys.argv) == 3:
+        run_year(year=int(sys.argv[1]), filter_type=int(sys.argv[2]))
     else:
-        raise ValueError("Provide valid arguments. E.g.: python data_cube_filters.py <year>")
+        raise ValueError("Provide valid arguments. E.g.: python data_cube_filters.py <year> <filter_type>")
