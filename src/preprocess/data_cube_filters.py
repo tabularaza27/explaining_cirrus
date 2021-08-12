@@ -176,6 +176,6 @@ def run_year(year, filter_type):
 
 if __name__ == "__main__":
     if len(sys.argv) == 3:
-        run_year(year=int(sys.argv[1]), filter_type=int(sys.argv[2]))
+        run_year(year=int(sys.argv[1]), filter_type=str(sys.argv[2]))
     else:
         raise ValueError("Provide valid arguments. E.g.: python data_cube_filters.py <year> <filter_type>")
