@@ -17,6 +17,7 @@ import socket
 from src.preprocess.helpers.io_helpers import save_file
 from src.preprocess.helpers.io_helpers import get_filepaths
 from src.preprocess.helpers.io_helpers import exists
+from src.preprocess.helpers.constants import DARDAR_INCOMING_DIR, DARDAR_GRIDDED_DIR
 
 warnings.filterwarnings('ignore')  # because of zero/nan divide warnings
 
@@ -79,16 +80,6 @@ CAT_VAR_NAMES = [
     'instrument_flag'
 ]
 
-# if executed on iac high performance cluster n2o directories can be accessed via /net/n2o
-hostname = socket.gethostname()
-ROOT_DIR = "/"
-if hostname == "iacdipl-6":
-    ROOT_DIR = "/net/n2o"
-
-SOURCE_DIR = os.path.join(ROOT_DIR, "wolke_scratch/kjeggle/DARDAR_NICE/DARNI_L2_PRO.v1.10")
-TARGET_DIR = os.path.join(ROOT_DIR, "wolke_scratch/kjeggle/DARDAR_NICE/gridded/hourly")
-
-
 class DardarNiceGrid:
     def __init__(self, date, time_range="day"):
         """
@@ -111,7 +102,7 @@ class DardarNiceGrid:
         self.l2_ds = load_files(date, self.time_range)
         if self.l2_ds is None:
             raise NoDataError(
-                "No Level 2 data found in specified source dir {} for Gridder with specs: {}".format(SOURCE_DIR,
+                "No Level 2 data found in specified source dir {} for Gridder with specs: {}".format(DARDAR_INCOMING_DIR,
                                                                                                      self.get_specs()))
         logger.info("loaded l2 files")
 
@@ -437,7 +428,7 @@ def load_files(date, time_range="day"):
     Returns:
 
     """
-    files = get_filepaths(date, SOURCE_DIR, file_format="nc", time_range=time_range)
+    files = get_filepaths(date, DARDAR_INCOMING_DIR, file_format="nc", time_range=time_range)
 
     if files is None:
         return None
@@ -572,7 +563,7 @@ def run_gridding(start_date, end_date, n_workers=10):
     """
 
     pool = mp.Pool(n_workers)
-    logger.info("{} {} {} {}".format(hostname, ROOT_DIR, SOURCE_DIR, TARGET_DIR))
+    logger.info("{} {} {} {}".format(hostname, ROOT_DIR, DARDAR_INCOMING_DIR, TARGET_DIR))
     logger.info("++++++++++++++ Start new gridding process with {} workers ++++++++++++++".format(n_workers))
     logger.info("gridding period: {} - {}".format(start_date, end_date))
     daterange = pd.date_range(start=start_date, end=end_date)

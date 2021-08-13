@@ -6,10 +6,11 @@ import os
 import sys
 import glob
 import multiprocessing as mp
-import merra2_preproc
-import era5_preproc
-from helpers.io_helpers import exists, save_file
-import this
+
+import src.preprocess import merra2_preproc
+import src.preprocess import era5_preproc
+from src.preprocess.helpers.io_helpers import exists, save_file
+from src.preprocess.helpers.constants import DARDAR_GRIDDED_DIR, DATA_CUBE_PRE_PROC_DIR, DATA_CUBE_PRE_PROC_FILESTUMPY
 
 MIN_LON = -75
 MAX_LON = -15.25
@@ -17,11 +18,6 @@ MIN_LAT = 0
 MAX_LAT = 59.75
 MIN_LEV = 1020
 MAX_LEV = 20040
-
-DARDAR_SOURCE_DIR = "/net/n2o/wolke_scratch/kjeggle/DARDAR_NICE/gridded/hourly"
-DESTINATION_DIR = "/net/n2o/wolke_scratch/kjeggle/DATA_CUBE/pre_proc"
-DATA_CUBE_FILESTUMPY = "data_cube_perproc"
-
 
 def get_file_paths(dates, source_dir, date_str="%Y_%m_%d", file_format="nc"):
     """get filepaths for given date
@@ -154,7 +150,7 @@ def merge_one_day(date):
     np_dt = np.datetime64(date)  # numpy date time
 
     # load dardar data for given data + next day ( for vicinity mask )
-    paths = get_file_paths([date, date + datetime.timedelta(days=1)], DARDAR_SOURCE_DIR)
+    paths = get_file_paths([date, date + datetime.timedelta(days=1)], DARDAR_GRIDDED_DIR)
     dardar_ds = xr.open_mfdataset(paths, concat_dim="time")
     dardar_ds = dardar_ds.transpose("time", "lev", "lat", "lon")
     print("loaded dardar data")
@@ -211,7 +207,7 @@ def merge_and_save(date):
     # amerged = merged.load()
     # print("loaded into memory")
 
-    save_file(DESTINATION_DIR, DATA_CUBE_FILESTUMPY, merged, date, complevel=4)
+    save_file(DATA_CUBE_PRE_PROC_DIR, DATA_CUBE_PRE_PROC_FILESTUMPY, merged, date, complevel=4)
     print("saved file")
 
 
@@ -228,10 +224,10 @@ def run_merging(n_workers=4,year=None):
 
     if year:
         print("run merging for {}".format(year))
-        files = glob.glob("{}/*{}*.nc".format(DARDAR_SOURCE_DIR,year))
+        files = glob.glob("{}/*{}*.nc".format(DARDAR_GRIDDED_DIR, year))
     else:
         print("run merging for all available dardar data")
-        files = glob.glob("{}/*.nc".format(DARDAR_SOURCE_DIR))
+        files = glob.glob("{}/*.nc".format(DARDAR_GRIDDED_DIR))
 
 
     for file in files:
@@ -240,7 +236,7 @@ def run_merging(n_workers=4,year=None):
         date = datetime.datetime.strptime(date_str, "%Y_%m_%d")
 
         # check if file already exists
-        if exists(date, DATA_CUBE_FILESTUMPY, DESTINATION_DIR):
+        if exists(date, DATA_CUBE_PRE_PROC_FILESTUMPY, DATA_CUBE_PRE_PROC_DIR):
             print("File already exists for: {}".format(date))
             continue
 

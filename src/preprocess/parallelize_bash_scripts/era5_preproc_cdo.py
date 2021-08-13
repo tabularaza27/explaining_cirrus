@@ -7,20 +7,18 @@ import glob
 import sys
 import os
 
-Source_File_Directory = '/net/n2o/wolke_scratch/kjeggle/ERA5/ECMWF_incoming'
-Script_Path = '/home/kjeggle/cirrus/src/preprocess/bash_scripts/era_preproc_single_file.sh'
-
+from src.preprocess.helpers.constants import ERA_CDO_SCRIPT_PATH, ERA_INCOMING_DIR
 
 def process_singlefile(filepath):
     """call preprocessing bash script for given file pTH"""
     print("Call Bash Script for file {}".format(filepath))
-    os.system("{} {}".format(Script_Path,filepath))
+    os.system("{} {}".format(ERA_CDO_SCRIPT_PATH, filepath))
 
 
 def parallel_preproc(n_workers, year):
     """call bash script that preprocesses era5 data with cdo in parallel using python multiprocessing"""
     print("Start parallel preprocessing for year {} with {} workers".format(year, n_workers))
-    filepaths = glob.glob("{}/era5_date_{}_*_time_*.grb".format(Source_File_Directory, year))
+    filepaths = glob.glob("{}/era5_date_{}_*_time_*.grb".format(ERA_INCOMING_DIR, year))
 
     pool = mp.Pool(n_workers)
     for filepath in filepaths:

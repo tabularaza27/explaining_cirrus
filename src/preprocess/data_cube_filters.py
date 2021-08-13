@@ -6,8 +6,9 @@ import sys
 import glob
 import dask
 
-TEMP_THRES = 235.15
-ICE_CLOUD_MASKS = [1, 2, 9, 10]  # maybe add 10 → top of convective towers
+from src.preprocess.helpers.constants import TEMP_THRES, CLM_V2_ICE_CLOUD_MASKS
+
+from src.preprocess.helpers.constants import DATA_CUBE_PRE_PROC_DIR, DATA_CUBE_DF_DIR, DATA_CUBE_FILTERED_DIR
 
 VAR_PROPERTIES = {
     'iwc': {'scale': 'lin', 'source': 'dardar', 'type': 'cirrus_var', 'load': True},
@@ -35,11 +36,6 @@ VAR_PROPERTIES = {
     'SO2': {'scale': 'lin', 'source': 'merra2', 'type': 'driver', 'load': True},
 }
 
-SOURCE_DIR = "/net/n2o/wolke_scratch/kjeggle/DATA_CUBE/pre_proc"
-DF_DIR = "/net/n2o/wolke_scratch/kjeggle/DATA_CUBE/dataframes"  # 2d data frame with all ice cloud ovservations
-FILTERED_CUBE_DIR = "/net/n2o/wolke_scratch/kjeggle/DATA_CUBE/filtered_cube"  # contains only entries with data mask true
-
-
 def get_load_variables():
     """return list of variables to load based on VAR_PROPERTIES"""
     return [var for var in VAR_PROPERTIES if VAR_PROPERTIES[var]["load"] == True]
@@ -53,7 +49,7 @@ def get_drop_vars():
 def get_month_files(year, month):
     """return list of files for given month and year of datacube preproc"""
     month = str(month).zfill(2)
-    files = glob.glob("{}/data_cube_perproc_{}_{}*.nc".format(SOURCE_DIR, year, month))
+    files = glob.glob("{}/data_cube_perproc_{}_{}*.nc".format(DATA_CUBE_PRE_PROC_DIR, year, month))
     return files
 
 
@@ -76,12 +72,12 @@ def filter_and_save_months(year, months, filter_type):
     initial_month_str = str(months[0]).zfill(2)
 
     if filter_type == "data":
-        df_filename = "{}/ice_in_cloud_df_{}_{}.pickle".format(DF_DIR, year, initial_month_str)
-        filtered_cube_filename = "{}/data_only_{}_{}.pickle".format(FILTERED_CUBE_DIR, year, initial_month_str)
+        df_filename = "{}/ice_in_cloud_df_{}_{}.pickle".format(DATA_CUBE_DF_DIR, year, initial_month_str)
+        filtered_cube_filename = "{}/data_only_{}_{}.pickle".format(DATA_CUBE_FILTERED_DIR, year, initial_month_str)
         mask_var = "data_mask"
     elif filter_type == "observations":
-        df_filename = "{}/observations_df_{}_{}.pickle".format(DF_DIR, year, initial_month_str)
-        filtered_cube_filename = "{}/observations_{}_{}.pickle".format(FILTERED_CUBE_DIR, year, initial_month_str)
+        df_filename = "{}/observations_df_{}_{}.pickle".format(DATA_CUBE_DF_DIR, year, initial_month_str)
+        filtered_cube_filename = "{}/observations_{}_{}.pickle".format(DATA_CUBE_FILTERED_DIR, year, initial_month_str)
         mask_var = "observation_mask"
     else:
         raise ValueError(
@@ -141,7 +137,7 @@ def filter_and_save_months(year, months, filter_type):
 
     if filter_type == "data":
         # filter data frame for cloud masks v1 and v2
-        df = df[(df.clm_v2.isin(ICE_CLOUD_MASKS)) | (df.clm == 1)]
+        df = df[(df.clm_v2.isin(CLM_V2_ICE_CLOUD_MASKS)) | (df.clm == 1)]
 
     # write dataframe and data only ds to pickle
     df.to_pickle(df_filename)

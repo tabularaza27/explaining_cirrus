@@ -13,8 +13,9 @@ import xgcm
 import numpy as np
 import pandas as pd
 
-from helpers.common_helpers import check_for_nans
-from helpers.constants import R, g
+from src.preprocess.helpers.common_helpers import check_for_nans
+from src.preprocess.helpers.constants import R, g
+from src.preprocess.helpers.constants import ERA_PRE_PROC_DIR
 
 HLEVS = pd.read_csv("/home/kjeggle/cirrus/src/config_files/height_levels.csv", index_col=0)
 TARGET_LEVEL_CENTER = HLEVS["lev"].dropna()
@@ -27,7 +28,7 @@ def load_ds(date):
         date (numpy.datetime64):
     """
     date_str = pd.to_datetime(str(date)).strftime("%Y_%m_%d")
-    path = "/net/n2o/wolke_scratch/kjeggle/ERA5/preproc/all_era5_date_{}_time_*.nc".format(date_str)
+    path = "{}/all_era5_date_{}_time_*.nc".format(ERA_PRE_PROC_DIR, date_str)
     ds = xr.open_mfdataset(path)
     ds = ds.load()  # load from dask arrays into memory
 
