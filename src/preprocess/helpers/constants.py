@@ -29,6 +29,8 @@ DATA_CUBE_PRE_PROC_FILESTUMPY = "data_cube_perproc"
 DATA_CUBE_FILTERED_DIR = "/net/n2o/wolke_scratch/kjeggle/DATA_CUBE/filtered_cube"  # contains only entries with data mask true
 DATA_CUBE_DF_DIR = "/net/n2o/wolke_scratch/kjeggle/DATA_CUBE/dataframes"  # 2d data frame with all ice cloud ovservations
 DATA_CUBE_FEATURE_ENGINEERED_DF_DIR = "/net/n2o/wolke_scratch/kjeggle/DATA_CUBE/dataframes/feature_engineered"
+DATA_ONLY_DF_FILESTUMPY = "ice_in_cloud_df"
+OBSERVATIONS_DF_FILESTUMPY = "observations_df"
 
 ### misc ##
 TEMP_THRES = 235.15 # cirrus cloud threshold
