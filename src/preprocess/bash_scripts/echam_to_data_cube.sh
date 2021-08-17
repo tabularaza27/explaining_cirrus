@@ -22,6 +22,9 @@ ACTIV_VARS=W_LARGE,W,ICNC,ICNC_instantaneous,IWC_ACC,CLOUD_TIME,CLIWC_TIME,SICE
 
 for i in {01..12};
 do
+  rm -r $INTERIM_DIR
+  mkdir $INTERIM_DIR
+
   FILE_STUMPY=Kai_inst_${YEAR}${i}.01
   echo "${FILE_STUMPY}"
 
