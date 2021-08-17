@@ -14,7 +14,7 @@ MIN_LAT=0
 MAX_LAT=60
 
 # Define Variables of interest
-REMOS_VARS=drieff,dupdraft,dnihom,dnidet,dninuc,dninuc_hom,dninuc_het,dninuc_dust,drhoair
+REMOS_VARS=drieff,dupdraft_inst,dnihom,dnidet,dninuc,dninuc_hom,dninuc_het,dninuc_dust,drhoair_inst
 ECHAM_VARS=relhum,xi,aclcac,aclcov,geosp,aps
 TRACER_VARS=SO4_AS,SO4_CS,SO4_KS,SO4_NS,DU_AI,DU_AS,DU_CI,DU_CS
 CIRRUS_VARS=homoAeroAllConc,dustImmAeroAllConc,dustDepAeroAllConc,sat
