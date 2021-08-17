@@ -18,7 +18,7 @@ REMOS_VARS=drieff,dupdraft,dnihom,dnidet,dninuc,dninuc_hom,dninuc_het,dninuc_dus
 ECHAM_VARS=relhum,xi,aclcac,aclcov,geosp
 TRACER_VARS=SO4_AS,SO4_CS,SO4_KS,SO4_NS,DU_AI,DU_AS,DU_CI,DU_CS
 CIRRUS_VARS=homoAeroAllConc,dustImmAeroAllConc,dustDepAeroAllConc,sat
-ACTIV_VARS=W_LARGE,W,ICNC,ICNC_instantaneous,IWC,CLOUD_TIME,CLIWC_TIME,SICE
+ACTIV_VARS=W_LARGE,W,ICNC,ICNC_instantaneous,IWC_ACC,CLOUD_TIME,CLIWC_TIME,SICE
 
 for i in {01..12};
 do
