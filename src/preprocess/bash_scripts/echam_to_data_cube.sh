@@ -14,11 +14,13 @@ MIN_LAT=0
 MAX_LAT=60
 
 # Define Variables of interest
-REMOS_VARS=drieff,dupdraft_inst,dnihom,dnidet,dninuc,dninuc_hom,dninuc_het,dninuc_dust,drhoair_inst
+#REMOS_VARS=drieff,dupdraft,dnihom,dnidet,dninuc,dninuc_hom,dninuc_het,dninuc_dust,drhoair
+REMOS_VARS=drieff,dicnc_inst,dicncb_inst,dnihet_inst,dnihom_inst,dnidet_inst,dninuc_inst,dninuc_het_inst,dninuc_hom_inst,dninuc_dust_inst,dninuc_soot_inst,dninuc_seed_inst,cloudice_inst,cloudliquid_inst,dupdraft_inst,dupdraftmax_inst,dtke_inst,drhoair_inst
 ECHAM_VARS=relhum,xi,aclcac,aclcov,geosp,aps
 TRACER_VARS=SO4_AS,SO4_CS,SO4_KS,SO4_NS,DU_AI,DU_AS,DU_CI,DU_CS
 CIRRUS_VARS=homoAeroAllConc,dustImmAeroAllConc,dustDepAeroAllConc,sat
 ACTIV_VARS=W_LARGE,W,ICNC,ICNC_instantaneous,IWC_ACC,CLOUD_TIME,CLIWC_TIME,SICE
+VPHYSC=aclc
 
 for i in {01..12};
 do
@@ -39,9 +41,10 @@ do
   cdo -select,name=${TRACER_VARS} ${SOURCE_DIR}/${FILE_STUMPY}_tracer.nc ${INTERIM_DIR}/${FILE_STUMPY}_tracer.nc
   cdo -select,name=${CIRRUS_VARS} ${SOURCE_DIR}/${FILE_STUMPY}_cirrus.nc ${INTERIM_DIR}/${FILE_STUMPY}_cirrus.nc
   cdo -select,name=${ACTIV_VARS} ${SOURCE_DIR}/${FILE_STUMPY}_activ.nc ${INTERIM_DIR}/${FILE_STUMPY}_activ.nc
+  cdo -select,name=${VPHYSC} ${SOURCE_DIR}/${FILE_STUMPY}_vphysc.nc ${INTERIM_DIR}/${FILE_STUMPY}_vphysc.nc
 
   # merge to monthly datacube file
-  cdo merge ${INTERIM_DIR}/${FILE_STUMPY}_remos.nc ${INTERIM_DIR}/${FILE_STUMPY}_echam.nc ${INTERIM_DIR}/${FILE_STUMPY}_tracer.nc ${INTERIM_DIR}/${FILE_STUMPY}_cirrus.nc ${INTERIM_DIR}/${FILE_STUMPY}_activ.nc ${INTERIM_DIR}/${FILE_STUMPY}_echam_st.nc ${INTERIM_DIR}/${FILE_STUMPY}_echam_uv.nc ${DATACUBE_DIR}/${FILE_STUMPY}_datacube.nc
+  cdo merge ${INTERIM_DIR}/${FILE_STUMPY}_remos.nc ${INTERIM_DIR}/${FILE_STUMPY}_echam.nc ${INTERIM_DIR}/${FILE_STUMPY}_tracer.nc ${INTERIM_DIR}/${FILE_STUMPY}_cirrus.nc ${INTERIM_DIR}/${FILE_STUMPY}_activ.nc ${INTERIM_DIR}/${FILE_STUMPY}_vphysc.nc ${INTERIM_DIR}/${FILE_STUMPY}_echam_st.nc ${INTERIM_DIR}/${FILE_STUMPY}_echam_uv.nc ${DATACUBE_DIR}/${FILE_STUMPY}_datacube.nc
   cdo sellonlatbox,$MIN_LON,$MAX_LON,$MIN_LAT,$MAX_LAT ${DATACUBE_DIR}/${FILE_STUMPY}_datacube.nc ${DATACUBE_DIR}/${FILE_STUMPY}_datacube_domain.nc
 
 done
