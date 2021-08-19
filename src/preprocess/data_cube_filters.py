@@ -62,7 +62,7 @@ def filter_and_save_months(year, months, filter_type):
     Args:
         year (int):
         months (list[int]): e.g. [1,2,3]
-        filter_type (str): one of the following ['data','observations']
+        filter_type (str): one of the following ['data','observations','observation_vicinity']
 
     Returns:
 
@@ -79,9 +79,13 @@ def filter_and_save_months(year, months, filter_type):
         df_filename = "{}/observations_df_{}_{}.pickle".format(DATA_CUBE_DF_DIR, year, initial_month_str)
         filtered_cube_filename = "{}/observations_{}_{}.pickle".format(DATA_CUBE_FILTERED_DIR, year, initial_month_str)
         mask_var = "observation_mask"
+    elif filter_type == "observation_vicinity":
+        df_filename = "{}/observation_vicinity_df_{}_{}.pickle".format(DATA_CUBE_DF_DIR, year, initial_month_str)
+        filtered_cube_filename = "{}/observation_vicinity_{}_{}.pickle".format(DATA_CUBE_FILTERED_DIR, year, initial_month_str)
+        mask_var = "observation_vicinity"
     else:
         raise ValueError(
-            "filter_type needs to be one of the following ['data','observations'], was {}".format(filter_type))
+            "filter_type needs to be one of the following ['data','observations','observation_vicinity'], was {}".format(filter_type))
 
     # check if file already exists
     if len(glob.glob(df_filename)) > 0:
