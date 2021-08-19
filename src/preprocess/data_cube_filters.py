@@ -82,7 +82,7 @@ def filter_and_save_months(year, months, filter_type):
     elif filter_type == "observation_vicinity":
         df_filename = "{}/observation_vicinity_df_{}_{}.pickle".format(DATA_CUBE_DF_DIR, year, initial_month_str)
         filtered_cube_filename = "{}/observation_vicinity_{}_{}.pickle".format(DATA_CUBE_FILTERED_DIR, year, initial_month_str)
-        mask_var = "observation_vicinity"
+        mask_var = "observation_vicinity_mask"
     else:
         raise ValueError(
             "filter_type needs to be one of the following ['data','observations','observation_vicinity'], was {}".format(filter_type))
