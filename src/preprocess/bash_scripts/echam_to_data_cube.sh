@@ -18,7 +18,7 @@ MAX_LAT=60
 REMOS_VARS=drieff,dicnc_inst,dicncb_inst,dnihet_inst,dnihom_inst,dnidet_inst,dninuc_inst,dninuc_het_inst,dninuc_hom_inst,dninuc_dust_inst,dninuc_soot_inst,dninuc_seed_inst,cloudice_inst,cloudliquid_inst,dupdraft_inst,dupdraftmax_inst,dtke_inst,drhoair_inst
 ECHAM_VARS=relhum,xi,aclcac,aclcov,geosp,aps
 TRACER_VARS=SO4_AS,SO4_CS,SO4_KS,SO4_NS,DU_AI,DU_AS,DU_CI,DU_CS
-CIRRUS_VARS=homoAeroAllConc,dustImmAeroAllConc,dustDepAeroAllConc,sat,newIceCrystalsTime,newIceCrystalsConc,newIceCrystalsRad
+CIRRUS_VARS=sat,homoAeroAllConc,dustImmAeroAllConc,dustDepAeroAllConc,dustDepCAeroInConc,dustDepAAeroInConc,newIceCrystalsTime,newIceCrystalsConc,newIceCrystalsRad,homoAeroInConc,homoIceConc,dustImmAeroInConc,dustImmIceConc,dustDepAIceConc,dustDepCIceConc
 ACTIV_VARS=W_LARGE,W,ICNC,ICNC_instantaneous,IWC_ACC,CLOUD_TIME,CLIWC_TIME,SICE
 VPHYSC=aclc
 
