@@ -4,7 +4,7 @@ import os
 from sklearn.model_selection import train_test_split
 
 from src.preprocess.helpers.constants import DATA_CUBE_FEATURE_ENGINEERED_DF_DIR
-from src.preprocess.helpers.constants import DATA_ONLY_DF_FILESTUMPY, OBSERVATIONS_DF_FILESTUMPY
+from src.preprocess.helpers.constants import DATA_ONLY_DF_FILESTUMPY, OBSERVATIONS_DF_FILESTUMPY, OBSERVATION_VICINITY_DF_FILESTUMPY
 
 CAT_VARS = ["season","lat_region","IC_CIR","clm_v2",'nightday_flag','land_water_mask','instrument_flag']
 LOG_TRANS_VARS = ['DU',"SO4", 'DU001','DU002','DU003','DU004','DU005']
@@ -18,14 +18,13 @@ def load_feature_engineered_df(df_type, year):
     created with FeatureEngineering Notebook
 
     Args:
-        df_type (str): observations or data_only
+        df_type (str): observations, observation_vicinity, data_only
         year (int|str): year or all
 
     Returns:
 
     """
-    filepath_map = {"observations": OBSERVATIONS_DF_FILESTUMPY, "data_only": DATA_ONLY_DF_FILESTUMPY}
-
+    filepath_map = {"observations": OBSERVATIONS_DF_FILESTUMPY,"observation_vicinity": OBSERVATION_VICINITY_DF_FILESTUMPY, "data_only": DATA_ONLY_DF_FILESTUMPY}
     filepath = os.path.join(DATA_CUBE_FEATURE_ENGINEERED_DF_DIR, "{}_feature_engineered_{}.pickle".format(filepath_map[df_type], year))
     print("load file: {}". format(filepath))
     df = pd.read_pickle(filepath)

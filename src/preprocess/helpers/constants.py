@@ -31,6 +31,7 @@ DATA_CUBE_DF_DIR = "/net/n2o/wolke_scratch/kjeggle/DATA_CUBE/dataframes"  # 2d d
 DATA_CUBE_FEATURE_ENGINEERED_DF_DIR = "/net/n2o/wolke_scratch/kjeggle/DATA_CUBE/dataframes/feature_engineered"
 DATA_ONLY_DF_FILESTUMPY = "ice_in_cloud_df"
 OBSERVATIONS_DF_FILESTUMPY = "observations_df"
+OBSERVATION_VICINITY_DF_FILESTUMPY = "observation_vicinity_df"
 
 ### misc ##
 TEMP_THRES = 235.15 # cirrus cloud threshold
