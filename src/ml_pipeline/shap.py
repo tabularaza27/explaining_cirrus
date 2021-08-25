@@ -87,6 +87,7 @@ if __name__ == "__main__":
         raise
 
     for experiment_name in experiment_names:
+        print(experiment_name)
         explainer, shap_values, shap_idx = calculate_and_log_shap_values(experiment_name,
                                                                          project_name,
                                                                          sample_size=sample_size,
