@@ -74,11 +74,29 @@ def load_shap_df(experiment_name):
 
     return shap_df
 
+def get_col_locs(columns, df):
+    return [df.columns.get_loc(col) for col in columns]
+
 def log_shap_plots(experiment_name, project_name="icnc-xgboost", summary_plots=True, dependence_plots=False):
     shap_values, shap_df, shap_idx = load_shap_values(experiment_name, project_name)
 
+    experiment = load_experiment(experiment_name, project_name)
+
+    var_groups = {
+        "met_vars": ["t", "w", "u", "v", "rh_ice"],
+        "aerosol_vars": ["DU_log", "SO4_log"],  # "SO2_log"],
+        "vertical_cloud_info": ["cloud_thickness", "dz_top"],
+        "instrument": [col for col in shap_df.columns if "instrument" in col],
+        "nightday": [col for col in shap_df.columns if "nightday" in col],
+        "land_water": [col for col in shap_df.columns if "land_water" in col],
+        "region": [col for col in shap_df.columns if "lat_region" in col],
+        "season": [col for col in shap_df.columns if "season" in col],
+        "ic_cir": [col for col in shap_df.columns if "IC_CIR" in col]
+    }
+
     if summary_plots:
-        experiment = load_experiment(experiment_name, project_name)
+
+        # plot all features
         fo = tempfile.NamedTemporaryFile(suffix=".png")
         shap.summary_plot(shap_values, shap_df, max_display=45, show=False)
         plt.savefig(fo.name)
@@ -86,6 +104,16 @@ def log_shap_plots(experiment_name, project_name="icnc-xgboost", summary_plots=T
         plt.close()
         fo.close()
 
+        # plot per var group
+        for var_group, col_names in var_groups.items():
+            print("###### {} ######".format(var_group))
+            fo = tempfile.NamedTemporaryFile(suffix=".png")
+            col_locs = get_col_locs(col_names, shap_df)
+            shap.summary_plot(shap_values[:, col_locs], shap_df[col_names], title="{}".format(var_group), show=False)
+            plt.savefig(fo.name)
+            experiment.log_image(fo.name)
+            plt.close()
+            fo.close()
 
 def calculate_and_log_shap_values(experiment_name, project_name, sample_size=None, log=True, interaction_values=False,
                                   check_additivity=False):
