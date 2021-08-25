@@ -36,7 +36,7 @@ def calculate_and_log_shap_values(experiment_name, project_name, sample_size=Non
     df = df.query("ta <= {}".format(TEMP_THRES))
     X_train, X_val, X_test, y_train, y_val, y_test = create_dataset(df, **experiment_config)
 
-    if (sample_size) and (sample_size > X_test.t.count()):
+    if (sample_size) and (sample_size < X_test.t.count()):
         X_test = X_test.sample(n=sample_size, axis="index", random_state=123).sort_index()
         print("Training set after sampling: {} Datapoints".format(X_test.t.count()))
 
