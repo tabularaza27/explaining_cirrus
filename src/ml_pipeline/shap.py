@@ -74,8 +74,8 @@ def load_shap_df(experiment_name):
 
     return shap_df
 
-def log_shap_plots(experiment_name, summary_plots=True, dependence_plots=False):
-    shap_values, shap_df, shap_idx = load_shap_values(experiment_name)
+def log_shap_plots(experiment_name, project_name="icnc-xgboost", summary_plots=True, dependence_plots=False):
+    shap_values, shap_df, shap_idx = load_shap_values(experiment_name, project_name)
 
     if summary_plots:
         experiment = load_experiment(experiment_name, project_name)
