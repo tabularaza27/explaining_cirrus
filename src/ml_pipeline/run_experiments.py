@@ -1,6 +1,8 @@
 from pprint import pprint
+import copy
 
 import pandas as pd
+import numpy as np
 
 from src.ml_pipeline.experiment import run_experiment
 from src.preprocess.helpers.constants import TEMP_THRES
@@ -321,8 +323,41 @@ experiment_configs = [
     #     }
 ]
 
+experiment_configs = []
+
+base_config = {
+        "filters": ["clm == 1"],
+        "predictors": ["DU",'nightday_flag','land_water_mask','instrument_flag','clm_v2','cloud_thickness'],
+        "predictand": "icnc_5um",
+        "preproc_steps": {
+             "x_log_trans": True,
+             "y_log_trans": True,
+             "kickout_outliers": True,
+             "oh_encoding": True
+    }
+    }
+
+filters = []
+# create filters for temperature bands
+step = 10
+for lev in np.arange(180,240,step):
+    temp_band = [lev, lev+step]
+    filters.append("t.between({},{})".format(temp_band[0],temp_band[1]))
+
+# create filters for cloud thickness bands
+step = 1000
+for lev in np.arange(0,13000,step):
+    thickness_band = [lev, lev+step]
+    filters.append("cloud_thickness.between({},{})".format(thickness_band[0],thickness_band[1]))
+
+for f in filters:
+    config = copy.deepcopy(base_config)
+    config["filters"].append(f)
+    experiment_configs.append(config)
+
+
 xgboost_config = {"objective": "reg:squarederror", 'subsample': 0.4, "colsample_bytree": 0.8, 'learning_rate': 0.02,
-                  'max_depth': 15, 'alpha': 38, 'lambda': 7, 'n_estimators': 500, "n_jobs": 40}
+                  'max_depth': 15, 'alpha': 38, 'lambda': 7, 'n_estimators': 500, "n_jobs": 50}
 
 
 def load_dataframe():
