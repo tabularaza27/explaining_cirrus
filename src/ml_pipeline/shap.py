@@ -5,10 +5,86 @@ import xgboost as xgb
 import shap
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from src.preprocess.helpers.constants import TEMP_THRES
-from src.ml_pipeline.experiment import get_experiment_assets, load_experiment
+from src.ml_pipeline.experiment import get_experiment_assets, load_experiment, get_asset_id
 from src.ml_pipeline.ml_preprocess import create_dataset
+
+def load_shap_values(experiment_name):
+    """load shap values and shap idx from comet"""
+    experiment = load_experiment(experiment_name, project_name)
+    experiment_assets = experiment.get_asset_list()
+
+    # get shap values
+    asset_id = get_asset_id(experiment_assets, "type", "shap_values")
+    rawdata = experiment.get_asset(asset_id)
+
+    fo = tempfile.NamedTemporaryFile(suffix=".npy")
+    with open(fo.name, "wb") as f:
+        f.write(rawdata)
+
+    shap_values = np.load(fo.name)
+    fo.close()
+
+    # get shap indices to create X
+    asset_id = get_asset_id(experiment_assets, "type", "shap_idx")
+    rawdata = experiment.get_asset(asset_id)
+
+    fo = tempfile.NamedTemporaryFile(suffix=".npy")
+    with open(fo.name, "wb") as f:
+        f.write(rawdata)
+
+    shap_idx = np.load(fo.name)
+    fo.close()
+
+    # create dataframe that was used to create shap values
+    asset_id = get_asset_id(experiment_assets, "fileName", "config")
+    experiment_config = experiment.get_asset(asset_id, return_type="json")
+
+    # load and create dataset
+    df = pd.read_pickle("/net/n2o/wolke/kjeggle/Notebooks/DataCube/df_pre_filtering.pickle")
+    # Drop NaN
+    df = df.dropna()
+    # Filter for Temperature
+    df = df.query("ta <= {}".format(TEMP_THRES))
+
+    X_train, X_val, X_test, y_train, y_val, y_test = create_dataset(df, **experiment_config)
+    shap_df = X_test[X_test.index.isin(shap_idx)]
+
+    return shap_values, shap_df, shap_idx
+
+def load_shap_df(experiment_name):
+    """load dataframe that was used to create shap values"""
+    experiment = load_experiment(experiment_name, project_name)
+    experiment_assets = experiment.get_asset_list()
+
+    asset_id = get_asset_id(experiment_assets, "fileName", "config")
+    experiment_config = experiment.get_asset(asset_id, return_type="json")
+
+    # load and create dataset
+    df = pd.read_pickle("/net/n2o/wolke/kjeggle/Notebooks/DataCube/df_pre_filtering.pickle")
+    # Drop NaN
+    df = df.dropna()
+    # Filter for Temperature
+    df = df.query("ta <= {}".format(TEMP_THRES))
+
+    X_train, X_val, X_test, y_train, y_val, y_test = create_dataset(df, **experiment_config)
+    shap_df  = X_test[X_test.index.isin(shap_idx)]
+
+    return shap_df
+
+def log_shap_plots(experiment_name, summary_plots=True, dependence_plots=False):
+    shap_values, shap_df, shap_idx = load_shap_values(experiment_name)
+
+    if summary_plots:
+        experiment = load_experiment(experiment_name, project_name)
+        fo = tempfile.NamedTemporaryFile(suffix=".png")
+        shap.summary_plot(shap_values, shap_df, max_display=45, show=False)
+        plt.savefig(fo.name)
+        experiment.log_image(fo.name)
+        plt.close()
+        fo.close()
 
 
 def calculate_and_log_shap_values(experiment_name, project_name, sample_size=None, log=True, interaction_values=False,
