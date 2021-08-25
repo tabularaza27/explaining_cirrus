@@ -12,7 +12,7 @@ from src.ml_pipeline.ml_preprocess import create_dataset
 
 
 def calculate_and_log_shap_values(experiment_name, project_name, sample_size=None, log=True, interaction_values=False,
-                                  check_additivity=True):
+                                  check_additivity=False):
     """return explainer object and shap values and index of predictions
 
     Args:
