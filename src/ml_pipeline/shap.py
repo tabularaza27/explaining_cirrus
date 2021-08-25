@@ -11,7 +11,7 @@ from src.preprocess.helpers.constants import TEMP_THRES
 from src.ml_pipeline.experiment import get_experiment_assets, load_experiment, get_asset_id
 from src.ml_pipeline.ml_preprocess import create_dataset
 
-def load_shap_values(experiment_name):
+def load_shap_values(experiment_name, project_name="icnc-xgboost"):
     """load shap values and shap idx from comet"""
     experiment = load_experiment(experiment_name, project_name)
     experiment_assets = experiment.get_asset_list()
@@ -56,7 +56,7 @@ def load_shap_values(experiment_name):
 
 def load_shap_df(experiment_name):
     """load dataframe that was used to create shap values"""
-    experiment = load_experiment(experiment_name, project_name)
+    experiment = load_experiment(experiment_name)
     experiment_assets = experiment.get_asset_list()
 
     asset_id = get_asset_id(experiment_assets, "fileName", "config")
