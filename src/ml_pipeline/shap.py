@@ -95,7 +95,6 @@ def log_shap_plots(experiment_name, project_name="icnc-xgboost", summary_plots=T
     }
 
     if summary_plots:
-
         # plot all features
         fo = tempfile.NamedTemporaryFile(suffix=".png")
         shap.summary_plot(shap_values, shap_df, max_display=45, show=False)
@@ -114,6 +113,22 @@ def log_shap_plots(experiment_name, project_name="icnc-xgboost", summary_plots=T
             experiment.log_image(fo.name, image_name=var_group)
             plt.close()
             fo.close()
+
+    if dependence_plots:
+        # plot dependence plots with strongest interaction
+        for var_group, col_names in var_groups.items():
+            # only for continuous variables
+            if var_group not in ["met_vars","aerosol_vars","vertical_cloud_info"]:
+                continue
+            for col in col_names:
+                print("###### dependenc: {} ######".format(col))
+                fo = tempfile.NamedTemporaryFile(suffix=".png")
+                shap.dependence_plot(col, shap_values, shap_df, alpha=0.5, dot_size=5, show=False)
+                plt.savefig(fo.name)
+                experiment.log_image(fo.name, image_name="dependence_{}".format(col))
+                plt.close()
+                fo.close()
+
 
 def calculate_and_log_shap_values(experiment_name, project_name, sample_size=None, log=True, interaction_values=False,
                                   check_additivity=False):
