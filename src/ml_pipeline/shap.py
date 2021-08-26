@@ -111,7 +111,7 @@ def log_shap_plots(experiment_name, project_name="icnc-xgboost", summary_plots=T
             col_locs = get_col_locs(col_names, shap_df)
             shap.summary_plot(shap_values[:, col_locs], shap_df[col_names], title="{}".format(var_group), show=False)
             plt.savefig(fo.name)
-            experiment.log_image(fo.name, image_name="var_group")
+            experiment.log_image(fo.name, image_name=var_group)
             plt.close()
             fo.close()
 
