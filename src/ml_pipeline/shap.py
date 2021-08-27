@@ -11,6 +11,7 @@ from src.preprocess.helpers.constants import TEMP_THRES
 from src.ml_pipeline.experiment import get_experiment_assets, load_experiment, get_asset_id
 from src.ml_pipeline.ml_preprocess import create_dataset
 
+
 def load_shap_values(experiment_name, project_name="icnc-xgboost"):
     """load shap values and shap idx from comet"""
     experiment = load_experiment(experiment_name, project_name)
@@ -54,28 +55,10 @@ def load_shap_values(experiment_name, project_name="icnc-xgboost"):
 
     return shap_values, shap_df, shap_idx
 
-def load_shap_df(experiment_name):
-    """load dataframe that was used to create shap values"""
-    experiment = load_experiment(experiment_name)
-    experiment_assets = experiment.get_asset_list()
-
-    asset_id = get_asset_id(experiment_assets, "fileName", "config")
-    experiment_config = experiment.get_asset(asset_id, return_type="json")
-
-    # load and create dataset
-    df = pd.read_pickle("/net/n2o/wolke/kjeggle/Notebooks/DataCube/df_pre_filtering.pickle")
-    # Drop NaN
-    df = df.dropna()
-    # Filter for Temperature
-    df = df.query("ta <= {}".format(TEMP_THRES))
-
-    X_train, X_val, X_test, y_train, y_val, y_test = create_dataset(df, **experiment_config)
-    shap_df  = X_test[X_test.index.isin(shap_idx)]
-
-    return shap_df
 
 def get_col_locs(columns, df):
     return [df.columns.get_loc(col) for col in columns]
+
 
 def log_shap_plots(experiment_name, project_name="icnc-xgboost", summary_plots=True, dependence_plots=False):
     shap_values, shap_df, shap_idx = load_shap_values(experiment_name, project_name)
@@ -84,7 +67,9 @@ def log_shap_plots(experiment_name, project_name="icnc-xgboost", summary_plots=T
 
     var_groups = {
         "met_vars": [col for col in shap_df.columns if col in ["t", "w", "u", "v", "rh_ice", "rh"]],
-        "aerosol_vars": [col for col in shap_df.columns if col in ["DU_log", "SO4_log", "SO2_log","DU001_log","DU002_log","DU003_log","DU004_log","DU005_log"]],
+        "aerosol_vars": [col for col in shap_df.columns if
+                         col in ["DU_log", "SO4_log", "SO2_log", "DU001_log", "DU002_log", "DU003_log", "DU004_log",
+                                 "DU005_log"]],
         "vertical_cloud_info": ["cloud_thickness", "dz_top"],
         "instrument": [col for col in shap_df.columns if "instrument" in col],
         "nightday": [col for col in shap_df.columns if "nightday" in col],
@@ -118,7 +103,7 @@ def log_shap_plots(experiment_name, project_name="icnc-xgboost", summary_plots=T
         # plot dependence plots with strongest interaction
         for var_group, col_names in var_groups.items():
             # only for continuous variables
-            if var_group not in ["met_vars","aerosol_vars","vertical_cloud_info"]:
+            if var_group not in ["met_vars", "aerosol_vars", "vertical_cloud_info"]:
                 continue
             for col in col_names:
                 print("###### dependenc: {} ######".format(col))
