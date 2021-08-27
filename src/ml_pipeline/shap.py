@@ -70,7 +70,8 @@ def log_shap_plots(experiment_name, project_name="icnc-xgboost", summary_plots=T
         "aerosol_vars": [col for col in shap_df.columns if
                          col in ["DU_log", "SO4_log", "SO2_log", "DU001_log", "DU002_log", "DU003_log", "DU004_log",
                                  "DU005_log"]],
-        "vertical_cloud_info": ["cloud_thickness", "dz_top"],
+        "vertical_cloud_info": [col for col in shap_df.columns if
+                         col in ["cloud_thickness", "dz_top"]],
         "instrument": [col for col in shap_df.columns if "instrument" in col],
         "nightday": [col for col in shap_df.columns if "nightday" in col],
         "land_water": [col for col in shap_df.columns if "land_water" in col],
