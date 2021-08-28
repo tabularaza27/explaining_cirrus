@@ -68,7 +68,7 @@ def log_figures_to_experiment(validate_df, experiment, experiment_config=None):
     if not experiment_config:
         experiement_assets = experiment.get_asset_list()
         config_id = get_asset_id(experiement_assets,"fileName", "config")
-    experiment_config = experiment.get_asset(config_id, return_type="json")
+        experiment_config = experiment.get_asset(config_id, return_type="json")
     target_variable = experiment_config["predictand"]
     if experiment_config["preproc_steps"]["y_log_trans"]:
         target_variable = "log( {} )".format(experiment_config["predictand"])
