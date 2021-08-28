@@ -53,24 +53,25 @@ def evaluate_model(model, X_test, y_test, experiment=None):
     return validate_df
 
 
-def log_figures_to_experiment(validate_df, experiment):
+def log_figures_to_experiment(validate_df, experiment, experiment_config=None):
     """
 
     Args:
         validate_df:
         experiment:
-        target_variable (str): used to label x and y axis of plots
+        target_variable (dict): not required when experiment config was already saved to comet
 
     Returns:
 
     """
     figures = []
-    experiement_assets = experiment.get_asset_list()
-    config_id = get_asset_id(experiement_assets,"fileName", "config")
-    config = experiment.get_asset(config_id, return_type="json")
-    target_variable = config["predictand"]
-    if config["preproc_steps"]["y_log_trans"]:
-        target_variable = "log( {} )".format(config["predictand"])
+    if not experiment_config:
+        experiement_assets = experiment.get_asset_list()
+        config_id = get_asset_id(experiement_assets,"fileName", "config")
+    experiment_config = experiment.get_asset(config_id, return_type="json")
+    target_variable = experiment_config["predictand"]
+    if experiment_config["preproc_steps"]["y_log_trans"]:
+        target_variable = "log( {} )".format(experiment_config["predictand"])
 
     # hex plot ground_truth vs. predictions
     axes_lims = (validate_df["ground_truth"].min(), validate_df["ground_truth"].max())
@@ -135,7 +136,7 @@ def run_experiment(df, xgboost_config, experiment_config, comet_project_name="ic
     experiment.log_asset_data(data=experiment_config, name="config")
 
     if log_figures:
-        log_figures_to_experiment(validate_df, experiment)
+        log_figures_to_experiment(validate_df, experiment, experiment_config)
 
     experiment.end()
 
