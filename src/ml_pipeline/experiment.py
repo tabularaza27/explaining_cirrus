@@ -54,17 +54,41 @@ def evaluate_model(model, X_test, y_test, experiment=None):
 
 
 def log_figures_to_experiment(validate_df, experiment):
+    """
+
+    Args:
+        validate_df:
+        experiment:
+        target_variable (str): used to label x and y axis of plots
+
+    Returns:
+
+    """
     figures = []
+    experiement_assets = experiment.get_asset_list()
+    config_id = get_asset_id(experiement_assets, "name", "config")
+    config = experiment.get_asset(config_id, return_type="json")
+    target_variable = config["predictand"]
+    if config["preproc_steps"]["y_log_trans"]:
+        target_variable = "log( {} )".format(config["predictand"])
 
     # hex plot ground_truth vs. predictions
     axes_lims = (validate_df["ground_truth"].min(), validate_df["ground_truth"].max())
     figures.append(
-        validate_df.hvplot.hexbin(x="predictions", y="ground_truth", xlim=axes_lims, ylim=axes_lims, width=750,
+        validate_df.hvplot.hexbin(x="predictions", y="ground_truth",
+                                  xlabel="predictions ({})".format(target_variable),
+                                  ylabel="ground_truth ({})".format(target_variable),
+                                  xlim=axes_lims, ylim=axes_lims, width=750,
                                   height=500, title="ground_truth vs. predictions"))
 
     # distributions ground_truth vs. predictions
-    figures.append(validate_df.hvplot.hist(y=["ground_truth", "predictions"], bins=100, alpha=0.5,
-                                           title="ground_truth vs. predictions"))
+    figures.append(validate_df.hvplot.hist(y=["ground_truth", "predictions"],
+                                           xlabel="predictions ({})".format(target_variable),bins=100, alpha=0.5,
+                                           title="ground_truth vs. predictions histograms"))
+
+    validate_df.hvplot.kde(y=["ground_truth", "predictions"], alpha=0.5,
+                           xlabel="predictions ({})".format(target_variable),
+                           title="prediction vs. ground truth distributions")
 
     # distributions of prediction differences
     figures.append(validate_df.hvplot.hist(y=["abs_diff", "diff"], bins=100, alpha=0.5,
