@@ -75,18 +75,18 @@ def log_figures_to_experiment(validate_df, experiment):
     # hex plot ground_truth vs. predictions
     axes_lims = (validate_df["ground_truth"].min(), validate_df["ground_truth"].max())
     figures.append(
-        validate_df.hvplot.hexbin(x="predictions", y="ground truth",
+        validate_df.hvplot.hexbin(x="predictions", y="ground_truth",
                                   xlabel="predictions ({})".format(target_variable),
                                   ylabel="ground_truth ({})".format(target_variable),
                                   xlim=axes_lims, ylim=axes_lims, width=750,
-                                  height=500, title="ground_truth vs. predictions"))
+                                  height=500, title="ground truth vs. predictions"))
 
     # distributions ground_truth vs. predictions
-    figures.append(validate_df.hvplot.hist(y=["ground truth", "predictions"],
+    figures.append(validate_df.hvplot.hist(y=["ground_truth", "predictions"],
                                            xlabel="predictions ({})".format(target_variable),bins=100, alpha=0.5,
                                            title="ground_truth vs. predictions histograms"))
 
-    figures.append(validate_df.hvplot.kde(y=["ground truth", "predictions"], alpha=0.5,
+    figures.append(validate_df.hvplot.kde(y=["ground_truth", "predictions"], alpha=0.5,
                            xlabel="predictions ({})".format(target_variable),
                            title="prediction vs. ground truth distributions"))
 
