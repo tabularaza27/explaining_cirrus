@@ -33,6 +33,9 @@ DATA_ONLY_DF_FILESTUMPY = "ice_in_cloud_df"
 OBSERVATIONS_DF_FILESTUMPY = "observations_df"
 OBSERVATION_VICINITY_DF_FILESTUMPY = "observation_vicinity_df"
 
+## Graphics ##
+Interview_Graphics = "/net/n2o/wolke/kjeggle/Graphics/PhDInterview"
+
 ### misc ##
 TEMP_THRES = 235.15 # cirrus cloud threshold
 CLM_V2_ICE_CLOUD_MASKS = [1, 2, 9, 10]  # maybe add 10 → top of convective towers
