@@ -34,7 +34,7 @@ OBSERVATIONS_DF_FILESTUMPY = "observations_df"
 OBSERVATION_VICINITY_DF_FILESTUMPY = "observation_vicinity_df"
 
 ## Graphics ##
-Interview_Graphics = "/net/n2o/wolke/kjeggle/Graphics/PhDInterview"
+INTERVIEW_GRAPHICS_DIR = "/net/n2o/wolke/kjeggle/Graphics/PhDInterview"
 
 ### misc ##
 TEMP_THRES = 235.15 # cirrus cloud threshold
