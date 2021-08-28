@@ -59,7 +59,7 @@ def log_figures_to_experiment(validate_df, experiment, experiment_config=None):
     Args:
         validate_df:
         experiment:
-        target_variable (dict): not required when experiment config was already saved to comet
+        experiment_config (dict): not required when experiment config was already saved to comet
 
     Returns:
 
