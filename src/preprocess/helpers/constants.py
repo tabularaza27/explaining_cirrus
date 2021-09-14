@@ -8,6 +8,7 @@ g = 9.80665  # Standard gravity
 # structure of directories: BASE_DIRECTORS + <config_id> + Directory Path
 
 BASE_DIRECTORY = "/net/n2o/wolke_scratch/kjeggle/CIRRUS_PIPELINE"
+CONFIG_FILE_DIR = "CONFIG_FILES"
 
 ## Reanalysis ##
 
