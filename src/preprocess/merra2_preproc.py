@@ -33,9 +33,9 @@ PTOP = 1
 VARIABLES = ["DU00{}".format(i) for i in range(1, 6)]
 VARIABLES += ["SO4", "SO2"]
 
-HLEVS = pd.read_csv("/home/kjeggle/cirrus/src/config_files/height_levels.csv", index_col=0) # todo make dynamic
-TARGET_LEVEL_CENTER = HLEVS["lev"].dropna() # todo
-TARGET_LEVEL_EDGE = HLEVS["lev_edge"] # todo
+# HLEVS = pd.read_csv("/home/kjeggle/cirrus/src/config_files/height_levels.csv", index_col=0) # todo make dynamic
+# TARGET_LEVEL_CENTER = HLEVS["lev"].dropna() # todo
+# TARGET_LEVEL_EDGE = HLEVS["lev_edge"] # todo
 
 
 def load_ds(date, config_id):
@@ -43,6 +43,7 @@ def load_ds(date, config_id):
 
     Args:
         date (numpy.datetime64):
+        config_id (str): config determines resolutions and location of load/save directories
     """
     next_day = date + np.timedelta64(1, "D")
 
@@ -201,11 +202,10 @@ def vert_trafo(ds, altitude_min, altitude_max, layer_thickness, linear=False):
     ### convert extensive variables to intensive variables again ###
 
     # (values /  thickness)
-    layer_thickness = 60 # todo make dynamic (same in era5)
     for var in VARIABLES:
         ext_var = "{}_ext".format(var)
 
-        ds_hlev[var] = ds_hlev[ext_var] / 60 # todo make dynamic
+        ds_hlev[var] = ds_hlev[ext_var] / layer_thickness
         ds_hlev[var].attrs.update({"units": "kg m**-3"})
 
     ### linear regridding - just for fun ###
