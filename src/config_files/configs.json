@@ -1,0 +1,22 @@
+{
+  "north_atlantic_high_res": {
+    "config_id": "north_atlantic_high_res",
+    "latmin": 0,
+    "latmax": 60,
+    "lonmin": -75,
+    "lonmax": -15,
+    "horizontal_resolution": 0.25,
+    "temporal_resolution": "1H",
+    "vertical_resolution": 60
+  },
+  "larger_domain_high_res": {
+    "config_id": "larger_domain_high_res",
+    "latmin": 0,
+    "latmax": 80,
+    "lonmin": -140,
+    "lonmax": 40,
+    "horizontal_resolution": 0.25,
+    "temporal_resolution": "1H",
+    "vertical_resolution": 60
+  }
+}
