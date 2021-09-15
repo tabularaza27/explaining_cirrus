@@ -24,6 +24,8 @@ from src.preprocess.helpers.io_helpers import exists, save_file
 from src.preprocess.helpers.constants import R, g
 from src.preprocess.helpers.constants import MERRA_PRE_PROC_DIR, MERRA_REGRID_DIR, MERRA_REGRID_FILESTUMPY
 
+from src.scaffolding.scaffolding import get_data_product_dir, get_height_levels, get_config
+
 # pressure at top of atmosphere is fixed constant 0.01 hPa = 1 Pa
 PTOP = 1
 
@@ -31,12 +33,12 @@ PTOP = 1
 VARIABLES = ["DU00{}".format(i) for i in range(1, 6)]
 VARIABLES += ["SO4", "SO2"]
 
-HLEVS = pd.read_csv("/home/kjeggle/cirrus/src/config_files/height_levels.csv", index_col=0)
-TARGET_LEVEL_CENTER = HLEVS["lev"].dropna()
-TARGET_LEVEL_EDGE = HLEVS["lev_edge"]
+HLEVS = pd.read_csv("/home/kjeggle/cirrus/src/config_files/height_levels.csv", index_col=0) # todo make dynamic
+TARGET_LEVEL_CENTER = HLEVS["lev"].dropna() # todo
+TARGET_LEVEL_EDGE = HLEVS["lev_edge"] # todo
 
 
-def load_ds(date):
+def load_ds(date, config_id):
     """loads file for given date and adds first timestamp of next day (needed for the hourly upsampling)
 
     Args:
@@ -49,8 +51,8 @@ def load_ds(date):
         date_str)  # convert to pandas datetime first to be able to use strftime
     next_day_str = pd.to_datetime(str(next_day)).strftime(date_str)
 
-    day_ds = xr.open_dataset(os.path.join(MERRA_PRE_PROC_DIR, "all_merra2_date_{}.nc".format(day_str)))
-    next_day_ds = xr.open_dataset(os.path.join(MERRA_PRE_PROC_DIR, "all_merra2_date_{}.nc".format(next_day_str)))
+    day_ds = xr.open_dataset(os.path.join(get_data_product_dir(config_id,MERRA_PRE_PROC_DIR), "all_merra2_date_{}.nc".format(day_str)))
+    next_day_ds = xr.open_dataset(os.path.join(get_data_product_dir(config_id, MERRA_PRE_PROC_DIR), "all_merra2_date_{}.nc".format(next_day_str)))
 
     ds = xr.concat([day_ds, next_day_ds.isel(time=0)], dim="time")
 
@@ -130,12 +132,15 @@ def calc_vol_mixing_ratio(ds):
     return ds
 
 
-def vert_trafo(ds, linear=False):
+def vert_trafo(ds, altitude_min, altitude_max, layer_thickness, linear=False):
     """vertical coordinate transformation from model to height levels
     all variables are conservative for MERRA2
 
     Args:
-        ds:
+        ds (xr.Dataset): dataset with hybrid sigma pressure levels
+        altitude_min (int): minimum altitude of dataset after transformation
+        altitude_max (int): maximum altitude of dataset after transformation
+        layer_thickness (int): vertical resolution after transformation
         linear (bool): If True also transform linearly
 
     Returns:
@@ -143,6 +148,10 @@ def vert_trafo(ds, linear=False):
 
     Target Levels need to be in ascending order for conservative regrid (seems to be some bug in xgcm)
     """
+    target_level_center = get_height_levels(altitude_min, altitude_max, layer_thickness,
+                                            position="center")  # height levels for linear trafo on level center
+    target_level_edge = get_height_levels(altitude_min, altitude_max, layer_thickness,
+                                            position="center")  # height levels for conservative trafo on level edge
 
     ### create extensive variables ###
     for var in VARIABLES:
@@ -170,7 +179,7 @@ def vert_trafo(ds, linear=False):
         da = grid.transform(
             ds[var_name],
             'Z',
-            np.flip(TARGET_LEVEL_EDGE),
+            np.flip(target_level_edge),
             target_data=ds.hlev_edge,
             method="conservative",
         )
@@ -192,11 +201,11 @@ def vert_trafo(ds, linear=False):
     ### convert extensive variables to intensive variables again ###
 
     # (values /  thickness)
-    layer_thickness = 60
+    layer_thickness = 60 # todo make dynamic (same in era5)
     for var in VARIABLES:
         ext_var = "{}_ext".format(var)
 
-        ds_hlev[var] = ds_hlev[ext_var] / 60
+        ds_hlev[var] = ds_hlev[ext_var] / 60 # todo make dynamic
         ds_hlev[var].attrs.update({"units": "kg m**-3"})
 
     ### linear regridding - just for fun ###
@@ -205,7 +214,7 @@ def vert_trafo(ds, linear=False):
             da = grid.transform(
                 ds[var_name],
                 'Z',
-                np.flip(TARGET_LEVEL_CENTER),
+                np.flip(target_level_center),
                 target_data=ds.hlev_center,
             )
             # da = da.reindex(hlev_center=np.flip(da.hlev_center))
@@ -225,17 +234,24 @@ def temporal_upsampling(ds):
     return ds_hourly
 
 
-def run_preprocess_pipeline(date):
+def run_preprocess_pipeline(date, config_id):
     """run preprocessing pipeline for given day
 
     Args:
         date (numpy.datetime64):
+        config_id (str) config determines resolutions and location of load/save directories
     Returns:
         xr.Dataset: vertically regridded and to hourly upsampled dataset
 
     """
+
+    config = get_config(config_id)
+    altitude_min = config["altitude_min"]
+    altitude_max = config["altitude_max"]
+    layer_thickness = config["layer_thickness"]
+
     # load datases
-    ds = load_ds(date)
+    ds = load_ds(date, config_id)
     # checks for nans
     check_for_nans(ds)
     # calculate pressure levels
@@ -245,7 +261,7 @@ def run_preprocess_pipeline(date):
     # calculate volume mixing ratio
     ds = calc_vol_mixing_ratio(ds)
     # vertical regrid to height levels
-    ds_hlev = vert_trafo(ds)
+    ds_hlev = vert_trafo(ds, altitude_min, altitude_max, layer_thickness)
     # temporal upsampling to hourly data
     ds_hourly = temporal_upsampling(ds_hlev)
     # select only specified day (right now also 0 of following day is in dataset)
@@ -258,11 +274,13 @@ def run_preprocess_pipeline(date):
     return final_ds
 
 
-def run_and_save(date):
+# not used directly, since run_preprocessing_pipeline is called directly by merge.py
+def run_and_save(date, config_id):
     """run preprocessing pipeline for given day and save regridded file to disk
 
     Args:
         date (datetime.datetime):
+        config_id (str) config determines resolutions and location of load/save directories
 
     Returns:
 
@@ -270,12 +288,13 @@ def run_and_save(date):
     np_date = np.datetime64(date)
 
     print("start regridding for {}".format(date))
-    merra_regridded = run_preprocess_pipeline(np_date)
+    merra_regridded = run_preprocess_pipeline(np_date, config_id)
 
-    save_file(MERRA_REGRID_DIR, MERRA_REGRID_FILESTUMPY, merra_regridded, date, complevel=4)
+    save_file(get_data_product_dir(config_id, MERRA_REGRID_DIR), MERRA_REGRID_FILESTUMPY, merra_regridded, date, complevel=4)
     print("save file: {}".format(date))
 
 
+# not used directly, since run_preprocessing_pipeline is called directly by merge.py
 def run_parallel(n_workers=4, year=None):
     """run regridding process in parallel year or whole directory
 

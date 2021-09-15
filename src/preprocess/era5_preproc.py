@@ -16,19 +16,22 @@ import pandas as pd
 from src.preprocess.helpers.common_helpers import check_for_nans
 from src.preprocess.helpers.constants import R, g
 from src.preprocess.helpers.constants import ERA_PRE_PROC_DIR
+from src.scaffolding.scaffolding import get_data_product_dir, get_height_levels, get_config
 
-HLEVS = pd.read_csv("/home/kjeggle/cirrus/src/config_files/height_levels.csv", index_col=0)
-TARGET_LEVEL_CENTER = HLEVS["lev"].dropna()
+# HLEVS = pd.read_csv("/home/kjeggle/cirrus/src/config_files/height_levels.csv", index_col=0) # todo make dynamic
+# TARGET_LEVEL_CENTER = HLEVS["lev"].dropna()
 
 
-def load_ds(date):
+def load_ds(date, config_id):
     """loads file for given date and adds first timestamp of next day (needed for the hourly upsampling)
 
     Args:
         date (numpy.datetime64):
+        config_id (str) config determines of load directories
     """
     date_str = pd.to_datetime(str(date)).strftime("%Y_%m_%d")
-    path = "{}/all_era5_date_{}_time_*.nc".format(ERA_PRE_PROC_DIR, date_str)
+    era_pre_proc_dir = get_data_product_dir(config_id, ERA_PRE_PROC_DIR)
+    path = "{}/all_era5_date_{}_time_*.nc".format(era_pre_proc_dir, date_str)
     ds = xr.open_mfdataset(path)
     ds = ds.load()  # load from dask arrays into memory
 
@@ -135,7 +138,7 @@ def calc_e_sat_i(tk):
 
     return e_sat_w
 
-
+# todo double check
 def calc_rh_ice(rh_w, tk):
     """calculate relative humidity w.r.t. ice for given temp
 
@@ -187,12 +190,22 @@ def calc_trans_w(ds):
     return ds
 
 
-def vert_trafo(ds):
+def vert_trafo(ds, altitude_min, altitude_max, layer_thickness):
     """vertical coordinate transformation from model to pressure levels
 
     all variables are transformed linear
+
+    Args:
+        ds (xr.Dataset): dataset with hybrid sigma pressure levels
+        altitude_min (int): minimum altitude of dataset after transformation
+        altitude_max (int): maximum altitude of dataset after transformation
+        layer_thickness (int): vertical resolution after transformation
+
+    Returns:
+        xr.Dataset: dataset with geometric height as vertical coordinate
     """
 
+    target_level_center = get_height_levels(altitude_min, altitude_max, layer_thickness, position="center") # height levels for linear trafo on level center
     lin_vars = ["etadot", "t", "w","w_trans", "u", "v", "rh", "rh_ice","plev_center"]
 
     var_dict = dict()
@@ -208,7 +221,7 @@ def vert_trafo(ds):
         da = grid.transform(
             ds[var_name],
             'Z',
-            TARGET_LEVEL_CENTER,
+            target_level_center,
             target_data=ds.hlev_center,
             method="linear"
         )
@@ -232,21 +245,27 @@ def vert_trafo(ds):
     return ds_hlev
 
 
-def run_preprocess_pipeline(date):
-    """
+def run_preprocess_pipeline(date, config_id):
+    """run preprocess pipeline for one day
 
     Args:
         date (numpy.datetime64):
+        config_id (str) config determines resolutions and location of load/save directories
     Returns:
         xr.Dataset: vertically regridded dataset
 
     """
-    ds = load_ds(date)
+    config = get_config(config_id)
+    altitude_min = config["altitude_min"]
+    altitude_max = config["altitude_max"]
+    layer_thickness = config["layer_thickness"]
+
+    ds = load_ds(date, config_id)
     check_for_nans(ds)
     ds = calc_plevs(ds)
     ds = calc_trans_w(ds)
     ds = calc_hlevs(ds)
     ds["rh_ice"] = calc_rh_ice(ds.rh, ds.t)
-    ds_hlev = vert_trafo(ds)
+    ds_hlev = vert_trafo(ds, altitude_min, altitude_max, layer_thickness)
 
     return ds_hlev
