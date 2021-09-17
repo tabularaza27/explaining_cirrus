@@ -6,6 +6,8 @@ import xarray as xr
 
 from src.preprocess.helpers.constants import *
 
+# todo: docstrings
+
 def get_config(config_id):
     """returns dict of config"""
     with open(CONFIGS) as f:
@@ -50,6 +52,7 @@ def setup_config_directories(config_id):
             MERRA_PRE_PROC_DIR,
             MERRA_REGRID_DIR,
             ERA_PRE_PROC_DIR,
+            ERA_IM_DIR,
             DARDAR_GRIDDED_DIR,
             DATA_CUBE_PRE_PROC_DIR,
             DATA_CUBE_FILTERED_DIR,
