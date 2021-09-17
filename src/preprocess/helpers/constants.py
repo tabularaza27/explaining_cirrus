@@ -24,6 +24,7 @@ MERRA_CDO_SCRIPT_PATH = '/home/kjeggle/cirrus/src/preprocess/bash_scripts/merra_
 ERA_INCOMING_DIR = '/net/n2o/wolke_scratch/kjeggle/ERA5/ECMWF_incoming'
 ERA_CDO_SCRIPT_PATH = '/home/kjeggle/cirrus/src/preprocess/bash_scripts/era_preproc_single_file.sh'
 ERA_PRE_PROC_DIR = 'ERA5/preproc'
+ERA_IM_DIR = 'ERA5/intermediate'
 
 ## Dardar ##
 DARDAR_INCOMING_DIR = "/net/n2o/wolke_scratch/kjeggle/DARDAR_NICE/DARNI_L2_PRO.v1.10"
