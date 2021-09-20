@@ -82,6 +82,8 @@ def setup_config_directories(config_id):
 
     dirs = [CONFIG_FILE_DIR,
             MERRA_INCOMING_DIR,
+            MERRA_METEO_INCOMING_DIR,
+            MERRA_IM_DIR,
             MERRA_PRE_PROC_DIR,
             MERRA_REGRID_DIR,
             ERA_PRE_PROC_DIR,
