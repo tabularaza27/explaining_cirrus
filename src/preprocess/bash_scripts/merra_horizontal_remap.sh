@@ -55,4 +55,4 @@ cdo merge ${Intermediate_File_Directory}/remap_merra2_date_${d}.nc ${Intermediat
 
 # todo delete intermediate directories
 # 6. Delete intermediate files
- rm  ${Intermediate_File_Directory}/*_date_${d}_time_${t}.nc
+rm  ${Intermediate_File_Directory}/*_date_${d}_time_${t}.nc
