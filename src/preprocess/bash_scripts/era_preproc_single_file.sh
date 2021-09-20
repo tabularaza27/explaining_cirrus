@@ -13,7 +13,7 @@ config_id=$2
 # get directories for given config
 Preproc_File_Directory=`python -c "from src.scaffolding.scaffolding import get_data_product_dir; from src.preprocess.helpers.constants import ERA_PRE_PROC_DIR; dir=get_data_product_dir('${config_id}', ERA_PRE_PROC_DIR); print(dir)"`
 Intermediate_File_Directory=`python -c "from src.scaffolding.scaffolding import get_data_product_dir; from src.preprocess.helpers.constants import ERA_IM_DIR; dir=get_data_product_dir('${config_id}', ERA_IM_DIR); print(dir)"`
-Template_Path=`python -c "from src.scaffolding.scaffolding import get_data_product_dir; from src.preprocess.helpers.constants import TEMPLATE_PATH; dir=get_data_product_dir('${config_id}', TEMPLATE_PATH); print(dir)"`
+Template_Path=`python -c "from src.scaffolding.scaffolding import get_abs_file_path; from src.preprocess.helpers.constants import TEMPLATE_PATH; path=get_abs_file_path('${config_id}', TEMPLATE_PATH); print(path)"`
 Config_File_Path=`python -c "from src.preprocess.helpers.constants import CONFIGS; print(CONFIGS)"`
 
 # get horizontal extent from config file (configs.json) for given config_id
