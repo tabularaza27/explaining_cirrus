@@ -6,14 +6,21 @@
 # filepath needs to be specified as first positional cmd argument when calling this file
 filename=$1
 
-MIN_LON=-75
-MAX_LON=-15
-MIN_LAT=0
-MAX_LAT=60
+# config_id needs to be specified as second positional cmd argument when calling this file
+# config id specifies the horizontal resolution and directories
+config_id=$2
 
-Intermediate_File_Directory='/net/n2o/wolke_scratch/kjeggle/ERA5/intermediate'
-Preproc_File_Directory='/net/n2o/wolke_scratch/kjeggle/ERA5/preproc'
-Template_Path='/home/kjeggle/cirrus/src/config_files/template.nc'
+# get directories for given config
+Preproc_File_Directory=`python -c "from src.scaffolding.scaffolding import get_data_product_dir; from src.preprocess.helpers.constants import ERA_PRE_PROC_DIR; dir=get_data_product_dir('${config_id}', ERA_PRE_PROC_DIR); print(dir)"`
+Intermediate_File_Directory=`python -c "from src.scaffolding.scaffolding import get_data_product_dir; from src.preprocess.helpers.constants import ERA_IM_DIR; dir=get_data_product_dir('${config_id}', ERA_IM_DIR); print(dir)"`
+Template_Path=`python -c "from src.scaffolding.scaffolding import get_data_product_dir; from src.preprocess.helpers.constants import ERA_PRE_PROC_DIR; dir=get_data_product_dir('${config_id}', TEMPLATE_PATH); print(dir)"`
+Config_File_Path=`python -c "from src.preprocess.helpers.constants import CONFIGS; print(CONFIGS)"`
+
+# get horizontal extent from config file (configs.json) for given config_id
+MIN_LON=`jq -r ".${config_id}.lonmin" $CONFIGS`
+MAX_LON=`jq -r ".${config_id}.lonmax" $CONFIGS`
+MIN_LAT=`jq -r ".${config_id}.latmin" $CONFIGS`
+MAX_LAT=`jq -r ".${config_id}.latmax" $CONFIGS`
 
 d=`echo $filename | grep -E -o '[0-9]{4}_[0-9]{2}_[0-9]{2}'`
 t=`echo $filename | grep -E -o 'time_[0-9]{2}_[0-9]{2}_[0-9]{2}' | cut -f2- -d'_'`

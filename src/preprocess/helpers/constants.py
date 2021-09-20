@@ -10,6 +10,7 @@ g = 9.80665  # Standard gravity
 CONFIGS = "/home/kjeggle/cirrus/src/config_files/configs.json" # location of configs.json
 BASE_DIRECTORY = "/net/n2o/wolke_scratch/kjeggle/CIRRUS_PIPELINE" # base directory under which all config ids are saved
 CONFIG_FILE_DIR = "CONFIG_FILES" # dir where config files like template.nc for a specific config id are saved
+TEMPLATE_PATH="CONFIG_FILES/template.nc"
 
 ## Reanalysis ##
 
