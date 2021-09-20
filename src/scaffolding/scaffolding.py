@@ -111,8 +111,20 @@ def create_horizontal_template(config_id):
                            config["horizontal_resolution"])
     random_place_holder_values = np.random.rand(lon_values.shape[0], lat_values.shape[0])
 
+    # create dataset
     template = xr.Dataset(data_vars={"random": (("lat", "lon"), random_place_holder_values)},
                           coords={"lon": lon_values, "lat": lat_values})
+
+    # set attributes
+    template.lon.attrs = {'standard_name': 'longitude',
+                          'long_name': 'longitude',
+                          'units': 'degrees_east',
+                          'axis': 'X'}
+    template.lat.attrs = {'standard_name': 'latitude',
+                          'long_name': 'latitude',
+                          'units': 'degrees_north',
+                          'axis': 'Y'}
+
     template.to_netcdf(config_file_path)
 
     print("created and saved horizontal template file (template.nc) for config `{}`".format(config_id))
