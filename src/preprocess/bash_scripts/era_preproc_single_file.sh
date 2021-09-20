@@ -17,10 +17,10 @@ Template_Path=`python -c "from src.scaffolding.scaffolding import get_abs_file_p
 Config_File_Path=`python -c "from src.preprocess.helpers.constants import CONFIGS; print(CONFIGS)"`
 
 # get horizontal extent from config file (configs.json) for given config_id
-MIN_LON=`jq -r ".${config_id}.lonmin" $CONFIGS`
-MAX_LON=`jq -r ".${config_id}.lonmax" $CONFIGS`
-MIN_LAT=`jq -r ".${config_id}.latmin" $CONFIGS`
-MAX_LAT=`jq -r ".${config_id}.latmax" $CONFIGS`
+MIN_LON=`jq -r ".${config_id}.lonmin" $Config_File_Path`
+MAX_LON=`jq -r ".${config_id}.lonmax" $Config_File_Path`
+MIN_LAT=`jq -r ".${config_id}.latmin" $Config_File_Path`
+MAX_LAT=`jq -r ".${config_id}.latmax" $Config_File_Path`
 
 d=`echo $filename | grep -E -o '[0-9]{4}_[0-9]{2}_[0-9]{2}'`
 t=`echo $filename | grep -E -o 'time_[0-9]{2}_[0-9]{2}_[0-9]{2}' | cut -f2- -d'_'`
