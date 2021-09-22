@@ -136,7 +136,7 @@ class DardarNiceGrid:
                                        lonmin=self.lonmin,
                                        lonmax=self.lonmax,
                                        latmin=self.latmin,
-                                       latmax=self.lonmax,
+                                       latmax=self.latmax,
                                        hor_res=self.hor_res,
                                        altmin=self.altmin,
                                        altmax=self.altmax,
