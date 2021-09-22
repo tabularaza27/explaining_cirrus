@@ -588,7 +588,7 @@ def grid_one_day(date, config_id):
         return None
     logger.info("Start Gridding: {}".format(date))
     try:
-        dn = DardarNiceGrid(date, "day")
+        dn = DardarNiceGrid(date=date, config_id=config_id, time_range="day")
     except NoDataError as err:
         logger.info(err)
         print(err)
