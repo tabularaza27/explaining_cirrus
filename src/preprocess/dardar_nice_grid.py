@@ -18,6 +18,7 @@ from src.preprocess.helpers.io_helpers import save_file
 from src.preprocess.helpers.io_helpers import get_filepaths
 from src.preprocess.helpers.io_helpers import exists
 from src.preprocess.helpers.constants import DARDAR_INCOMING_DIR, DARDAR_GRIDDED_DIR
+from src.scaffolding.scaffolding import get_config, get_data_product_dir
 
 warnings.filterwarnings('ignore')  # because of zero/nan divide warnings
 
@@ -40,18 +41,18 @@ logger.addHandler(ch)
 
 # meta data for spatial resolution
 # horizontal
-LATMIN = 0  # 0
-LATMAX = 60  # 60
-LONMIN = -75  # -75
-LONMAX = -15  # -15
-HOR_RES = 0.25  # horizontal resolution [degree]
-TEMP_RES = "1H"  # temporal resolution in hours
-
-# vertical; vertical resolution is kept at 60m for now
-ALTMIN = 0
-ALTMAX = 25080
-ALTINTERVAL = 60
-ALTLEVELS = 419
+# LATMIN = 0  # 0
+# LATMAX = 60  # 60
+# LONMIN = -75  # -75
+# LONMAX = -15  # -15
+# HOR_RES = 0.25  # horizontal resolution [degree]
+# TEMP_RES = "1H"  # temporal resolution in hours
+#
+# # vertical; vertical resolution is kept at 60m for now
+# ALTMIN = 0
+# ALTMAX = 25080
+# ALTINTERVAL = 60
+# ALTLEVELS = 419
 
 CONT = "continuous"
 CAT = "categorical"
@@ -80,14 +81,33 @@ CAT_VAR_NAMES = [
     'instrument_flag'
 ]
 
-class DardarNiceGrid:
-    def __init__(self, date, time_range="day"):
-        """
 
+class DardarNiceGrid:
+    def __init__(self, date, config_id, time_range="day"):
+        """
         Args:
             date (datetime.datetime):
+            config_id (str): config determines resolutions and location of load/save directories
             time_range (str): day | month
         """
+        # get configuration file
+        self.config = get_config(config_id)
+
+        # define spatial/temporal extent and resolutions
+        # horizontal
+        self.latmin=self.config["latmin"]
+        self.latmax=self.config["latmax"]
+        self.lonmin=self.config["lonmin"]
+        self.lonmax=self.config["lonmax"]
+        self.hor_res=self.config["horizontal_resolution"] # horizontal resolution [degree]
+        self.temp_res=self.config["temporal_resolution"] # temporal resolution in hours
+
+        # vertical; vertical resolution is kept at 60m for now
+        self.altmin=self.config["altitude_min"]
+        self.altmax=self.config["altitude_max"]
+        self.layer_thickness=self.config["layer_thickness"]
+
+        # set start date and time range
         self.time_range = time_range
         self.start_date = date
 
@@ -99,20 +119,33 @@ class DardarNiceGrid:
             raise ValueError("Specify correct timerange. got {}".format(time_range))
 
         logger.info("Created Gridder with following specs {}".format(self.get_specs()))
-        self.l2_ds = load_files(date, self.time_range)
+        self.l2_ds = load_files(date=date, hor_res=self.hor_res, temp_res=self.temp_res, time_range=self.time_range)
         if self.l2_ds is None:
             raise NoDataError(
-                "No Level 2 data found in specified source dir {} for Gridder with specs: {}".format(DARDAR_INCOMING_DIR,
-                                                                                                     self.get_specs()))
+                "No Level 2 data found in specified source dir {} for Gridder with specs: {}".format(
+                    DARDAR_INCOMING_DIR,
+                    self.get_specs()))
         logger.info("loaded l2 files")
 
         self.l2_ds = remove_bad_quality_data(self.l2_ds)
         logger.info("removed bad quality retrievals")
 
-        self.l3_ds = create_empty_grid(start_date=str(self.start_date), end_date=str(self.end_date))
+        self.l3_ds = create_empty_grid(start_date=str(self.start_date),
+                                       end_date=str(self.end_date),
+                                       temp_res=self.temp_res,
+                                       lonmin=self.lonmin,
+                                       lonmax=self.lonmax,
+                                       latmin=self.latmin,
+                                       latmax=self.lonmax,
+                                       hor_res=self.hor_res,
+                                       altmin=self.altmin,
+                                       altmax=self.altmax,
+                                       layer_thickness=self.layer_thickness)
+
         logger.info("created empty grid")
 
         # get combinations of lat/lon/time  with observations
+        # todo filter for lats/lons of given domain before to reduce overhead
         (self.lats_all, self.lons_all, self.times_all), counts_all = np.unique(
             np.array([self.l2_ds.latr.values, self.l2_ds.lonr.values, self.l2_ds.timer.values]),
             axis=1, return_counts=True)
@@ -120,6 +153,7 @@ class DardarNiceGrid:
         self.lons_all = np.round(self.lons_all.astype('float64'), 4)
 
         # obervation has data if at least one vertical level contains iwc>0
+        # todo refactor datamask
         iwc = self.l2_ds["iwc"].values
         vertical_sum = np.nansum(iwc, 1)
         data_mask = vertical_sum > 0
@@ -139,9 +173,11 @@ class DardarNiceGrid:
 
     def get_specs(self):
         """returns string with specifications of this gridder"""
-        specs_string = "Start Date:{}  End Date: {} Time Range: {} ".format(self.start_date,
-                                                                            self.end_date,
-                                                                            self.time_range)
+        specs_string = "Start Date:{}  End Date: {} Time Range: {} \n" \
+                       "Config: {} ".format(self.start_date,
+                                            self.end_date,
+                                            self.time_range,
+                                            self.config)
         return specs_string
 
     def prep_l3(self):
@@ -162,7 +198,7 @@ class DardarNiceGrid:
                 # not from today
                 continue
 
-            if (lat < LATMIN) | (lat >= LATMAX) | (lon < LONMIN) | (lon >= LONMAX):
+            if (lat < self.latmin) | (lat >= self.latmax) | (lon < self.lonmin) | (lon >= self.lonmax):
                 # logger.info("out of area")
                 continue
 
@@ -220,7 +256,7 @@ class DardarNiceGrid:
                 # not from today
                 continue
 
-            if (lat < LATMIN) | (lat >= LATMAX) | (lon < LONMIN) | (lon >= LONMAX):
+            if (lat < self.latmin) | (lat >= self.latmax) | (lon < self.lonmin) | (lon >= self.lonmax):
                 # logger.info("out of area")
                 continue
 
@@ -249,9 +285,9 @@ class DardarNiceGrid:
         for var_name in self.l3_ds:
             dims = len(self.l3_ds[var_name].dims)
             if var_name == "cloud_cover":
-                obs = get_observations(self.l2_ds, "iwc", 4, data_vector_idxs)
+                obs = get_observations(self.l2_ds, "iwc", 4, data_vector_idxs) # todo cloudmask
                 nobs = obs.shape[0]
-                iwc_obs = np.count_nonzero(obs, axis=0)  # observations with iwc >=0
+                iwc_obs = np.count_nonzero(obs, axis=0)  # observations with iwc >=0 # todo cloudmask
                 agg = iwc_obs / nobs
             else:
                 agg = self.calc_in_cloud_agg(var_name, data_vector_idxs, in_cloud_mask)
@@ -325,47 +361,49 @@ class NoDataError(Exception):
 
 def create_empty_grid(start_date,
                       end_date,
-                      freq=TEMP_RES,
-                      lonmin=LONMIN,
-                      lonmax=LONMAX,
-                      latmin=LATMIN,
-                      latmax=LATMAX,
-                      hor_res=HOR_RES,
-                      altmin=ALTMIN,
-                      altmax=ALTMAX,
-                      alt_res=ALTINTERVAL,
+                      temp_res,
+                      lonmin,
+                      lonmax,
+                      latmin,
+                      latmax,
+                      hor_res,
+                      altmin,
+                      altmax,
+                      layer_thickness
                       ):
     """create empty grid for l3 dataset
 
     Args:
-        start_date:
-        end_date:
-        freq:
-        lonmin:
-        lonmax:
-        latmin:
-        latmax:
-        hor_res:
-        altmin:
-        altmax:
-        alt_res:
+        start_date (str or cf.datetime):
+        end_date (str or cf.datetime):
+        temp_res (str): e.g. 1H for hourly
+        lonmin (int):
+        lonmax (int):
+        latmin (int):
+        latmax (int):
+        hor_res (float): horizontal resolutin in degrees
+        altmin (int):
+        altmax (int):
+        layer_thickness (int): thickness of atmospheric layer
 
     Returns:
 
     """
-    # load dardar nice L3 dataset to copy the coordinate attributes
-    dardar_l3_files = glob.glob(os.path.join(ROOT_DIR, 'wolke_scratch/kjeggle/DARDAR_NICE/L3/2006/*'))
-    dar_nice = xr.open_dataset(dardar_l3_files[3])
-
-    timegr = xr.cftime_range(start=start_date, end=end_date, freq=freq, closed="left")  # closed to the left 00 - 23
+    timegr = xr.cftime_range(start=start_date, end=end_date, freq=temp_res, closed="left")  # closed to the left 00 - 23
     latgr = np.round(np.arange(latmin, latmax, hor_res), 4)  # need to round for float errors
     longr = np.round(np.arange(lonmin, lonmax, hor_res), 4)
-    altgr = np.flip(np.arange(altmin, altmax + alt_res, alt_res))  # highest hight at index 0
+    altgr = np.flip(np.arange(altmin, altmax + layer_thickness, layer_thickness))  # highest hight at index 0
 
     ds = xr.Dataset(
         coords=dict(
-            lon=(["lon"], longr, dar_nice.lon.attrs.copy()),
-            lat=(["lat"], latgr, dar_nice.lat.attrs.copy()),
+            lon=(["lon"], longr, {'units': 'degree_east',
+                                  'standard_name': 'longitude',
+                                  'valid_range': [-180.,  180.],
+                                  'axis': 'X'}),
+            lat=(["lat"], latgr, {'units': 'degree_north',
+                                  'standard_name': 'latitude',
+                                  'valid_range': [-90.,  90.],
+                                  'axis': 'Y'}),
             lev=(["lev"], altgr, {"units": "m", "axis": "Z", "long_name": "Altitude Level"}),
             time=(["time"], timegr, {"axis": "T", "long_name": "time"})
         )
@@ -418,17 +456,19 @@ def preprocess(ds):
     return ds
 
 
-def load_files(date, time_range="day"):
+def load_files(date, hor_res, temp_res, time_range="day"):
     """loads l2 files of dardar nice dataset for given date
 
     Args:
         date (datetime.datetime):
+        hor_res (float): horizontal resolution in degrees
+        temp_res (str): e.g. 1H for hourly
         time_range (str): day|month. If month, then load all files for the month. date is still specified as "%Y_%m_%d"
 
     Returns:
 
     """
-    files = get_filepaths(date, DARDAR_INCOMING_DIR, file_format="nc", time_range=time_range)
+    files = get_filepaths(date, DARDAR_INCOMING_DIR, file_format="nc", time_range=time_range)  # todo replace global
 
     if files is None:
         return None
@@ -437,9 +477,11 @@ def load_files(date, time_range="day"):
     ds = xr.open_mfdataset(files, preprocess=preprocess, concat_dim="time")
 
     # create data variables with rounded lat/lon/time
-    ds = ds.assign(latr=lambda x: np.round((np.round(x.lat * (1 / HOR_RES)) * HOR_RES).astype('float64'), 4))
-    ds = ds.assign(lonr=lambda x: np.round((np.round(x.lon * (1 / HOR_RES)) * HOR_RES).astype('float64'), 4))
-    ds = ds.assign(timer=ds.time.dt.round(TEMP_RES))
+    ds = ds.assign(latr=lambda x: np.round((np.round(x.lat * (1 / hor_res)) * hor_res).astype('float64'),
+                                           4))
+    ds = ds.assign(lonr=lambda x: np.round((np.round(x.lon * (1 / hor_res)) * hor_res).astype('float64'),
+                                           4))
+    ds = ds.assign(timer=ds.time.dt.round(temp_res))
 
     # convert timer to std datetime, so it can be used in np.unique
     # a bit over complicated, but havent found better way so far
@@ -515,6 +557,8 @@ def get_observations(l2_ds, var_name, var_dims, data_vector_idxs):
 def get_in_cloud_mask(l2_ds, data_vector_idxs):
     """returns vector that has all values masked that are 0.
 
+    # todo use correct cloud mask
+
     True for masked values"""
 
     obs = get_observations(l2_ds, "iwc", 4, data_vector_idxs)
@@ -525,17 +569,21 @@ def get_in_cloud_mask(l2_ds, data_vector_idxs):
 
 ### run gridding ###
 
-def grid_one_day(date):
+def grid_one_day(date, config_id):
     """runs gridding process for DARDAR NICE L2 data for 1 day
+
+    # todo consider case where temporal resolution is larger then 1 day
 
     Args:
         date (datetime.datetime):
+        config_id (str) config determines resolutions and location of load/save directories
 
     Returns:
         None if file doesnt exist or gridded file already exists. True if successfully gridded
 
     """
-    if exists(date, "dardar_nice", TARGET_DIR):
+    target_dir = get_data_product_dir(config_id, DARDAR_GRIDDED_DIR)
+    if exists(date, "dardar_nice", target_dir):
         logger.info("File already exists for: {}".format(date))
         return None
     logger.info("Start Gridding: {}".format(date))
@@ -545,31 +593,32 @@ def grid_one_day(date):
         logger.info(err)
         print(err)
     dn.aggregate()
-    save_file(TARGET_DIR, "dardar_nice", dn.l3_ds, date=date)
+    save_file(target_dir, "dardar_nice", dn.l3_ds, date=date)
     logger.info("saved file")
     gc.collect()  # garbage collection
     return True
 
 
-def run_gridding(start_date, end_date, n_workers=10):
+def run_gridding(start_date, end_date, config_id, n_workers=10):
     """runs gridding process for DARDAR CLOUD L2 data for given time period in parallel, starts one gridding process
     per day
 
     Args:
         start_date (str): YYYY-mm-dd
         end_date (str): YYYY-mm-dd
+        config_id (str) config determines resolutions and location of load/save directories
         n_workers (int): nuber of cpus to use for gridding
 
     """
-
+    # todo check if config_id is valid
     pool = mp.Pool(n_workers)
-    logger.info("{} {} {} {}".format(hostname, ROOT_DIR, DARDAR_INCOMING_DIR, TARGET_DIR))
-    logger.info("++++++++++++++ Start new gridding process with {} workers ++++++++++++++".format(n_workers))
-    logger.info("gridding period: {} - {}".format(start_date, end_date))
+    logger.info("++++++++++++++ Start new gridding process for config {} with {} workers ++++++++++++++".format(config_id, n_workers))
+    logger.info("gridding period: {} "
+                "- {}".format(start_date, end_date))
     daterange = pd.date_range(start=start_date, end=end_date)
     for date in daterange:
         date = date.to_pydatetime()
-        pool.apply_async(grid_one_day, args=(date,))
+        pool.apply_async(grid_one_day, args=(date, config_id,))
     pool.close()
     pool.join()
 
@@ -577,8 +626,7 @@ def run_gridding(start_date, end_date, n_workers=10):
 if __name__ == "__main__":
     # todo make user friendly
     if len(sys.argv) == 4:
-        run_gridding(start_date=sys.argv[1], end_date=sys.argv[2], n_workers=int(sys.argv[3]))
-    elif len(sys.argv) == 3:
-        run_gridding(start_date=sys.argv[1], end_date=sys.argv[2])
+        run_gridding(start_date=sys.argv[1], end_date=sys.argv[2], config_id=sys.argv[3], n_workers=int(sys.argv[4]))
     else:
-        raise ValueError("Provide valid arguments. E.g.: python dardar_nice_grid '2016-01-01' '2016-01-31' <#workers>")
+        raise ValueError("Provide valid arguments. E.g.: python dardar_nice_grid '2016-01-01' '2016-01-31' "
+                         "<config_id> <#workers>")
