@@ -7,17 +7,12 @@ import sys
 import glob
 import multiprocessing as mp
 
-import src.preprocess import merra2_preproc
-import src.preprocess import era5_preproc
+from src.preprocess import merra2_preproc
+from src.preprocess import era5_preproc
+from src.scaffolding.scaffolding import get_data_product_dir, get_config
 from src.preprocess.helpers.io_helpers import exists, save_file
 from src.preprocess.helpers.constants import DARDAR_GRIDDED_DIR, DATA_CUBE_PRE_PROC_DIR, DATA_CUBE_PRE_PROC_FILESTUMPY
 
-MIN_LON = -75
-MAX_LON = -15.25
-MIN_LAT = 0
-MAX_LAT = 59.75
-MIN_LEV = 1020
-MAX_LEV = 20040
 
 def get_file_paths(dates, source_dir, date_str="%Y_%m_%d", file_format="nc"):
     """get filepaths for given date
@@ -97,26 +92,31 @@ def create_dardar_masks(ds):
     return ds
 
 
-def crop_ds(ds, min_date, max_date, min_lon=MIN_LON, max_lon=MAX_LON, min_lat=MIN_LAT, max_lat=MAX_LAT, min_lev=MIN_LEV,
-            max_lev=MAX_LEV):
+def crop_ds(ds, min_date, max_date, config_id):
     """crops dataset to given dimensions
 
     Args:
-        ds:
-        min_date:
-        max_date:
-        min_lon:
-        max_lon:
-        min_lat:
-        max_lat:
-        min_lev:
-        max_lev:
+        ds (xr.Dataset): dataset to crop
+        min_date (str): format 2008-06-24T21:00:00
+        max_date (str): format 2008-06-24T21:00:00
+        config_id (str) config determines resolutions and location of load/save directories
 
     Returns:
 
     """
-    ds = ds.sel(time=slice(min_date, max_date), lon=slice(min_lon, max_lon), lat=slice(min_lat, max_lat),
-                lev=slice(max_lev, min_lev))
+
+    # get config info
+    config = get_config(config_id)
+
+    latmin = config["latmin"]
+    latmax = config["latmax"]
+    lonmin = config["lonmin"]
+    lonmax = config["lonmax"]
+    altmin = config["altitude_min"]
+    altmax = config["altitude_max"]
+
+    ds = ds.sel(time=slice(min_date, max_date), lon=slice(lonmin, lonmax), lat=slice(latmin, latmax),
+                lev=slice(altmax, altmin))
     return ds
 
 
@@ -134,23 +134,26 @@ def check_dimensions(dardar, era, merra):
                 "Dimension {} has different lengths and potentially different contents for datasets".format(dim))
 
 
-def merge_one_day(date):
+def merge_one_day(date, config_id):
     """merge data sources for given date
 
     Args:
         date:
+        config_id (str) config determines resolutions and location of load/save directories
 
     Returns:
 
     """
-    print("Start merging for", str(date))
+    print("Start merging for {}; config: {}".format(str(date), config_id))
+
     # datestrings
     min_date_str = str(date)
     max_date_str = str(date + datetime.timedelta(hours=23))
     np_dt = np.datetime64(date)  # numpy date time
 
     # load dardar data for given data + next day ( for vicinity mask )
-    paths = get_file_paths([date, date + datetime.timedelta(days=1)], DARDAR_GRIDDED_DIR)
+    paths = get_file_paths([date, date + datetime.timedelta(days=1)],
+                           get_data_product_dir(config_id, DARDAR_GRIDDED_DIR))
     dardar_ds = xr.open_mfdataset(paths, concat_dim="time")
     dardar_ds = dardar_ds.transpose("time", "lev", "lat", "lon")
     print("loaded dardar data")
@@ -160,17 +163,17 @@ def merge_one_day(date):
     print("created masks on dardar data")
 
     # crop dardar dataset
-    dardar_ds = crop_ds(dardar_ds, min_date_str, max_date_str)
+    dardar_ds = crop_ds(ds=dardar_ds, min_date=min_date_str, max_date=max_date_str, config_id=config_id)
     print("cropped dardar data")
 
     # retrieve and transform reanalysis data online
-    era = era5_preproc.run_preprocess_pipeline(np_dt)
+    era = era5_preproc.run_preprocess_pipeline(date=np_dt, config_id=config_id)
     print("loaded  and transformed era data")
-    era = crop_ds(era, min_date_str, max_date_str)
+    era = crop_ds(era, min_date_str, max_date_str, config_id)
     print("cropped era data")
-    merra = merra2_preproc.run_preprocess_pipeline(np_dt)
+    merra = merra2_preproc.run_preprocess_pipeline(np_dt, config_id)
     print("loaded  and transformed merra data")
-    merra = crop_ds(merra, min_date_str, max_date_str)
+    merra = crop_ds(merra, min_date_str, max_date_str, config_id)
     print("cropped merra data")
 
     # add observation vicinity mask
@@ -191,30 +194,33 @@ def merge_one_day(date):
     return merged  # , dardar_ds, era_reduced, merra_reduced
 
 
-def merge_and_save(date):
+def merge_and_save(date, config_id):
     """merges and saves for one day
 
     Args:
         date (datetime.datetime):
+        config_id (str) config determines resolutions and location of load/save directories
 
     Returns:
 
     """
     # run merging
-    merged = merge_one_day(date)
+    merged = merge_one_day(date, config_id)
 
     # load into memory
     # amerged = merged.load()
     # print("loaded into memory")
 
-    save_file(DATA_CUBE_PRE_PROC_DIR, DATA_CUBE_PRE_PROC_FILESTUMPY, merged, date, complevel=4)
+    save_file(get_data_product_dir(config_id, DATA_CUBE_PRE_PROC_DIR), DATA_CUBE_PRE_PROC_FILESTUMPY, merged, date,
+              complevel=4)
     print("saved file")
 
 
-def run_merging(n_workers=4,year=None):
+def run_merging(config_id, n_workers=4, year=None):
     """run merging process in parallel
 
     Args:
+        config_id (str) config determines resolutions and location of load/save directories
         n_workers:
         year (int): if none run for all available dardar files
 
@@ -222,13 +228,15 @@ def run_merging(n_workers=4,year=None):
     """
     pool = mp.Pool(n_workers)
 
+    dardar_gridded_dir = get_data_product_dir(config_id, DARDAR_GRIDDED_DIR)
+    data_cube_preproc_dir = get_data_product_dir(config_id, DATA_CUBE_PRE_PROC_DIR)
+
     if year:
         print("run merging for {}".format(year))
-        files = glob.glob("{}/*{}*.nc".format(DARDAR_GRIDDED_DIR, year))
+        files = glob.glob("{}/*{}*.nc".format(dardar_gridded_dir, year))
     else:
         print("run merging for all available dardar data")
-        files = glob.glob("{}/*.nc".format(DARDAR_GRIDDED_DIR))
-
+        files = glob.glob("{}/*.nc".format(dardar_gridded_dir))
 
     for file in files:
         # extract date string from file
@@ -236,23 +244,23 @@ def run_merging(n_workers=4,year=None):
         date = datetime.datetime.strptime(date_str, "%Y_%m_%d")
 
         # check if file already exists
-        if exists(date, DATA_CUBE_PRE_PROC_FILESTUMPY, DATA_CUBE_PRE_PROC_DIR):
+        if exists(date, DATA_CUBE_PRE_PROC_FILESTUMPY, data_cube_preproc_dir):
             print("File already exists for: {}".format(date))
             continue
 
-
-        pool.apply_async(merge_and_save, args=(date,))
+        pool.apply_async(merge_and_save, args=(date, config_id,))
 
     pool.close()
     pool.join()
 
 
 if __name__ == "__main__":
+    if len(sys.argv) == 4:
+        run_merging(config_id=sys.argv[1], n_workers=int(sys.argv[2]), year=int(sys.argv[3]))
     if len(sys.argv) == 3:
-        run_merging(n_workers=int(sys.argv[1]),year=int(sys.argv[2]))
-    if len(sys.argv) == 2:
-        run_merging(n_workers=int(sys.argv[1]))
-    elif len(sys.argv) == 1:
-        run_merging()
+        run_merging(config_id=sys.argv[1], n_workers=int(sys.argv[2]))
+    elif len(sys.argv) == 2:
+        run_merging(config_id=sys.argv[1])
     else:
-        raise ValueError("Provide valid arguments. E.g.: python merge.py <#workers> or python merge.py <#workers> <year>")
+        raise ValueError(
+            "Provide valid arguments. E.g.: python merge.py <config_id> <#workers> or python merge.py <config_id> <#workers> <year>")

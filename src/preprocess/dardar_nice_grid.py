@@ -39,6 +39,7 @@ ch.setFormatter(formatter)
 logger.addHandler(fh)
 logger.addHandler(ch)
 
+# todo clean up
 # meta data for spatial resolution
 # horizontal
 # LATMIN = 0  # 0
