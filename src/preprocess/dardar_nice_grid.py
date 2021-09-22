@@ -95,17 +95,17 @@ class DardarNiceGrid:
 
         # define spatial/temporal extent and resolutions
         # horizontal
-        self.latmin=self.config["latmin"]
-        self.latmax=self.config["latmax"]
-        self.lonmin=self.config["lonmin"]
-        self.lonmax=self.config["lonmax"]
-        self.hor_res=self.config["horizontal_resolution"] # horizontal resolution [degree]
-        self.temp_res=self.config["temporal_resolution"] # temporal resolution in hours
+        self.latmin = self.config["latmin"]
+        self.latmax = self.config["latmax"]
+        self.lonmin = self.config["lonmin"]
+        self.lonmax = self.config["lonmax"]
+        self.hor_res = self.config["horizontal_resolution"]  # horizontal resolution [degree]
+        self.temp_res = self.config["temporal_resolution"]  # temporal resolution in hours
 
         # vertical; vertical resolution is kept at 60m for now
-        self.altmin=self.config["altitude_min"]
-        self.altmax=self.config["altitude_max"]
-        self.layer_thickness=self.config["layer_thickness"]
+        self.altmin = self.config["altitude_min"]
+        self.altmax = self.config["altitude_max"]
+        self.layer_thickness = self.config["layer_thickness"]
 
         # set start date and time range
         self.time_range = time_range
@@ -129,6 +129,10 @@ class DardarNiceGrid:
 
         self.l2_ds = remove_bad_quality_data(self.l2_ds)
         logger.info("removed bad quality retrievals")
+
+        # filter l2 dataset for given height levels
+        # todo also filter for lon / lats, but not straight forward cause not dimension of the dataset
+        self.l2_ds = self.l2_ds.sel(height=slice(self.altmax, self.altmin))
 
         self.l3_ds = create_empty_grid(start_date=str(self.start_date),
                                        end_date=str(self.end_date),
@@ -285,7 +289,7 @@ class DardarNiceGrid:
         for var_name in self.l3_ds:
             dims = len(self.l3_ds[var_name].dims)
             if var_name == "cloud_cover":
-                obs = get_observations(self.l2_ds, "iwc", 4, data_vector_idxs) # todo cloudmask
+                obs = get_observations(self.l2_ds, "iwc", 4, data_vector_idxs)  # todo cloudmask
                 nobs = obs.shape[0]
                 iwc_obs = np.count_nonzero(obs, axis=0)  # observations with iwc >=0 # todo cloudmask
                 agg = iwc_obs / nobs
@@ -398,11 +402,11 @@ def create_empty_grid(start_date,
         coords=dict(
             lon=(["lon"], longr, {'units': 'degree_east',
                                   'standard_name': 'longitude',
-                                  'valid_range': [-180.,  180.],
+                                  'valid_range': [-180., 180.],
                                   'axis': 'X'}),
             lat=(["lat"], latgr, {'units': 'degree_north',
                                   'standard_name': 'latitude',
-                                  'valid_range': [-90.,  90.],
+                                  'valid_range': [-90., 90.],
                                   'axis': 'Y'}),
             lev=(["lev"], altgr, {"units": "m", "axis": "Z", "long_name": "Altitude Level"}),
             time=(["time"], timegr, {"axis": "T", "long_name": "time"})
@@ -612,7 +616,9 @@ def run_gridding(start_date, end_date, config_id, n_workers=10):
     """
     # todo check if config_id is valid
     pool = mp.Pool(n_workers)
-    logger.info("++++++++++++++ Start new gridding process for config {} with {} workers ++++++++++++++".format(config_id, n_workers))
+    logger.info(
+        "++++++++++++++ Start new gridding process for config {} with {} workers ++++++++++++++".format(config_id,
+                                                                                                        n_workers))
     logger.info("gridding period: {} "
                 "- {}".format(start_date, end_date))
     daterange = pd.date_range(start=start_date, end=end_date)
