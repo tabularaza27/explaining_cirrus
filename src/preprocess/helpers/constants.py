@@ -16,7 +16,7 @@ TEMPLATE_PATH="CONFIG_FILES/template.nc"
 
 # Merra
 MERRA_INCOMING_DIR = 'MERRA2/incoming'
-MERRA_METEO_INCOMING_DIR = 'MERRA2/meteo_incoming/' # todo simplify path to MERRA2/meteo_incoming
+MERRA_METEO_INCOMING_DIR = 'MERRA2/meteo_incoming/'
 MERRA_IM_DIR = 'MERRA2/intermediate'
 MERRA_PRE_PROC_DIR = "MERRA2/preproc"
 MERRA_REGRID_DIR = "MERRA2/regrid"

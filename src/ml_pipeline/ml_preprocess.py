@@ -8,9 +8,9 @@ from src.preprocess.helpers.constants import DATA_ONLY_DF_FILESTUMPY, OBSERVATIO
 
 CAT_VARS = ["season","lat_region","IC_CIR","clm_v2",'nightday_flag','land_water_mask','instrument_flag']
 LOG_TRANS_VARS = ['DU',"SO4","SO2", 'DU001','DU002','DU003','DU004','DU005']
-BASE_PREDICTORS = [ 't', 'w', 'u', 'v', 'rh_ice','SO4','season','lat_region','dz_top',"IC_CIR",] # DU, clm_v2
+BASE_PREDICTORS = [ 't', 'w', 'u', 'v', 'rh_ice','SO4','season','lat_region','dz_top',"IC_CIR"] # DU, clm_v2
 
-# other predictor variables: 'DU001','DU002','DU003','DU004','DU005','DU','clm_v2', 'nightday_flag','land_water_mask','instrument_flag'
+# other predictor variables: 'DU001','DU002','DU003','DU004','DU005','DU','clm_v2', 'nightday_flag','land_water_mask','instrument_flag', 'layer_index'
 
 def load_feature_engineered_df(df_type, year):
     """load dataframe with engineered features

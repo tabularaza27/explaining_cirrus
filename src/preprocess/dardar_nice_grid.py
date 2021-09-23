@@ -3,8 +3,6 @@ import pandas as pd
 import xarray as xr
 import datetime
 import cis
-import os
-import glob
 import gc
 import logging
 import sys
@@ -13,7 +11,6 @@ from copy import deepcopy
 from cis import time_util
 from dateutil.relativedelta import relativedelta
 import warnings
-import socket
 from src.preprocess.helpers.io_helpers import save_file
 from src.preprocess.helpers.io_helpers import get_filepaths
 from src.preprocess.helpers.io_helpers import exists
@@ -40,21 +37,6 @@ logger.addHandler(fh)
 logger.addHandler(ch)
 
 # todo clean up
-# meta data for spatial resolution
-# horizontal
-# LATMIN = 0  # 0
-# LATMAX = 60  # 60
-# LONMIN = -75  # -75
-# LONMAX = -15  # -15
-# HOR_RES = 0.25  # horizontal resolution [degree]
-# TEMP_RES = "1H"  # temporal resolution in hours
-#
-# # vertical; vertical resolution is kept at 60m for now
-# ALTMIN = 0
-# ALTMAX = 25080
-# ALTINTERVAL = 60
-# ALTLEVELS = 419
-
 CONT = "continuous"
 CAT = "categorical"
 
@@ -79,7 +61,8 @@ CAT_VAR_NAMES = [
     'clm_v2',
     'nightday_flag',
     'mixedphase_flag',
-    'instrument_flag'
+    'instrument_flag',
+    'layer_index'
 ]
 
 
@@ -307,6 +290,8 @@ class DardarNiceGrid:
         """
 
         Args:
+            var_name (str)
+            data_vector_idxs (np.array): array with True/False values indicating which values to return. shape: (n_obs, )
             in_cloud_mask (np.ndarray): only needed for continuous 3d
         """
         dims = len(self.l3_ds[var_name].dims)

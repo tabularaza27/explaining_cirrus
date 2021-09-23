@@ -53,6 +53,5 @@ cdo remapcon,$Template_Path $filename ${Intermediate_File_Directory}/remap_merra
 # 3. Join aerosol data with temperature data
 cdo merge ${Intermediate_File_Directory}/remap_merra2_date_${d}.nc ${Intermediate_File_Directory}/remap_meteo_merra2_date_${d}.nc $FINAL_FILE
 
-# todo delete intermediate directories
 # 6. Delete intermediate files
 rm  ${Intermediate_File_Directory}/*_date_${d}_time_${t}.nc
