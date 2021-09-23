@@ -48,7 +48,8 @@ def create_dardar_masks(ds):
 
     """
     # observations mask
-    obs = ds.iwc.sum(dim="lev", skipna=True, min_count=400).persist()  # grid points without observations are set to nan
+    min_count = int(ds.dims["lev"] * 0.9) # at least 90% of vertical profile need to be not nan to be considered an observation
+    obs = ds.iwc.sum(dim="lev", skipna=True, min_count=min_count).persist()  # grid points without observations are set to nan
     observation_mask = np.isfinite(obs)
 
     # add mask as coordniate, so I can easily apply `where()`
@@ -58,6 +59,7 @@ def create_dardar_masks(ds):
          })
 
     # data mask
+    # todo update datamask
     data_mask = obs > 0
     ds.coords["data_mask"] = (("time", "lat", "lon"), data_mask)
     ds.observation_mask.attrs.update({
