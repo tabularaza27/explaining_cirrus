@@ -205,6 +205,12 @@ def merge_and_save(date, config_id):
     Returns:
 
     """
+    # check if file already exists
+    data_cube_preproc_dir = get_data_product_dir(config_id, DATA_CUBE_PRE_PROC_DIR)
+    if exists(date, DATA_CUBE_PRE_PROC_FILESTUMPY, data_cube_preproc_dir):
+        print("File already exists for: {}".format(date))
+        return
+
     # run merging
     merged = merge_one_day(date, config_id)
 
