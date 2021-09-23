@@ -152,7 +152,7 @@ def vert_trafo(ds, altitude_min, altitude_max, layer_thickness, linear=False):
     target_level_center = get_height_levels(altitude_min, altitude_max, layer_thickness,
                                             position="center")  # height levels for linear trafo on level center
     target_level_edge = get_height_levels(altitude_min, altitude_max, layer_thickness,
-                                            position="center")  # height levels for conservative trafo on level edge
+                                            position="edge")  # height levels for conservative trafo on level edge
 
     ### create extensive variables ###
     for var in VARIABLES:
