@@ -110,10 +110,11 @@ def crop_ds(ds, min_date, max_date, config_id):
     latmax = config["latmax"]
     lonmin = config["lonmin"]
     lonmax = config["lonmax"]
+    hor_res = config["horizontal_resolution"]
     altmin = config["altitude_min"]
     altmax = config["altitude_max"]
 
-    ds = ds.sel(time=slice(min_date, max_date), lon=slice(lonmin, lonmax), lat=slice(latmin, latmax),
+    ds = ds.sel(time=slice(min_date, max_date), lon=slice(lonmin, lonmax - hor_res), lat=slice(latmin, latmax - hor_res),
                 lev=slice(altmax, altmin))
     return ds
 
