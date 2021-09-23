@@ -11,6 +11,18 @@
     "altitude_max": 20040,
     "layer_thickness": 60
   },
+  "north_atlantic_one_degree": {
+    "config_id": "north_atlantic_high_res",
+    "latmin": 0,
+    "latmax": 60,
+    "lonmin": -75,
+    "lonmax": -15,
+    "horizontal_resolution": 1,
+    "temporal_resolution": "1H",
+    "altitude_min": 1020,
+    "altitude_max": 20040,
+    "layer_thickness": 60
+  },
   "larger_domain_high_res": {
     "config_id": "larger_domain_high_res",
     "latmin": 0,
