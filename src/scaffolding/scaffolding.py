@@ -163,11 +163,11 @@ def get_height_levels(min_level, max_level, layer_thickness, position="center"):
 
     """
     if position == "center":
-        hlevs = np.arange(min_level, max_level, layer_thickness)
+        hlevs = np.arange(min_level, max_level + layer_thickness, layer_thickness)
     elif position == "edge":
         lower_edge = min_level - layer_thickness / 2
         upper_edge = max_level + layer_thickness / 2
-        hlevs = np.arange(lower_edge, upper_edge, layer_thickness)
+        hlevs = np.arange(lower_edge, upper_edge + layer_thickness, layer_thickness)
     else:
         raise ValueError("position needs to be center or edge, got {}".format(position))
 
