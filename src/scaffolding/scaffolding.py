@@ -185,13 +185,43 @@ def scaffolding(config_id):
     * template.nc
     * create directories
     """
+
+    verify_config(config_id)
     setup_config_directories(config_id)
     create_horizontal_template(config_id)
 
 
 # todo
 def verify_config(config_id):
-    """verifies config"""
+    """verifies config
+
+    # todo verify value ranges for each key
+    """
+    try:
+        config = get_config(config_id)
+    except KeyError:
+        print("config_id {} not defined in configs.json".format(config_id))
+        raise
+
+    required_keys = ['config_id',
+                     'latmin',
+                     'latmax',
+                     'lonmin',
+                     'lonmax',
+                     'horizontal_resolution',
+                     'temporal_resolution',
+                     'altitude_min',
+                     'altitude_max',
+                     'layer_thickness']
+
+    for k in required_keys:
+        if k not in config.keys():
+            raise ValueError(
+                "{} is not defined for config_id {} in configs.json \n following keys need to be specified {}".format(k,
+                                                                                                                      config_id,
+                                                                                                                         str(required_keys)))
+    print("config {} is valid".format(config_id))
+
 
 
 # todo
