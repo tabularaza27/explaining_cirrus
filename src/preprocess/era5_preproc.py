@@ -90,7 +90,7 @@ def calc_hlevs(ds):
     ds = ds.assign(log_div=(["time", "lev", "lat", "lon"], log_div.isel(nhyi=slice(1, 138)).values))
 
     # calculate geometric layer thickness with hypsometric equation
-    delta_z = R / g * ds.t * ds.log_div
+    delta_z = R / g * ds.t * ds.log_div #  todo use virtual temperature
 
     # set layer thickness of top layer to 5000 (doesnt really matter what value it is, since we are not interested in data at those heights but currently it is infinity which fucks up the cumsum)
     delta_z[:, 0, :, :] = np.ones((ds.dims["time"], ds.dims["lat"], ds.dims["lon"])) * 5000
