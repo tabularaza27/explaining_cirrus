@@ -125,15 +125,15 @@ def create_horizontal_template(config_id):
     config_base_dir = get_config_base_dir(config_id)
     config_file_path = os.path.join(config_base_dir, CONFIG_FILE_DIR, "template.nc")
 
-    lon_values = np.arange(config["lonmin"], config["lonmax"] + config["horizontal_resolution"],
-                           config["horizontal_resolution"])
     lat_values = np.arange(config["latmin"], config["latmax"] + config["horizontal_resolution"],
                            config["horizontal_resolution"])
-    random_place_holder_values = np.random.rand(lon_values.shape[0], lat_values.shape[0])
+    lon_values = np.arange(config["lonmin"], config["lonmax"] + config["horizontal_resolution"],
+                           config["horizontal_resolution"])
+    random_place_holder_values = np.random.rand(lat_values.shape[0], lon_values.shape[0])
 
     # create dataset
     template = xr.Dataset(data_vars={"random": (("lat", "lon"), random_place_holder_values)},
-                          coords={"lon": lon_values, "lat": lat_values})
+                          coords={"lat": lat_values, "lon": lon_values})
 
     # set attributes
     template.lon.attrs = {'standard_name': 'longitude',
