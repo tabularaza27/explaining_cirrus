@@ -617,7 +617,7 @@ def run_gridding(start_date, end_date, config_id, n_workers=10):
 
 if __name__ == "__main__":
     # todo make user friendly
-    if len(sys.argv) == 4:
+    if len(sys.argv) == 5:
         run_gridding(start_date=sys.argv[1], end_date=sys.argv[2], config_id=sys.argv[3], n_workers=int(sys.argv[4]))
     else:
         raise ValueError("Provide valid arguments. E.g.: python dardar_nice_grid '2016-01-01' '2016-01-31' "
