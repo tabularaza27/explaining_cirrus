@@ -31,8 +31,8 @@
     "lonmax": 40,
     "horizontal_resolution": 0.25,
     "temporal_resolution": "1H",
-    "altitude_min": 1020,
-    "altitude_max": 20040,
+    "altitude_min": 4020,
+    "altitude_max": 18060,
     "layer_thickness": 60
   }
 }
