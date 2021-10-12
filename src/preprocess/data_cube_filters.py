@@ -36,6 +36,8 @@ VAR_PROPERTIES = {
     'SO2': {'scale': 'lin', 'source': 'merra2', 'type': 'driver', 'load': True},
 }
 
+# todo refactor to be runnable with configs.json
+
 def get_load_variables():
     """return list of variables to load based on VAR_PROPERTIES"""
     return [var for var in VAR_PROPERTIES if VAR_PROPERTIES[var]["load"] == True]
