@@ -111,11 +111,11 @@ def l2_vertical_regrid(ds, layer_thickness):
     """aggregates l2 data variables to new layerthickness
 
     Args:
-        ds:
-        layer_thickness:
+        ds (xr.Dataset): l2 dardar nice dataset
+        layer_thickness (int): layer thickness of regridded dataset
 
     Returns:
-
+        xr.Dataset: vertically regridded dataset
     """
 
     agg_layers = layer_thickness / 60
@@ -147,6 +147,16 @@ def l2_vertical_regrid(ds, layer_thickness):
 
 
 def l2_filter_cirrus_regime(ds, altmax, altmin):
+    """filter for cirrus temp regime and given altmax,altmin
+
+    Args:
+        ds:
+        altmax:
+        altmin:
+
+    Returns:
+
+    """
     # all values for all variables will be set to nan
     # + select only viable altitude range
     ice = ds.sel(height=slice(altmax, altmin)).where(ds.ta <= TEMP_THRES)
@@ -158,6 +168,17 @@ def l2_filter_cirrus_regime(ds, altmax, altmin):
 
 
 def run_l2_preproc(ds, altmax, altmin, layer_thickness):
+    """run preprocessing pipeline & vertical regridding of dardar l2
+
+    Args:
+        ds (xr.Dataset): l2 dardar nice dataset
+        altmax (int): min altitude
+        altmin (min): max altitude
+        layer_thickness (int): layer thickness of regridded dataset
+
+    Returns:
+        xr.Dataset: feature engineered and regridded dataset
+    """
     one_dim_vars = [var for var in ds.data_vars if len(ds[var].dims) == 1]
     two_dim_vars = [var for var in ds.data_vars if len(ds[var].dims) == 2]
 
