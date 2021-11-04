@@ -16,6 +16,7 @@ from src.preprocess.helpers.io_helpers import save_file
 from src.preprocess.helpers.io_helpers import get_filepaths
 from src.preprocess.helpers.io_helpers import exists
 from src.preprocess.helpers.constants import DARDAR_INCOMING_DIR, DARDAR_GRIDDED_DIR
+from src.preprocess.helpers.common_helpers import custom_mode
 from src.scaffolding.scaffolding import get_config, get_data_product_dir
 
 warnings.filterwarnings('ignore')  # because of zero/nan divide warnings
@@ -286,24 +287,43 @@ class DardarNiceGrid:
         lonidx, latidx, timeidx = get_grid_idx(lon, lat, cis.time_util.convert_std_time_to_datetime(timestamp),
                                                self.l3_ds)
         # idxs of data in l2 ds
-        data_vector_idxs = get_data_vector_idxs(lon, lat, timestamp, self.l2_ds)
-        in_cloud_mask = get_in_cloud_mask(self.l2_ds, data_vector_idxs)  # needed for cont 3d aggregation
+        l2_time_indexes = get_data_vector_idxs(lon, lat, timestamp, self.l2_ds)
+        timestamp_array = l2_time_indexes.where(l2_time_indexes == True, drop=True).time.values
+
+        # select timestamps
+        grid_cell = self.l2_ds.sel(time=timestamp_array)
+
+        # in_cloud_mask = get_in_cloud_mask(self.l2_ds, data_vector_idxs)  # needed for cont 3d aggregation
+
+        # cloud_cover weighted mean for continuous variables
+        cc_weighted_mean = (grid_cell[CONT_VAR_NAMES] * grid_cell["cloud_cover"]).sum(dim="time", keep_attrs=True) / grid_cell.cloud_cover.sum(
+        dim="time", keep_attrs=True)
+        cc_weighted_mean = cc_weighted_mean.drop_vars(["cloud_cover", "plev", "ta"])
+
+        # normal mean for cloud cover, plev, ta
+        cc_mean = grid_cell[["cloud_cover", "plev", "ta"]].mean(dim="time", keep_attrs=True)
+
+        # mode for flag variables + categorical variables (drop cloud masks, as they are encoded in cloud cover)
+        hor_mode = grid_cell[CAT_VAR_NAMES].reduce(custom_mode, dim="time", keep_attrs=True)
+
+        hor_agg_merge = xr.merge([cc_weighted_mean, cc_mean, hor_mode], compat="override")
+        hor_agg_merge = hor_agg_merge.load()
 
         for var_name in self.l3_ds:
             dims = len(self.l3_ds[var_name].dims)
-            if var_name == "cloud_cover":
-                obs = get_observations(self.l2_ds, "iwc", 4, data_vector_idxs)  # todo cloudmask
-                nobs = obs.shape[0]
-                iwc_obs = np.count_nonzero(obs, axis=0)  # observations with iwc >=0 # todo cloudmask
-                agg = iwc_obs / nobs
-            else:
-                agg = self.calc_in_cloud_agg(var_name, data_vector_idxs, in_cloud_mask)
+            # if var_name == "cloud_cover":
+            #     obs = get_observations(self.l2_ds, "iwc", 4, data_vector_idxs)  # todo cloudmask
+            #     nobs = obs.shape[0]
+            #     iwc_obs = np.count_nonzero(obs, axis=0)  # observations with iwc >=0 # todo cloudmask
+            #     agg = iwc_obs / nobs
+            # else:
+            #     agg = self.calc_in_cloud_agg(var_name, data_vector_idxs, in_cloud_mask)
 
             # write result in l3 grid
             if dims == 4:
-                self.l3_ds[var_name][lonidx, latidx, :, timeidx] = agg
+                self.l3_ds[var_name][lonidx, latidx, :, timeidx] = hor_agg_merge[var_name].values
             else:
-                self.l3_ds[var_name][lonidx, latidx, timeidx] = agg
+                self.l3_ds[var_name][lonidx, latidx, timeidx] = hor_agg_merge[var_name].values
 
     def calc_in_cloud_agg(self, var_name, data_vector_idxs, in_cloud_mask=None):
         """

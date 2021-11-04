@@ -125,20 +125,20 @@ def l2_vertical_regrid(ds, layer_thickness):
     # mean for continous variables
     coarse_cont = ds[CONT_VARIABLES].coarsen(height=agg_layers, boundary="trim", side="right", coord_func="mean").mean(
         keep_attrs=True)
-    print("cont coarse")
+    # print("cont coarse")
 
     # mode for categorical variables
     coarse_cat = ds[CAT_VARIABLES].coarsen(height=agg_layers, boundary="trim", side="right", coord_func="mean").reduce(
         custom_mode, keep_attrs=True)
-    print("cat coarse")
+    # print("cat coarse")
 
     # max for flag variables
     coarse_flag = ds[FLAG_VARIABLES].coarsen(height=agg_layers, boundary="trim", side="right", coord_func="mean").max(
         keep_attrs=True)
-    print("flag coarse")
+    # print("flag coarse")
 
     merge = xr.merge([coarse_cat, coarse_cont, coarse_flag])
-    print("merged")
+    # print("merged")
 
     return merge
 
