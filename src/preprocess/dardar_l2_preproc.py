@@ -140,9 +140,6 @@ def l2_vertical_regrid(ds, layer_thickness):
     merge = xr.merge([coarse_cat, coarse_cont, coarse_flag])
     print("merged")
 
-    # flag columns with clouds
-    merge["data_mask"] = (merge.cloud_cover.sum(dim="height") > 0).astype(int)
-
     return merge
 
 
@@ -197,5 +194,8 @@ def run_l2_preproc(ds, altmax, altmin, layer_thickness):
         merge = xr.merge([ds_coarse, one_dim_ds])
     else:
         merge = xr.merge([ice, one_dim_ds])
+
+    # add data mask flag
+    merge["data_mask"] = (merge.cloud_cover.sum(dim="height") > 0).astype(int)
 
     return merge

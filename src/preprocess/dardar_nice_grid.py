@@ -11,11 +11,13 @@ from copy import deepcopy
 from cis import time_util
 from dateutil.relativedelta import relativedelta
 import warnings
+from src.preprocess.dardar_l2_preproc import run_l2_preproc
 from src.preprocess.helpers.io_helpers import save_file
 from src.preprocess.helpers.io_helpers import get_filepaths
 from src.preprocess.helpers.io_helpers import exists
 from src.preprocess.helpers.constants import DARDAR_INCOMING_DIR, DARDAR_GRIDDED_DIR
 from src.scaffolding.scaffolding import get_config, get_data_product_dir
+
 
 warnings.filterwarnings('ignore')  # because of zero/nan divide warnings
 
@@ -114,9 +116,8 @@ class DardarNiceGrid:
         self.l2_ds = remove_bad_quality_data(self.l2_ds)
         logger.info("removed bad quality retrievals")
 
-        # filter l2 dataset for given height levels
-        # todo also filter for lon / lats, but not straight forward cause not dimension of the dataset
-        self.l2_ds = self.l2_ds.sel(height=slice(self.altmax, self.altmin))
+        # filter feature engineer and regrid l2 dataset
+        self.l2_ds = run_l2_preproc(self.l2_ds, self.altmax, self.altmin, layer_thickness=self.layer_thickness)
 
         self.l3_ds = create_empty_grid(start_date=str(self.start_date),
                                        end_date=str(self.end_date),
@@ -140,11 +141,11 @@ class DardarNiceGrid:
         self.lats_all = np.round(self.lats_all.astype('float64'), 4)  # float rounding errors
         self.lons_all = np.round(self.lons_all.astype('float64'), 4)
 
-        # obervation has data if at least one vertical level contains iwc>0
-        # todo refactor datamask
-        iwc = self.l2_ds["iwc"].values
-        vertical_sum = np.nansum(iwc, 1)
-        data_mask = vertical_sum > 0
+        # obervation has data if at least one vertical level contains cloud cover > 0
+        data_mask = (self.l2_ds.data_mask == 1).values
+        # iwc = self.l2_ds["iwc"].values
+        # vertical_sum = np.nansum(iwc, 1)
+        # data_mask = vertical_sum > 0
 
         # retrieve lat lon, time combinations and how often they occur for observations with data
         (self.lats_data, self.lons_data, self.times_data), counts_data = np.unique(
@@ -154,6 +155,8 @@ class DardarNiceGrid:
             return_counts=True)  # lat/lon/time combo with iwc at at at least on altitude level
         self.lats_data = np.round(self.lats_data.astype('float64'), 4)  # float rounding errors
         self.lons_data = np.round(self.lons_data.astype('float64'), 4)
+
+        logger.info("{} columns with data".format(len(self.lats_data)))
 
         # l3_ds with empty mean tensors for each data variable
         self.prep_l3()
