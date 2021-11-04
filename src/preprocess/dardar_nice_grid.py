@@ -300,12 +300,13 @@ class DardarNiceGrid:
         # in_cloud_mask = get_in_cloud_mask(self.l2_ds, data_vector_idxs)  # needed for cont 3d aggregation
 
         # cloud_cover weighted mean for continuous variables
-        cc_weighted_mean = (grid_cell[CONT_VAR_NAMES] * grid_cell["cloud_cover"]).sum(dim="time", keep_attrs=True) / grid_cell.cloud_cover.sum(
-        dim="time", keep_attrs=True)
-        cc_weighted_mean = cc_weighted_mean.drop_vars(["cloud_cover", "plev", "ta","ps"])
+        cc_weighted_mean = (grid_cell[CONT_VAR_NAMES] * grid_cell["cloud_cover"]).sum(dim="time",
+                                                                                      keep_attrs=True) / grid_cell.cloud_cover.sum(
+            dim="time", keep_attrs=True)
+        cc_weighted_mean = cc_weighted_mean.drop_vars(["cloud_cover", "plev", "ta", "ps"])
 
         # normal mean for cloud cover, plev, ta
-        cc_mean = grid_cell[["cloud_cover", "plev", "ta","ps"]].mean(dim="time", keep_attrs=True)
+        cc_mean = grid_cell[["cloud_cover", "plev", "ta", "ps"]].mean(dim="time", keep_attrs=True)
 
         # mode for flag variables + categorical variables (drop cloud masks, as they are encoded in cloud cover)
         hor_mode = grid_cell[CAT_VAR_NAMES].reduce(custom_mode, dim="time", keep_attrs=True)
@@ -314,7 +315,9 @@ class DardarNiceGrid:
         hor_agg_merge = hor_agg_merge.load()
 
         for var_name in self.l3_ds:
-
+            if var_name not in hor_agg_merge:
+                # e.g. observation mask
+                continue
             print(var_name)
 
             dims = len(self.l3_ds[var_name].dims)
@@ -330,10 +333,8 @@ class DardarNiceGrid:
             if dims == 4:
                 self.l3_ds[var_name][lonidx, latidx, :, timeidx] = hor_agg_merge[var_name].values
             else:
-                val=hor_agg_merge[var_name].values.ravel()
-                assert len(val)==1, "len of 2d value needs to be one, is {}".format(len(val))
-                print(val)
-                print(val[0])
+                val = hor_agg_merge[var_name].values.ravel()
+                assert len(val) == 1, "len of 2d value needs to be one, is {}".format(len(val))
                 self.l3_ds[var_name][lonidx, latidx, timeidx] = val[0]
 
     def calc_in_cloud_agg(self, var_name, data_vector_idxs, in_cloud_mask=None):
