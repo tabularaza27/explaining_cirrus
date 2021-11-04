@@ -302,10 +302,10 @@ class DardarNiceGrid:
         # cloud_cover weighted mean for continuous variables
         cc_weighted_mean = (grid_cell[CONT_VAR_NAMES] * grid_cell["cloud_cover"]).sum(dim="time", keep_attrs=True) / grid_cell.cloud_cover.sum(
         dim="time", keep_attrs=True)
-        cc_weighted_mean = cc_weighted_mean.drop_vars(["cloud_cover", "plev", "ta"])
+        cc_weighted_mean = cc_weighted_mean.drop_vars(["cloud_cover", "plev", "ta","ps"])
 
         # normal mean for cloud cover, plev, ta
-        cc_mean = grid_cell[["cloud_cover", "plev", "ta"]].mean(dim="time", keep_attrs=True)
+        cc_mean = grid_cell[["cloud_cover", "plev", "ta","ps"]].mean(dim="time", keep_attrs=True)
 
         # mode for flag variables + categorical variables (drop cloud masks, as they are encoded in cloud cover)
         hor_mode = grid_cell[CAT_VAR_NAMES].reduce(custom_mode, dim="time", keep_attrs=True)
