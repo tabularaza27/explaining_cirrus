@@ -182,11 +182,20 @@ def run_l2_preproc(ds, altmax, altmin, layer_thickness):
     one_dim_vars = [var for var in ds.data_vars if len(ds[var].dims) == 1]
     two_dim_vars = [var for var in ds.data_vars if len(ds[var].dims) == 2]
 
+    # create dataset for one dimensional variables, just add at the end
     one_dim_ds = ds[one_dim_vars]
 
+    # run feature engineering
     fe_ds = l2_feature_engineering(ds[two_dim_vars])
+
+    # filter for cirrus regime
     ice = l2_filter_cirrus_regime(fe_ds, altmax, altmin)
-    ds_coarse = l2_vertical_regrid(ice, layer_thickness)
-    merge = xr.merge([ds_coarse, one_dim_ds])
+
+    # vertical regrid if layer thickness larger than original layer thickness
+    if layer_thickness > 60:
+        ds_coarse = l2_vertical_regrid(ice, layer_thickness)
+        merge = xr.merge([ds_coarse, one_dim_ds])
+    else:
+        merge = xr.merge([ice, one_dim_ds])
 
     return merge
