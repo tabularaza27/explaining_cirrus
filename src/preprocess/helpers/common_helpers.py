@@ -41,7 +41,7 @@ def custom_mode(ndarray, axis):
             int(np.__version__.split('.')[1]) >= 9]):
         modals, counts = np.unique(ndarray, return_counts=True)
         index = np.argmax(counts)
-        return modals[index], counts[index]
+        return modals[index] #, counts[index]
 
     # Sort array
     sort = np.sort(ndarray, axis=axis)
