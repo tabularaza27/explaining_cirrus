@@ -124,6 +124,10 @@ class DardarNiceGrid:
         # filter feature engineer and regrid l2 dataset
         self.l2_ds = run_l2_preproc(self.l2_ds, self.altmax, self.altmin, layer_thickness=self.layer_thickness)
 
+        # reset altitude boundaries to boundaries of l2 dataset after regridding
+        self.altmin = self.l2_ds.height.values.min()
+        self.altmax = self.l2_ds.height.values.max()
+
         self.l3_ds = create_empty_grid(start_date=str(self.start_date),
                                        end_date=str(self.end_date),
                                        temp_res=self.temp_res,
