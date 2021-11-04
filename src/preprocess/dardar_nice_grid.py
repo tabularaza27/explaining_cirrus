@@ -318,8 +318,6 @@ class DardarNiceGrid:
             if var_name not in hor_agg_merge:
                 # e.g. observation mask
                 continue
-            print(var_name)
-
             dims = len(self.l3_ds[var_name].dims)
             # if var_name == "cloud_cover":
             #     obs = get_observations(self.l2_ds, "iwc", 4, data_vector_idxs)  # todo cloudmask
