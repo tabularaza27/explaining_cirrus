@@ -328,7 +328,7 @@ class DardarNiceGrid:
                 self.l3_ds[var_name][lonidx, latidx, :, timeidx] = hor_agg_merge[var_name].values
             else:
                 val=hor_agg_merge[var_name].values.ravel()
-                assert len(val)==0, "len of 2d value needs to be one, is {}".format(len(val))
+                assert len(val)==1, "len of 2d value needs to be one, is {}".format(len(val))
                 self.l3_ds[var_name][lonidx, latidx, timeidx] = val[0]
 
     def calc_in_cloud_agg(self, var_name, data_vector_idxs, in_cloud_mask=None):
