@@ -314,6 +314,9 @@ class DardarNiceGrid:
         hor_agg_merge = hor_agg_merge.load()
 
         for var_name in self.l3_ds:
+
+            print(var_name)
+
             dims = len(self.l3_ds[var_name].dims)
             # if var_name == "cloud_cover":
             #     obs = get_observations(self.l2_ds, "iwc", 4, data_vector_idxs)  # todo cloudmask
