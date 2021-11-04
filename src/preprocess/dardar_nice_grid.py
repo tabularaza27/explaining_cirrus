@@ -18,7 +18,6 @@ from src.preprocess.helpers.io_helpers import exists
 from src.preprocess.helpers.constants import DARDAR_INCOMING_DIR, DARDAR_GRIDDED_DIR
 from src.scaffolding.scaffolding import get_config, get_data_product_dir
 
-
 warnings.filterwarnings('ignore')  # because of zero/nan divide warnings
 
 # setup logger - see: https://docs.python.org/3/howto/logging-cookbook.html
@@ -55,6 +54,8 @@ CONT_VAR_NAMES = ['ps',
                   'icnc_5um_error',
                   'icnc_100um_error',
                   'dz_top',
+                  'dz_top_v2',
+                  'cloud_cover'
                   ]
 
 CAT_VAR_NAMES = [
@@ -62,9 +63,12 @@ CAT_VAR_NAMES = [
     'clm',
     'clm_v2',
     'nightday_flag',
-    'mixedphase_flag',
     'instrument_flag',
-    'layer_index'
+    'cloud_layer',
+    'cloud_top',
+    'cloud_bottom',
+    'liquid_origin',
+    'data_mask'
 ]
 
 
@@ -182,7 +186,11 @@ class DardarNiceGrid:
             (self.l3_ds.sizes["lon"], self.l3_ds.sizes["lat"], self.l3_ds.sizes["lev"], self.l3_ds.sizes["time"]))
         means[:, :, :, :] = np.nan  # set all grid points to nan
 
-        # set all grid points with observations to 0 - all other gridpoints are nan. i.e. only the swath is set to 0
+        # for 2d variables, i.e. without height coord
+        means_2d = means[:, :, 0, :]
+
+        # create observation mask variable
+        observation_mask = np.zeros((self.l3_ds.sizes["lon"], self.l3_ds.sizes["lat"], self.l3_ds.sizes["time"]))
         for lat, lon, timestamp in zip(self.lats_all, self.lons_all, self.times_all):
             cf_timestamp = cis.time_util.convert_std_time_to_datetime(timestamp)
             if cf_timestamp not in self.l3_ds.time:
@@ -195,11 +203,9 @@ class DardarNiceGrid:
 
             # get indices
             lonidx, latidx, timeidx = get_grid_idx(lon, lat, cf_timestamp, self.l3_ds)
-            means[lonidx, latidx, :, timeidx] = np.zeros(shape=(self.l3_ds.sizes["lev"],), dtype=np.float64)
+            observation_mask[lonidx, latidx, timeidx] = 1
 
-        # for 2d variables, i.e. without height coord
-        means_2d = means[:, :, 0, :]
-
+        # create data variables
         var_dict = {}
         for var, var_info in self.l2_ds.items():
             if var not in CONT_VAR_NAMES + CAT_VAR_NAMES:
@@ -225,15 +231,25 @@ class DardarNiceGrid:
             # add to dict
             var_dict[var] = (coords, values, attrs)
 
-        # add cloud cover as variable
-        cc_attrs = {"units": "1",
-                    "long_name": "cloud cover per vertical coordinate",
-                    "description": "percentage of observations in gridbox that had observations containing iwc",
-                    "var_type": CONT,
+        # add observation mask as variable
+        om_attrs = {"units": "1",
+                    "long_name": "flags atmospheric columns with satellite observations",
+                    "description": "1 if atmospheric column was overflown by satellite",
+                    "var_type": CAT,
                     "valid_range": [0, 1]
                     }
 
-        var_dict["cloud_cover"] = (["lon", "lat", "lev", "time"], deepcopy(means), cc_attrs)
+        var_dict["observation_mask"] = (["lon", "lat", "time"], observation_mask, om_attrs)
+
+        # add cloud cover as variable
+        # cc_attrs = {"units": "1",
+        #             "long_name": "cloud cover per vertical coordinate",
+        #             "description": "percentage of observations in gridbox that had observations containing iwc",
+        #             "var_type": CONT,
+        #             "valid_range": [0, 1]
+        #             }
+        #
+        # var_dict["cloud_cover"] = (["lon", "lat", "lev", "time"], deepcopy(means), cc_attrs)
 
         self.l3_ds = self.l3_ds.assign(var_dict)
 
