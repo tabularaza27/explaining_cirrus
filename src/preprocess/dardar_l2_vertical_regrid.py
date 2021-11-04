@@ -120,7 +120,7 @@ def l2_vertical_regrid(ds, layer_thickness):
 
     agg_layers = layer_thickness / 60
     assert agg_layers % 1 == 0, "layer_thickness must be multiple of 60, is {}".format(layer_thickness)
-
+    agg_layers = int(agg_layers)
 
     # mean for continous variables
     coarse_cont = ds[CONT_VARIABLES].coarsen(height=agg_layers, boundary="trim", side="right", coord_func="mean").mean(
