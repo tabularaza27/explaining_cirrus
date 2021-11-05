@@ -312,7 +312,7 @@ class DardarNiceGrid:
         hor_mode = grid_cell[CAT_VAR_NAMES].reduce(custom_mode, dim="time", keep_attrs=True)
 
         hor_agg_merge = xr.merge([cc_weighted_mean, cc_mean, hor_mode], compat="override")
-        #hor_agg_merge = hor_agg_merge.load()
+        hor_agg_merge = hor_agg_merge.load()
 
         for var_name in self.l3_ds:
             if var_name not in hor_agg_merge:
