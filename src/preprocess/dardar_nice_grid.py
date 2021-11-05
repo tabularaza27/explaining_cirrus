@@ -23,13 +23,13 @@ warnings.filterwarnings('ignore')  # because of zero/nan divide warnings
 
 # setup logger - see: https://docs.python.org/3/howto/logging-cookbook.html
 logger = logging.getLogger(__name__)
-logger.setLevel(level=logging.INFO)
+logger.setLevel(level=logging.DEBUG)
 # log file
 fh = logging.FileHandler("{}.log".format("dardar_nice"), mode="w")
 fh.setLevel(logging.DEBUG)
 # console output
 ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
+ch.setLevel(logging.DEBUG)
 # format
 formatter = logging.Formatter('%(asctime)-15s %(message)s')
 fh.setFormatter(formatter)
