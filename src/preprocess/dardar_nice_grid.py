@@ -29,7 +29,7 @@ fh = logging.FileHandler("{}.log".format("dardar_nice"), mode="w")
 fh.setLevel(logging.DEBUG)
 # console output
 ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
+ch.setLevel(logging.INFO)
 # format
 formatter = logging.Formatter('%(asctime)-15s %(message)s')
 fh.setFormatter(formatter)
@@ -123,6 +123,9 @@ class DardarNiceGrid:
 
         # filter feature engineer and regrid l2 dataset
         self.l2_ds = run_l2_preproc(self.l2_ds, self.altmax, self.altmin, layer_thickness=self.layer_thickness)
+
+        # load l2_ds into memory, otherwise aggregation per gridbox will be terribly slow
+        self.l2_ds = self.l2_ds.load()
 
         # reset altitude boundaries to boundaries of l2 dataset after regridding
         self.altmin = self.l2_ds.height.values.min()
@@ -309,10 +312,10 @@ class DardarNiceGrid:
         cc_mean = grid_cell[["cloud_cover", "plev", "ta", "ps"]].mean(dim="time", keep_attrs=True)
 
         # mode for flag variables + categorical variables (drop cloud masks, as they are encoded in cloud cover)
-        # hor_mode = grid_cell[CAT_VAR_NAMES].reduce(custom_mode, dim="time", keep_attrs=True)
-        # , hor_mode
+        hor_mode = grid_cell[CAT_VAR_NAMES].reduce(custom_mode, dim="time", keep_attrs=True)
+        #
 
-        hor_agg_merge = xr.merge([cc_weighted_mean, cc_mean], compat="override")
+        hor_agg_merge = xr.merge([cc_weighted_mean, cc_mean, hor_mode], compat="override")
         hor_agg_merge = hor_agg_merge.load()
 
         for var_name in self.l3_ds:
