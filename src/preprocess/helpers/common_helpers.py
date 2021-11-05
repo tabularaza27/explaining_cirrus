@@ -27,7 +27,7 @@ def custom_mode(ndarray, axis):
     ndarray = np.asarray(ndarray)
     ndim = ndarray.ndim
     if ndarray.size == 1:
-        return (ndarray[0], 1)
+        return ndarray[0]
     elif ndarray.size == 0:
         raise Exception('Cannot compute mode on empty array')
     try:
