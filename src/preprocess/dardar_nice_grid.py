@@ -309,10 +309,10 @@ class DardarNiceGrid:
         cc_mean = grid_cell[["cloud_cover", "plev", "ta", "ps"]].mean(dim="time", keep_attrs=True)
 
         # mode for flag variables + categorical variables (drop cloud masks, as they are encoded in cloud cover)
-        hor_mode = grid_cell[CAT_VAR_NAMES].reduce(custom_mode, dim="time", keep_attrs=True)
-        #
+        # hor_mode = grid_cell[CAT_VAR_NAMES].reduce(custom_mode, dim="time", keep_attrs=True)
+        # , hor_mode
 
-        hor_agg_merge = xr.merge([cc_weighted_mean, cc_mean, hor_mode], compat="override")
+        hor_agg_merge = xr.merge([cc_weighted_mean, cc_mean], compat="override")
         hor_agg_merge = hor_agg_merge.load()
 
         for var_name in self.l3_ds:
