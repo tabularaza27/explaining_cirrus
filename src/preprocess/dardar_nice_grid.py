@@ -29,7 +29,7 @@ fh = logging.FileHandler("{}.log".format("dardar_nice"), mode="w")
 fh.setLevel(logging.DEBUG)
 # console output
 ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
+ch.setLevel(logging.DEBUG)
 # format
 formatter = logging.Formatter('%(asctime)-15s %(message)s')
 fh.setFormatter(formatter)
