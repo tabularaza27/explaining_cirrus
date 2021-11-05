@@ -125,7 +125,7 @@ class DardarNiceGrid:
         self.l2_ds = run_l2_preproc(self.l2_ds, self.altmax, self.altmin, layer_thickness=self.layer_thickness)
 
         # load l2_ds into memory, otherwise aggregation per gridbox will be terribly slow
-        self.l2_ds = self.l2_ds.load()
+        self.l2_ds = self.l2_ds.load() # todo implement as part of load_data()
 
         # reset altitude boundaries to boundaries of l2 dataset after regridding
         self.altmin = self.l2_ds.height.values.min()
