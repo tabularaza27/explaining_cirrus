@@ -115,6 +115,12 @@ def crop_ds(ds, min_date, max_date, config_id):
     hor_res = config["horizontal_resolution"]
     altmin = config["altitude_min"]
     altmax = config["altitude_max"]
+    layer_thickness = config["layer_thickness"]
+
+    if layer_thickness > 60:
+        # dardar data was vertically regridded in that case, and original altmax/altmin shifted according to xr.coarsen function with side="right"
+        altmax -= layer_thickness
+        altmin -= (2/3) * layer_thickness
 
     ds = ds.sel(time=slice(min_date, max_date), lon=slice(lonmin, lonmax - hor_res), lat=slice(latmin, latmax - hor_res),
                 lev=slice(altmax, altmin))
