@@ -119,8 +119,12 @@ def crop_ds(ds, min_date, max_date, config_id):
 
     if layer_thickness > 60:
         # dardar data was vertically regridded in that case, and original altmax/altmin shifted according to xr.coarsen function with side="right"
-        altmax -= layer_thickness
-        altmin -= (2/3) * layer_thickness
+        # this replicates the regird in l2_vertical_regrid()
+        lev_arr = xr.DataArray(np.flip(np.arange(altmin, altmax + 60, 60)))
+        dim_name = lev_arr.dims[0]
+        regridded = lev_arr.coarsen({dim_name: 5}, boundary="trim", side="right", coord_func="mean").mean()
+        altmin = regridded.values.min()
+        altmax = regridded.values.max()
 
     ds = ds.sel(time=slice(min_date, max_date), lon=slice(lonmin, lonmax - hor_res), lat=slice(latmin, latmax - hor_res),
                 lev=slice(altmax, altmin))
