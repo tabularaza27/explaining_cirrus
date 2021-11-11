@@ -29,6 +29,8 @@ FLAG_VARIABLES = ['cloud_top', 'cloud_bottom', 'liquid_origin', 'cloud_layer']  
 def l2_feature_engineering(ds):
     """
 
+    #todo add attributes for all variables
+
     Args:
         ds (xr.Dataset): L2 dataset of Dardar nice
 
@@ -152,7 +154,7 @@ def l2_filter_cirrus_regime(ds, altmax, altmin):
         altmin:
 
     Returns:
-
+        xr.Dataset: with all values set to nan where temp below cirrus regime + filtered for altitude
     """
     # all values for all variables will be set to nan
     # + select only viable altitude range

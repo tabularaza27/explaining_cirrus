@@ -56,7 +56,8 @@ CONT_VAR_NAMES = ['ps',
                   'icnc_100um_error',
                   'dz_top',
                   'dz_top_v2',
-                  'cloud_cover'
+                  'cloud_cover',
+                  'cloud_thickness'
                   ]
 
 CAT_VAR_NAMES = [
@@ -68,8 +69,7 @@ CAT_VAR_NAMES = [
     'cloud_layer',
     'cloud_top',
     'cloud_bottom',
-    'liquid_origin',
-    'data_mask'
+    'liquid_origin'
 ]
 
 
