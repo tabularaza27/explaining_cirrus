@@ -125,7 +125,7 @@ class DardarNiceGrid:
         self.l2_ds = run_l2_preproc(self.l2_ds, self.altmax, self.altmin, layer_thickness=self.layer_thickness)
 
         # load l2_ds into memory, otherwise aggregation per gridbox will be terribly slow
-        self.l2_ds = self.l2_ds.load() # todo implement as part of load_data()
+        self.l2_ds = self.l2_ds.load()  # todo implement as part of load_data()
 
         # reset altitude boundaries to boundaries of l2 dataset after regridding
         self.altmin = self.l2_ds.height.values.min()
@@ -239,27 +239,17 @@ class DardarNiceGrid:
             # add to dict
             var_dict[var] = (coords, values, attrs)
 
-        # add observation mask as variable
+        self.l3_ds = self.l3_ds.assign(var_dict)
+
+        # add observation mask as coord
+        self.l3_ds.coords["observation_mask"] = observation_mask
         om_attrs = {"units": "1",
                     "long_name": "flags atmospheric columns with satellite observations",
                     "description": "1 if atmospheric column was overflown by satellite",
                     "var_type": CAT,
                     "valid_range": [0, 1]
                     }
-
-        var_dict["observation_mask"] = (["lon", "lat", "time"], observation_mask, om_attrs)
-
-        # add cloud cover as variable
-        # cc_attrs = {"units": "1",
-        #             "long_name": "cloud cover per vertical coordinate",
-        #             "description": "percentage of observations in gridbox that had observations containing iwc",
-        #             "var_type": CONT,
-        #             "valid_range": [0, 1]
-        #             }
-        #
-        # var_dict["cloud_cover"] = (["lon", "lat", "lev", "time"], deepcopy(means), cc_attrs)
-
-        self.l3_ds = self.l3_ds.assign(var_dict)
+        self.l3_ds.observation_mask.attrs.update(om_attrs)
 
     def aggregate(self):
         """aggregates whole lon/lat/timestamp data for each gridbox that contains at least
@@ -278,6 +268,13 @@ class DardarNiceGrid:
             # calc aggregate for each variable
             logger.debug("Grid: {} , {} , {}".format(lon, lat, timestamp))
             self.aggregate_gridbox(lon, lat, timestamp)
+
+        # create datamask
+        data_mask = self.l3_ds.cloud_cover.sum(dim="lev", skipna=True) > 0
+        self.l3_ds.coords["data_mask"] = data_mask
+        self.l3_ds.data_mask.attrs.update({
+            "long_name": "1 for grid cells (time,lat,lon) where there is a calipso/cloudsat observation with observed ice clouds, 0 else"
+        })
 
     def aggregate_gridbox(self, lon, lat, timestamp):
         """aggregates l2 data for given lon/lat/timestamp
