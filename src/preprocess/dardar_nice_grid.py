@@ -198,7 +198,7 @@ class DardarNiceGrid:
         means_2d = means[:, :, 0, :]
 
         # create observation mask variable
-        observation_mask = np.zeros((self.l3_ds.sizes["lon"], self.l3_ds.sizes["lat"], self.l3_ds.sizes["time"]))
+        observation_mask = np.zeros((self.l3_ds.sizes["lon"], self.l3_ds.sizes["lat"], self.l3_ds.sizes["time"]),dtype=int)
         for lat, lon, timestamp in zip(self.lats_all, self.lons_all, self.times_all):
             cf_timestamp = cis.time_util.convert_std_time_to_datetime(timestamp)
             if cf_timestamp not in self.l3_ds.time:
@@ -270,7 +270,7 @@ class DardarNiceGrid:
             self.aggregate_gridbox(lon, lat, timestamp)
 
         # create datamask
-        data_mask = self.l3_ds.cloud_cover.sum(dim="lev", skipna=True) > 0
+        data_mask = (self.l3_ds.cloud_cover.sum(dim="lev", skipna=True) > 0).astype(int)
         self.l3_ds.coords["data_mask"] = (("lon", "lat", "time"), data_mask)
         self.l3_ds.data_mask.attrs.update({
             "long_name": "1 for grid cells (time,lat,lon) where there is a calipso/cloudsat observation with observed ice clouds, 0 else"
