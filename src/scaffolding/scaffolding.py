@@ -175,6 +175,37 @@ def get_height_levels(min_level, max_level, layer_thickness, position="center"):
 
     return hlevs
 
+def get_alt_range(config_id):
+    """return altitude min and altitude max of config. In case dardar data was vertically regridded in that case, and original
+    altmax/altmin shifted according to xr.coarsen function with side="right"
+
+    Args:
+        config_id:
+
+    Returns:
+        int, int: altmin, altmax
+    """
+
+    # get config info
+    config = get_config(config_id)
+    layer_thickness=config["layer_thickness"]
+    altmin, altmax = config["altitude_min"], config["altitude_max"]
+
+    if layer_thickness > 60:
+        # dardar data was vertically regridded
+        agg_layers = layer_thickness / 60
+        assert agg_layers % 1 == 0, "layer_thickness must be multiple of 60, is {}".format(layer_thickness)
+        agg_layers = int(agg_layers)
+
+        # this replicates the regird in l2_vertical_regrid()
+        lev_arr = xr.DataArray(np.flip(np.arange(altmin, altmax + 60, 60)))
+        dim_name = lev_arr.dims[0]
+        regridded = lev_arr.coarsen({dim_name: agg_layers}, boundary="trim", side="right", coord_func="mean").mean()
+        altmin = regridded.values.min()
+        altmax = regridded.values.max()
+
+    return altmin, altmax
+
 
 def scaffolding(config_id):
     """sets up grid config files based on config and creates directories for config

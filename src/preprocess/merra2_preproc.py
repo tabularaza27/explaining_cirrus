@@ -24,7 +24,7 @@ from src.preprocess.helpers.io_helpers import exists, save_file
 from src.preprocess.helpers.constants import R, g
 from src.preprocess.helpers.constants import MERRA_PRE_PROC_DIR, MERRA_REGRID_DIR, MERRA_REGRID_FILESTUMPY
 
-from src.scaffolding.scaffolding import get_data_product_dir, get_height_levels, get_config
+from src.scaffolding.scaffolding import get_data_product_dir, get_height_levels, get_config, get_alt_range
 
 # pressure at top of atmosphere is fixed constant 0.01 hPa = 1 Pa
 PTOP = 1
@@ -246,9 +246,8 @@ def run_preprocess_pipeline(date, config_id):
     """
 
     config = get_config(config_id)
-    altitude_min = config["altitude_min"]
-    altitude_max = config["altitude_max"]
     layer_thickness = config["layer_thickness"]
+    altitude_min, altitude_max = get_alt_range(config_id)
 
     # load datases
     ds = load_ds(date, config_id)

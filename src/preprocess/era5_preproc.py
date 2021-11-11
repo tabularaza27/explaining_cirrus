@@ -16,7 +16,7 @@ import pandas as pd
 from src.preprocess.helpers.common_helpers import check_for_nans
 from src.preprocess.helpers.constants import R, g
 from src.preprocess.helpers.constants import ERA_PRE_PROC_DIR
-from src.scaffolding.scaffolding import get_data_product_dir, get_height_levels, get_config
+from src.scaffolding.scaffolding import get_data_product_dir, get_height_levels, get_config, get_alt_range
 
 # HLEVS = pd.read_csv("/home/kjeggle/cirrus/src/config_files/height_levels.csv", index_col=0) # todo make dynamic
 # TARGET_LEVEL_CENTER = HLEVS["lev"].dropna()
@@ -256,9 +256,8 @@ def run_preprocess_pipeline(date, config_id):
 
     """
     config = get_config(config_id)
-    altitude_min = config["altitude_min"]
-    altitude_max = config["altitude_max"]
-    layer_thickness = config["layer_thickness"]
+    layer_thickness=config["layer_thickness"]
+    altitude_min, altitude_max = get_alt_range(config_id)
 
     ds = load_ds(date, config_id)
     check_for_nans(ds)

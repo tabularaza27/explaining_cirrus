@@ -7,7 +7,7 @@ import multiprocessing as mp
 
 from src.preprocess import merra2_preproc
 from src.preprocess import era5_preproc
-from src.scaffolding.scaffolding import get_data_product_dir, get_config
+from src.scaffolding.scaffolding import get_data_product_dir, get_config, get_alt_range
 from src.preprocess.helpers.io_helpers import exists, save_file
 from src.preprocess.helpers.constants import DARDAR_GRIDDED_DIR, DATA_CUBE_PRE_PROC_DIR, DATA_CUBE_PRE_PROC_FILESTUMPY
 
@@ -113,18 +113,7 @@ def crop_ds(ds, min_date, max_date, config_id):
     lonmin = config["lonmin"]
     lonmax = config["lonmax"]
     hor_res = config["horizontal_resolution"]
-    altmin = config["altitude_min"]
-    altmax = config["altitude_max"]
-    layer_thickness = config["layer_thickness"]
-
-    if layer_thickness > 60:
-        # dardar data was vertically regridded in that case, and original altmax/altmin shifted according to xr.coarsen function with side="right"
-        # this replicates the regird in l2_vertical_regrid()
-        lev_arr = xr.DataArray(np.flip(np.arange(altmin, altmax + 60, 60)))
-        dim_name = lev_arr.dims[0]
-        regridded = lev_arr.coarsen({dim_name: 5}, boundary="trim", side="right", coord_func="mean").mean()
-        altmin = regridded.values.min()
-        altmax = regridded.values.max()
+    altmin, altmax = get_alt_range(config_id)
 
     ds = ds.sel(time=slice(min_date, max_date), lon=slice(lonmin, lonmax - hor_res), lat=slice(latmin, latmax - hor_res),
                 lev=slice(altmax, altmin))
