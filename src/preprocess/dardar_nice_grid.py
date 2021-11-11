@@ -242,7 +242,7 @@ class DardarNiceGrid:
         self.l3_ds = self.l3_ds.assign(var_dict)
 
         # add observation mask as coord
-        self.l3_ds.coords["observation_mask"] = observation_mask
+        self.l3_ds.coords["observation_mask"] = (("lon", "lat", "time"), observation_mask)
         om_attrs = {"units": "1",
                     "long_name": "flags atmospheric columns with satellite observations",
                     "description": "1 if atmospheric column was overflown by satellite",
@@ -271,7 +271,7 @@ class DardarNiceGrid:
 
         # create datamask
         data_mask = self.l3_ds.cloud_cover.sum(dim="lev", skipna=True) > 0
-        self.l3_ds.coords["data_mask"] = data_mask
+        self.l3_ds.coords["data_mask"] = (("lon", "lat", "time"), data_mask)
         self.l3_ds.data_mask.attrs.update({
             "long_name": "1 for grid cells (time,lat,lon) where there is a calipso/cloudsat observation with observed ice clouds, 0 else"
         })
