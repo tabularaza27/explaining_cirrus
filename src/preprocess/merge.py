@@ -160,8 +160,8 @@ def merge_one_day(date, config_id):
     print("loaded dardar data")
 
     # create observation,data mask etc
-    dardar_ds = create_dardar_masks(dardar_ds)
-    print("created masks on dardar data")
+    #dardar_ds = create_dardar_masks(dardar_ds)
+    #print("created masks on dardar data")
 
     # crop dardar dataset
     dardar_ds = crop_ds(ds=dardar_ds, min_date=min_date_str, max_date=max_date_str, config_id=config_id)
@@ -177,13 +177,21 @@ def merge_one_day(date, config_id):
     merra = crop_ds(merra, min_date_str, max_date_str, config_id)
     print("cropped merra data")
 
+    # # add observation vicinity mask
+    # era.coords["observation_vicinity_mask"] = (("time", "lat", "lon"), dardar_ds.observation_vicinity_mask)
+    # merra.coords["observation_vicinity_mask"] = (("time", "lat", "lon"), dardar_ds.observation_vicinity_mask)
+    # # mask all values with nan that don't have an observation in their vicinity (cause we do not need them)
+    # era_reduced = era.where(era.observation_vicinity_mask == 1)
+    # merra_reduced = merra.where(merra.observation_vicinity_mask == 1)
+    # print("added observation vicinity mask and dropped all unnecessary data from reanalysis data")
+
     # add observation vicinity mask
-    era.coords["observation_vicinity_mask"] = (("time", "lat", "lon"), dardar_ds.observation_vicinity_mask)
-    merra.coords["observation_vicinity_mask"] = (("time", "lat", "lon"), dardar_ds.observation_vicinity_mask)
+    era.coords["observation_mask"] = (("time", "lat", "lon"), dardar_ds.observation_mask)
+    merra.coords["observation_mask"] = (("time", "lat", "lon"), dardar_ds.observation_mask)
     # mask all values with nan that don't have an observation in their vicinity (cause we do not need them)
-    era_reduced = era.where(era.observation_vicinity_mask == 1)
-    merra_reduced = merra.where(merra.observation_vicinity_mask == 1)
-    print("added observation vicinity mask and dropped all unnecessary data from reanalysis data")
+    era_reduced = era.where(era.observation_mask == 1)
+    merra_reduced = merra.where(merra.observation_mask == 1)
+    print("added observation mask and dropped all unnecessary data from reanalysis data")
 
     # check if all dimensions are the same
     check_dimensions(dardar_ds, era_reduced, merra_reduced)
