@@ -658,6 +658,7 @@ def run_gridding(start_date, end_date, config_id, n_workers=10):
     logger.info("gridding period: {} "
                 "- {}".format(start_date, end_date))
     daterange = pd.date_range(start=start_date, end=end_date)
+    print(daterange)
     for date in daterange:
         date = date.to_pydatetime()
         pool.apply_async(grid_one_day, args=(date, config_id,))
