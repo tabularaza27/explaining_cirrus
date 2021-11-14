@@ -6,4 +6,4 @@ WORKER=$3
 /home/kjeggle/miniconda3/envs/xarray/bin/python /home/kjeggle/cirrus/src/preprocess/parallelize_bash_scripts/era5_preproc_cdo.py "$WORKER" "$YEAR" "$CONFIG_ID"
 /home/kjeggle/miniconda3/envs/xarray/bin/python /home/kjeggle/cirrus/src/preprocess/parallelize_bash_scripts/merra2_preproc_cdo.py "$WORKER" "$YEAR" "$CONFIG_ID"
 /home/kjeggle/miniconda3/envs/xarray/bin/python /home/kjeggle/cirrus/src/preprocess/merge.py "$CONFIG_ID" "$WORKER" "$YEAR"
-#/home/kjeggle/miniconda3/envs/xarray/bin/python /home/kjeggle/cirrus/src/preprocess/data_cube_filters.py "$YEAR" data # todo data cube filters has to be refactored
+/home/kjeggle/miniconda3/envs/xarray/bin/python /home/kjeggle/cirrus/src/preprocess/data_cube_filters.py "$CONFIG_ID" "$YEAR" data "$WORKER"

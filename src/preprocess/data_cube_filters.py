@@ -165,14 +165,14 @@ def filter_and_save_months(year, months, filter_type, config_id):
         pickle.dump(filtered_cube, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-def run_year(config_id, year, filter_type):
+def run_year(config_id, year, filter_type, n_worker):
     """create data frame and data_only dataset for given year. one file each 3 months
 
     Args:
         config_id (str) config determines resolutions and location of load/save directories
         year:
         filter_type (str): one of the following ['data','observations']
-
+        n_worker (int): cores to use for dask
     Returns:
 
     """
@@ -180,7 +180,7 @@ def run_year(config_id, year, filter_type):
     month_ranges = np.arange(1, 13, 1).reshape(4, 3)
     # month_ranges = np.arange(7,13,1).reshape(6,1)
 
-    cluster = LocalCluster(processes=True)
+    cluster = LocalCluster(processes=True,n_workers=n_worker)
     with Client(cluster) as client:
         dashboard_port = client.scheduler_info()['services']['dashboard']
         print("execute on local terminal to connect to dashboard: \n`ssh -L 8787:localhost:{} n2o`".format(
@@ -191,7 +191,7 @@ def run_year(config_id, year, filter_type):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 4:
-        run_year(config_id=sys.argv[1], year=int(sys.argv[2]), filter_type=str(sys.argv[3]))
+    if len(sys.argv) == 5:
+        run_year(config_id=str(sys.argv[1]), year=int(sys.argv[2]), filter_type=str(sys.argv[3]),n_worker=int(sys.argv[4]))
     else:
-        raise ValueError("Provide valid arguments. E.g.: python data_cube_filters.py <config_id> <year> <filter_type>")
+        raise ValueError("Provide valid arguments. E.g.: python data_cube_filters.py <config_id> <year> <filter_type> <n_worker>")
