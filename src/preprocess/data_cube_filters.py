@@ -176,7 +176,7 @@ def run_year(config_id, year, filter_type, n_worker):
     Returns:
 
     """
-
+    print("run for config_id: {}; year: {}; filter_type: {}; n_worker {}".format(config_id, year, filter_type, n_worker))
     month_ranges = np.arange(1, 13, 1).reshape(4, 3)
     # month_ranges = np.arange(7,13,1).reshape(6,1)
 
