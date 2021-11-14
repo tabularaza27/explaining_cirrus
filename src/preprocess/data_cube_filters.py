@@ -180,7 +180,7 @@ def run_year(config_id, year, filter_type, n_worker):
     month_ranges = np.arange(1, 13, 1).reshape(4, 3)
     # month_ranges = np.arange(7,13,1).reshape(6,1)
 
-    cluster = LocalCluster(processes=True,n_workers=n_worker)
+    cluster = LocalCluster(processes=True,n_workers=n_worker,threads_per_worker=4)
     with Client(cluster) as client:
         dashboard_port = client.scheduler_info()['services']['dashboard']
         print("execute on local terminal to connect to dashboard: \n`ssh -L 8787:localhost:{} n2o`".format(
