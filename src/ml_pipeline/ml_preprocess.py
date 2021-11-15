@@ -242,11 +242,8 @@ def split_train_val_test(df, predictand, random_state, train_size=0.8):
     Returns:
 
     """
-    X = df.drop(predictand, 1)
-    y = df[predictand]
-
     ### split train / test data
-    unique_gridcell = X["grid_cell"].unique()
+    unique_gridcell = df["grid_cell"].unique()
 
     # split between training and remaining data
     train_cells, rem_cells = train_test_split(unique_gridcell, train_size=train_size, random_state=random_state)
@@ -254,11 +251,17 @@ def split_train_val_test(df, predictand, random_state, train_size=0.8):
     # split between validate and test data for remaining cells
     val_cells, test_cells = train_test_split(rem_cells, test_size=0.5, random_state=random_state)
 
-    X_train, X_val, X_test = X[X.grid_cell.isin(train_cells)], X[X.grid_cell.isin(val_cells)], X[X.grid_cell.isin(test_cells)]
-    y_train, y_val, y_test = y[y.index.isin(X_train.index)], y[y.index.isin(X_val.index)], y[y.index.isin(X_test.index)]
-    X_train.drop("grid_cell", inplace=True, axis=1)
-    X_val.drop("grid_cell", inplace=True, axis=1)
-    X_test.drop("grid_cell", inplace=True, axis=1)
+    # split dataframe
+    df_train, df_val, df_test = df[df.grid_cell.isin(train_cells)], df[df.grid_cell.isin(val_cells)], df[df.grid_cell.isin(test_cells)]
+
+    # drop grid cell variable
+    df_train.drop("grid_cell", inplace=True, axis=1)
+    df_val.drop("grid_cell", inplace=True, axis=1)
+    df_test.drop("grid_cell", inplace=True, axis=1)
+
+    # create train, val, test dataframes
+    X_train, X_val, X_test = df_train.drop(predictand, 1), df_val.drop(predictand, 1), df_test.drop(predictand, 1)
+    y_train, y_val, y_test = df_train[predictand], df_val[predictand], df_test[predictand]
 
     return X_train, X_val, X_test, y_train, y_val, y_test
 
