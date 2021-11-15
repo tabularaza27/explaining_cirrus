@@ -41,7 +41,7 @@ def parallel_caltra(n_workers, year, month):
     # todo now I just link all available startfiles
     os.system("ln -sf {}/* {}".format(START_FILE_DIR, OUT_FILE_DIR))
 
-    filepaths = glob.glob("{}/*{}{:02d}*".format(START_FILE_DIR, year, month))
+    filepaths = glob.glob("{}/{}/*{}{:02d}*".format(START_FILE_DIR,year, year, month))
 
     pool = mp.Pool(n_workers)
     for filepath in filepaths:
