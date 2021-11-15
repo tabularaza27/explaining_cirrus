@@ -17,12 +17,18 @@ def process_singlefile(date_hour):
     """call preprocessing bash script for given file pTH
 
     Args:
-        filepath (str):
-        config_id (config): config_id (str) config determines resolutions and location of load/save directories
+        date_hour (str): yyyymmdd_hh
 
     Returns:
     """
     print("Call Bash Script for date {}".format(date_hour))
+
+    target_filename = "tra_traced_{}.1"
+
+    if os.path.isfile(target_filename):
+        print("file already exists")
+        return
+
     os.system("{} {}".format(BACKTRAJECTORY_SCRIPT, date_hour))
 
 
@@ -37,6 +43,10 @@ def parallel_caltra(n_workers, year, month):
     """
     print("Start parallel merra preprocessing for month {} for year {} with {} workers".format(month, year,
                                                                                                n_workers))
+
+    os.system("rm {}/*tmp*".format(OUT_FILE_DIR))
+    print("removed intermediate leftover files")
+
     # link startfiles to output dir
     # todo now I just link all available startfiles
     os.system("ln -sf {}/* {}".format(START_FILE_DIR, OUT_FILE_DIR))
