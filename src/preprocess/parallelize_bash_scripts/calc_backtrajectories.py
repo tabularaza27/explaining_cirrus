@@ -39,7 +39,7 @@ def parallel_caltra(n_workers, year, month):
                                                                                                n_workers))
     # link startfiles to output dir
     # todo now I just link all available startfiles
-    os.system("ln -s {}/* {}".format(START_FILE_DIR, OUT_FILE_DIR))
+    os.system("ln -sf {}/* {}".format(START_FILE_DIR, OUT_FILE_DIR))
 
     filepaths = glob.glob("{}/*{}{:02d}*".format(START_FILE_DIR, year, month))
 
