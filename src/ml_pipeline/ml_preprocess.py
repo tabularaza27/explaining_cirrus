@@ -214,16 +214,16 @@ def split_train_test(df, predictand, random_state, test_size=0.2):
     Returns:
 
     """
-    X = df.drop(predictand, 1)
-    y = df[predictand]
-
     ### split train / test data
-    unique_gridcell = X["grid_cell"].unique()
+    unique_gridcell = df["grid_cell"].unique()
     train_cells, test_cells = train_test_split(unique_gridcell, test_size=test_size, random_state=random_state)
-    X_train, X_test = X[X.grid_cell.isin(train_cells)], X[X.grid_cell.isin(test_cells)]
-    y_train, y_test = y[y.index.isin(X_train.index)], y[y.index.isin(X_test.index)]
-    X_train.drop("grid_cell", inplace=True, axis=1)
-    X_test.drop("grid_cell", inplace=True, axis=1)
+    df_train, df_test = df[df.grid_cell.isin(train_cells)], df[df.grid_cell.isin(test_cells)]
+
+    df_train.drop("grid_cell", inplace=True, axis=1)
+    df_test.drop("grid_cell", inplace=True, axis=1)
+
+    X_train, X_test = df_train.drop(predictand, 1), df_test.drop(predictand, 1)
+    y_train, y_test = df_train[[predictand, "grid_cell"]], df_test[[predictand, "grid_cell"]]
 
     return X_train, X_test, y_train, y_test
 
