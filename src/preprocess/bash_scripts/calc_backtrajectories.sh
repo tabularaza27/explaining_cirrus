@@ -18,7 +18,7 @@ era5filedir=/net/thermo/atmosdyn/era5/cdf
 # define start and end date
 dat=$1
 yyyy=`echo $dat | cut -c 1-4`
-backdat=$(newtime ${dat} -120)  # 5d backward
+backdat=$(newtime ${dat} -60)  # 2.5d backward
 
 # directory where netcdf files are linked and where trajectories will be written
 #cd /net/litho/atmosdyn/binderh/varia/kai/test
@@ -26,7 +26,7 @@ cd /net/n2o/wolke_scratch/kjeggle/BACKTRAJECTORIES/outfiles
 #ln -s /net/thermo/atmosdyn/era5/cdf/2008/01/
 
 # link era5 netcdf files to current working directory
-x=-120
+x=-60
 while [ $x -le 0 ];do
     newdat=$(newtime $dat $x)
     echo $newdat
