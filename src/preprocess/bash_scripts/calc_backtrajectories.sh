@@ -59,7 +59,6 @@ if [ ! -f tracevars ];then
     echo "U           1.    0    P" >> tracevars   # m/s
     echo "V           1.    0    P" >> tracevars   # m/s
     echo "OMEGA       1.    0    P" >> tracevars   # Pa/s
-    echo "CC          1.    0    P" >> tracevars   # percent
 fi
 trace trah_tmp_${dat}.1 tra_traced_${dat}.1
 
