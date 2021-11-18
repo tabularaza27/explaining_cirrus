@@ -45,7 +45,7 @@ def parallel_caltra(n_workers, year, month):
     print("Start parallel merra preprocessing for month {} for year {} with {} workers".format(month, year,
                                                                                                n_workers))
 
-    os.system("rm {}/*tmp*".format(OUT_FILE_DIR))
+    os.system("rm {}/*tmp_{}{:02d}*".format(OUT_FILE_DIR,year,month))
     print("removed intermediate leftover files")
 
     # link startfiles to output dir
