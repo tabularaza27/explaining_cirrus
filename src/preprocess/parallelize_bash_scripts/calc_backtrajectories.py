@@ -88,7 +88,7 @@ if __name__ == "__main__":
     year = args.year
     months = args.months
 
-    print("n_workers: ", n_workers,"year: " year, "months:", months)
+    print("n_workers: ", n_workers,"year: ", year, "months:", months)
 
     for month in months:
         parallel_caltra(n_workers=n_workers, year=year, month=month)
