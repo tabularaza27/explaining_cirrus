@@ -63,6 +63,7 @@ def parallel_caltra(n_workers, year, month):
 
 
 if __name__ == "__main__":
+    # python calc_backtrajectories.py --n_workers 8 --year 2008 --months 1 2 3
     CLI=argparse.ArgumentParser()
     CLI.add_argument(
         "--n_workers",
@@ -87,13 +88,7 @@ if __name__ == "__main__":
     year = args.year
     months = args.months
 
-    print(n_workers, year, months)
-    #
-    # # todo make user friendly
-    # if len(sys.argv) == 4:
-    #     month_input = sys.argv[3]
-    #     months = map(float, input.strip('[]').split(','))
-    #
-    #     parallel_caltra(n_workers=int(sys.argv[1]), year=int(sys.argv[2]), month=int(sys.argv[3]))
-    # else:
-    #     raise ValueError("Provide valid arguments. E.g.: python calc_backtrajectories.py <#workers> <year> <month>")
+    print("n_workers: ", n_workers,"year: " year, "months:", months)
+
+    for month in months:
+        parallel_caltra(n_workers=n_workers, year=year, month=month)
