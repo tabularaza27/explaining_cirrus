@@ -66,14 +66,12 @@ if __name__ == "__main__":
     CLI=argparse.ArgumentParser()
     CLI.add_argument(
         "--n_workers",
-        nargs=1,
         type=int,
         default=6
     )
 
     CLI.add_argument(
         "--year",
-        nargs=1,
         type=int
     )
 
