@@ -65,7 +65,7 @@ def parallel_caltra(n_workers, year, month):
 if __name__ == "__main__":
     CLI=argparse.ArgumentParser()
     CLI.add_argument(
-        "n_workers",
+        "--n_workers",
         nargs=1,
         type=int,
         default=6
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     )
 
     CLI.add_argument(
-        "months",
+        "--months",
         nargs="*",
         type=int
     )
