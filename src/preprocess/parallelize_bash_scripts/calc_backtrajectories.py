@@ -6,6 +6,7 @@ import multiprocessing as mp
 import glob
 import sys
 import os
+import argparse
 
 BACKTRAJECTORY_SCRIPT = "/net/n2o/wolke/kjeggle/Repos/cirrus/src/preprocess/bash_scripts/calc_backtrajectories.sh"
 START_FILE_DIR = "/net/n2o/wolke_scratch/kjeggle/BACKTRAJECTORIES/start_files"  # get dir of config id
@@ -62,8 +63,39 @@ def parallel_caltra(n_workers, year, month):
 
 
 if __name__ == "__main__":
-    # todo make user friendly
-    if len(sys.argv) == 4:
-        parallel_caltra(n_workers=int(sys.argv[1]), year=int(sys.argv[2]), month=int(sys.argv[3]))
-    else:
-        raise ValueError("Provide valid arguments. E.g.: python calc_backtrajectories.py <#workers> <year> <month>")
+    CLI=argparse.ArgumentParser()
+    CLI.add_argument(
+        "n_workers",
+        nargs=1,
+        type=int,
+        default=6
+    )
+
+    CLI.add_argument(
+        "--year",
+        nargs=1,
+        type=int
+    )
+
+    CLI.add_argument(
+        "months",
+        nargs="*",
+        type=int
+    )
+
+    args= CLI.parse_args()
+
+    n_workers = args.n_workers
+    year = args.year
+    months = args.months
+
+    print(n_workers, year, months)
+    #
+    # # todo make user friendly
+    # if len(sys.argv) == 4:
+    #     month_input = sys.argv[3]
+    #     months = map(float, input.strip('[]').split(','))
+    #
+    #     parallel_caltra(n_workers=int(sys.argv[1]), year=int(sys.argv[2]), month=int(sys.argv[3]))
+    # else:
+    #     raise ValueError("Provide valid arguments. E.g.: python calc_backtrajectories.py <#workers> <year> <month>")
