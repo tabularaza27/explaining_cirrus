@@ -71,4 +71,4 @@ trace trah_tmp_${dat}.1 tra_traced_${dat}.1
 
 
 ### clean
-rm startf_${dat}.1 tra_tmp_${dat}.1 trah_tmp_${dat}.1
+rm tra_tmp_${dat}.1 trah_tmp_${dat}.1 # startf_${dat}.1
