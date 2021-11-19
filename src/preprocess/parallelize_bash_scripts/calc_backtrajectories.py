@@ -34,7 +34,7 @@ def process_singlefile(date_hour):
 
     # after successful run remove blocked times and file path from the global variables
     d = datetime.datetime.strptime(date_hour, "%Y%m%d_%H")
-    BLOCKED_TIMES=remove_blocked_times(d)
+    BLOCKED_TIMES=remove_blocked_times(d, BLOCKED_TIMES)
     FILEPATHS=[file for file in FILEPATHS if date_hour not in file]
 
 # def parallel_caltra(n_workers, year, month):
@@ -68,7 +68,7 @@ def process_singlefile(date_hour):
 def get_blocked_times(d, steps=60):
     return pd.date_range(d + datetime.timedelta(hours=-(steps+1)), periods=steps+2,freq="1H").tolist()
 
-def remove_blocked_times(d, steps=60, blocked_times=BLOCKED_TIMES):
+def remove_blocked_times(d, steps=60, blocked_times):
     temp = get_blocked_times(d, steps)
     return [t for t in blocked_times if t not in temp]
 
