@@ -15,125 +15,140 @@ BACKTRAJECTORY_SCRIPT = "/net/n2o/wolke/kjeggle/Repos/cirrus/src/preprocess/bash
 START_FILE_DIR = "/net/n2o/wolke_scratch/kjeggle/BACKTRAJECTORIES/start_files"  # get dir of config id
 OUT_FILE_DIR = "/net/n2o/wolke_scratch/kjeggle/BACKTRAJECTORIES/outfiles"
 
+
 # todo make dynamic → potentially use with config
 
-def process_singlefile(date_hour):
-    """call preprocessing bash script for given file pTH
+class PARALLEL_CALTRA:
+    def __init__(self, n_workers, year):
+        self.n_workers = n_workers
+        self.year = year
 
-    Args:
-        date_hour (str): yyyymmdd_hh
+        self.BLOCKED_TIMES = []
+        self.FILEPATHS = glob.glob("{}/{}/*{}*_*".format(OUT_FILE_DIR, year, year))
+        # remove old tmp files
+        os.system("rm {}/*tmp_{}*".format(OUT_FILE_DIR, year))
+        print("removed intermediate leftover files")
 
-    Returns:
-    """
-    print("Call Bash Script for date {}".format(date_hour))
+        # link startfiles to output dir
+        # todo now I just link all available startfiles
+        os.system("ln -sf {}/* {}".format(START_FILE_DIR, OUT_FILE_DIR))
 
-    target_filename = "tra_traced_{}.1"
+    def process_singlefile(self, date_hour):
+        """call preprocessing bash script for given file pTH
 
-    if os.path.isfile(target_filename):
-        print("file already exists")
-    else:
-        # run caltra
-        os.system("{} {}".format(BACKTRAJECTORY_SCRIPT, date_hour))
+        Args:
+            date_hour (str): yyyymmdd_hh
 
-    # after successful run remove blocked times and file path from the global variables
-    d = datetime.datetime.strptime(date_hour, "%Y%m%d_%H")
-    BLOCKED_TIMES=remove_blocked_times(d, BLOCKED_TIMES)
-    FILEPATHS=[file for file in FILEPATHS if date_hour not in file]
+        Returns:
+        """
+        print("Call Bash Script for date {}".format(date_hour))
 
-# def parallel_caltra(n_workers, year, month):
-#     """call bash script that calculates backtrajectories using lagranto in parallel using python multiprocessing
-#
-#     Args:
-#         n_workers (int):
-#         year (int):
-#         month (int):
-#
-#     """
-#     print("Start parallel merra preprocessing for month {} for year {} with {} workers".format(month, year,
-#                                                                                                n_workers))
-#
-#     os.system("rm {}/*tmp_{}{:02d}*".format(OUT_FILE_DIR,year,month))
-#     print("removed intermediate leftover files")
-#
-#     # link startfiles to output dir
-#     # todo now I just link all available startfiles
-#     os.system("ln -sf {}/* {}".format(START_FILE_DIR, OUT_FILE_DIR))
-#
-#     filepaths = glob.glob("{}/{}/*{}{:02d}*".format(START_FILE_DIR,year, year, month))
-#
-#     pool = mp.Pool(n_workers)
-#     for filepath in filepaths:
-#         date_hour = filepath.split("startf_")[1]
-#         pool.apply_async(process_singlefile, args=(date_hour,))
-#     pool.close()
-#     pool.join()
+        target_filename = "tra_traced_{}.1"
 
-def get_blocked_times(d, steps=60):
-    return pd.date_range(d + datetime.timedelta(hours=-(steps+1)), periods=steps+2,freq="1H").tolist()
-
-def remove_blocked_times(d, blocked_times,steps=60):
-    temp = get_blocked_times(d, steps)
-    return [t for t in blocked_times if t not in temp]
-
-def parallel_caltra(n_workers, year):
-    """call bash script that calculates backtrajectories using lagranto in parallel using python multiprocessing
-
-    Args:
-        n_workers (int):
-        year (int):
-    """
-    print("Start parallel merra preprocessing for year {} with {} workers".format(year, n_workers))
-
-    pool = mp.Pool(n_workers)
-    # randomly select filepath
-    while len(FILEPATHS) > 0:
-        file = np.random.choice(FILEPATHS)
-        date_hour = file.split("startf_")[1]
-        d = datetime.datetime.strptime(date_hour, "%Y%m%d_%H")
-        # get times that need to be locked for this files
-        file_block_times = get_blocked_times(d)
-        # check if these times are not locked
-        if len([t for t in file_block_times if t in BLOCKED_TIMES]) == 0:
-            print("All times for {} are available → run now".format(date_hour))
-            BLOCKED_TIMES += file_block_times
-            pool.apply_async(process_singlefile, args=(date_hour,))
+        if os.path.isfile(target_filename):
+            print("file already exists")
         else:
-            print("Dates for {} are occupied, try another file".format(date_hour))
-            continue
+            # run caltra
+            os.system("{} {}".format(BACKTRAJECTORY_SCRIPT, date_hour))
 
-    pool.close()
-    pool.join()
+        # after successful run remove blocked times and file path from the global variables
+        d = datetime.datetime.strptime(date_hour, "%Y%m%d_%H")
+        self.BLOCKED_TIMES = PARALLEL_CALTRA.remove_blocked_times(d, self.BLOCKED_TIMES)
+        self.FILEPATHS = [file for file in self.FILEPATHS if date_hour not in file]
 
+    def parallel_caltra(self):
+        """call bash script that calculates backtrajectories using lagranto in parallel using python multiprocessing
 
-if __name__ == "__main__":
-    # python calc_backtrajectories.py --n_workers 8 --year 2008 #--months 1 2 3
-    CLI=argparse.ArgumentParser()
-    CLI.add_argument(
-        "--n_workers",
-        type=int,
-        default=6
-    )
+        Args:
+            n_workers (int):
+            year (int):
+        """
+        n_workers = self.n_workers
+        year = self.year
 
-    CLI.add_argument(
-        "--year",
-        type=int
-    )
-    args= CLI.parse_args()
+        print("Start parallel merra preprocessing for year {} with {} workers".format(year, n_workers))
 
-    n_workers = args.n_workers
-    year = args.year
+        pool = mp.Pool(n_workers)
+        # randomly select filepath
+        while len(self.FILEPATHS) > 0:
+            file = np.random.choice(self.FILEPATHS)
+            date_hour = file.split("startf_")[1]
+            d = datetime.datetime.strptime(date_hour, "%Y%m%d_%H")
+            # get times that need to be locked for this files
+            file_block_times = PARALLEL_CALTRA.get_blocked_times(d)
+            # check if these times are not locked
+            if len([t for t in file_block_times if t in self.BLOCKED_TIMES]) == 0:
+                print("All times for {} are available → run now".format(date_hour))
+                self.BLOCKED_TIMES += file_block_times
+                pool.apply_async(self.process_singlefile, args=(date_hour,))
+            else:
+                print("Dates for {} are occupied, try another file".format(date_hour))
+                continue
 
-    print("n_workers: ", n_workers,"year: ", year)
+        pool.close()
+        pool.join()
 
-    # remove old tmp files
-    os.system("rm {}/*tmp_{}*".format(OUT_FILE_DIR, year))
-    print("removed intermediate leftover files")
+    @staticmethod
+    def get_blocked_times(d, steps=60):
+        return pd.date_range(d + datetime.timedelta(hours=-(steps + 1)), periods=steps + 2, freq="1H").tolist()
 
-    # link startfiles to output dir
-    # todo now I just link all available startfiles
-    os.system("ln -sf {}/* {}".format(START_FILE_DIR, OUT_FILE_DIR))
+    @staticmethod
+    def remove_blocked_times(d, blocked_times, steps=60):
+        temp = get_blocked_times(d, steps)
+        return [t for t in blocked_times if t not in temp]
 
-    FILEPATHS=glob.glob("{}/{}/*{}*_*".format(OUT_FILE_DIR,year, year))
-    BLOCKED_TIMES=[]
+    # def parallel_caltra(n_workers, year, month):
+    #     """call bash script that calculates backtrajectories using lagranto in parallel using python multiprocessing
+    #
+    #     Args:
+    #         n_workers (int):
+    #         year (int):
+    #         month (int):
+    #
+    #     """
+    #     print("Start parallel merra preprocessing for month {} for year {} with {} workers".format(month, year,
+    #                                                                                                n_workers))
+    #
+    #     os.system("rm {}/*tmp_{}{:02d}*".format(OUT_FILE_DIR,year,month))
+    #     print("removed intermediate leftover files")
+    #
+    #     # link startfiles to output dir
+    #     # todo now I just link all available startfiles
+    #     os.system("ln -sf {}/* {}".format(START_FILE_DIR, OUT_FILE_DIR))
+    #
+    #     filepaths = glob.glob("{}/{}/*{}{:02d}*".format(START_FILE_DIR,year, year, month))
+    #
+    #     pool = mp.Pool(n_workers)
+    #     for filepath in filepaths:
+    #         date_hour = filepath.split("startf_")[1]
+    #         pool.apply_async(process_singlefile, args=(date_hour,))
+    #     pool.close()
+    #     pool.join()
 
-    parallel_caltra(n_workers=n_workers, year=year)
+    if __name__ == "__main__":
+        # python calc_backtrajectories.py --n_workers 8 --year 2008 #--months 1 2 3
+        CLI = argparse.ArgumentParser()
+        CLI.add_argument(
+            "--n_workers",
+            type=int,
+            default=6
+        )
+
+        CLI.add_argument(
+            "--year",
+            type=int
+        )
+        args = CLI.parse_args()
+
+        n_workers = args.n_workers
+        year = args.year
+
+        print("n_workers: ", n_workers, "year: ", year)
+
+        PC = PARALLEL_CALTRA(n_workers, year)
+        PC.parallel_caltra()
+
+    # FILEPATHS=glob.glob("{}/{}/*{}*_*".format(OUT_FILE_DIR,year, year))
+    # BLOCKED_TIMES=[]
+
+    # parallel_caltra(n_workers=n_workers, year=year)
