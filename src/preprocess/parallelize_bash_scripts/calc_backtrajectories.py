@@ -88,6 +88,8 @@ class ParallelCaltra:
         pool.close()
         pool.join()
 
+
+
     @staticmethod
     def get_blocked_times(d, steps=60):
         return pd.date_range(d + datetime.timedelta(hours=-(steps + 1)), periods=steps + 2, freq="1H").tolist()
@@ -96,6 +98,10 @@ class ParallelCaltra:
     def remove_blocked_times(d, blocked_times, steps=60):
         temp = get_blocked_times(d, steps)
         return [t for t in blocked_times if t not in temp]
+
+def run(n_workers, year):
+    pc = ParallelCaltra(n_workers, year)
+    pc.parallel_caltra()
 
     # def parallel_caltra(n_workers, year, month):
     #     """call bash script that calculates backtrajectories using lagranto in parallel using python multiprocessing
@@ -144,9 +150,7 @@ class ParallelCaltra:
         year = args.year
 
         print("n_workers: ", n_workers, "year: ", year)
-
-        pc = ParallelCaltra(n_workers, year)
-        pc.parallel_caltra()
+        run(n_workers, year)
 
     # FILEPATHS=glob.glob("{}/{}/*{}*_*".format(OUT_FILE_DIR,year, year))
     # BLOCKED_TIMES=[]
