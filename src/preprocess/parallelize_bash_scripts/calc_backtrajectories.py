@@ -28,9 +28,9 @@ def process_singlefile(date_hour):
 
     if os.path.isfile(target_filename):
         print("file already exists")
-        return
-
-    os.system("{} {}".format(BACKTRAJECTORY_SCRIPT, date_hour))
+    else:
+        # run caltra
+        os.system("{} {}".format(BACKTRAJECTORY_SCRIPT, date_hour))
 
     # after successful run remove blocked times and file path from the global variables
     d = datetime.datetime.strptime(date_hour, "%Y%m%d_%H")
