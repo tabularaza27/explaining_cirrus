@@ -7,6 +7,7 @@ import glob
 import sys
 import os
 import datetime
+import time
 import pandas as pd
 import numpy as np
 import argparse
@@ -79,6 +80,7 @@ class ParallelCaltra:
             # check if these times are not locked
             if len([t for t in file_block_times if t in self.BLOCKED_TIMES]) == 0:
                 print("All times for {} are available → run now".format(date_hour))
+                time.sleep(np.random.randint(5,20))
                 self.BLOCKED_TIMES += file_block_times
                 pool.apply_async(self.process_singlefile, args=(date_hour,))
             else:
