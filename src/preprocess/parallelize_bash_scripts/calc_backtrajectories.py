@@ -53,7 +53,7 @@ class ParallelCaltra:
 
         # after successful run remove blocked times and file path from the global variables
         d = datetime.datetime.strptime(date_hour, "%Y%m%d_%H")
-        self.BLOCKED_TIMES = PARALLEL_CALTRA.remove_blocked_times(d, self.BLOCKED_TIMES)
+        self.BLOCKED_TIMES = ParallelCaltra.remove_blocked_times(d, self.BLOCKED_TIMES)
         self.FILEPATHS = [file for file in self.FILEPATHS if date_hour not in file]
 
     def parallel_caltra(self):
@@ -75,7 +75,7 @@ class ParallelCaltra:
             date_hour = file.split("startf_")[1]
             d = datetime.datetime.strptime(date_hour, "%Y%m%d_%H")
             # get times that need to be locked for this files
-            file_block_times = PARALLEL_CALTRA.get_blocked_times(d)
+            file_block_times = ParallelCaltra.get_blocked_times(d)
             # check if these times are not locked
             if len([t for t in file_block_times if t in self.BLOCKED_TIMES]) == 0:
                 print("All times for {} are available → run now".format(date_hour))
@@ -96,7 +96,7 @@ class ParallelCaltra:
 
     @staticmethod
     def remove_blocked_times(d, blocked_times, steps=60):
-        temp = get_blocked_times(d, steps)
+        temp = ParallelCaltra.get_blocked_times(d, steps)
         return [t for t in blocked_times if t not in temp]
 
 def run(n_workers, year):
