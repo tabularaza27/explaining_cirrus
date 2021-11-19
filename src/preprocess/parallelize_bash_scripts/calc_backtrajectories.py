@@ -18,7 +18,7 @@ OUT_FILE_DIR = "/net/n2o/wolke_scratch/kjeggle/BACKTRAJECTORIES/outfiles"
 
 # todo make dynamic → potentially use with config
 
-class PARALLEL_CALTRA:
+class ParallelCaltra:
     def __init__(self, n_workers, year):
         self.n_workers = n_workers
         self.year = year
@@ -145,8 +145,8 @@ class PARALLEL_CALTRA:
 
         print("n_workers: ", n_workers, "year: ", year)
 
-        PC = PARALLEL_CALTRA(n_workers, year)
-        PC.parallel_caltra()
+        pc = ParallelCaltra(n_workers, year)
+        pc.parallel_caltra()
 
     # FILEPATHS=glob.glob("{}/{}/*{}*_*".format(OUT_FILE_DIR,year, year))
     # BLOCKED_TIMES=[]
