@@ -26,6 +26,8 @@ cd /net/n2o/wolke_scratch/kjeggle/BACKTRAJECTORIES/outfiles
 #ln -s /net/thermo/atmosdyn/era5/cdf/2008/01/
 
 # link era5 netcdf files to current working directory
+# commented out → do for whole month instead of for every file
+<<comm
 x=-60
 while [ $x -le 0 ];do
     newdat=$(newtime $dat $x)
@@ -35,6 +37,7 @@ while [ $x -le 0 ];do
     ln -s ${era5filedir}/${yyyynewdat}/${mmnewdat}/*${newdat} .
     x=$(( $x + 1 ))
 done
+comm
 
 # convert pressure in startfile from Pa to hPa
 #awk '{print $1,$2,$3/100}' startf_20080129_17_Pascal > startf_20080129_17
