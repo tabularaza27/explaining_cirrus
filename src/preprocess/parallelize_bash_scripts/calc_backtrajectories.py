@@ -6,6 +6,7 @@ import multiprocessing as mp
 import glob
 import sys
 import os
+import numpy as np
 import argparse
 
 BACKTRAJECTORY_SCRIPT = "/net/n2o/wolke/kjeggle/Repos/cirrus/src/preprocess/bash_scripts/calc_backtrajectories.sh"
