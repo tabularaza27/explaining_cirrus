@@ -134,24 +134,21 @@ def run(n_workers, year):
 
 if __name__ == "__main__":
     # python calc_backtrajectories.py --n_workers 8 --year 2008 #--months 1 2 3
-    # CLI = argparse.ArgumentParser()
-    # CLI.add_argument(
-    #     "--n_workers",
-    #     type=int,
-    #     default=6
-    # )
-    #
-    # CLI.add_argument(
-    #     "--year",
-    #     type=int
-    # )
-    # args = CLI.parse_args()
-    #
-    # n_workers = args.n_workers
-    # year = args.year
+    CLI = argparse.ArgumentParser()
+    CLI.add_argument(
+        "--n_workers",
+        type=int,
+        default=6
+    )
 
-    n_workers=32
-    year=2008
+    CLI.add_argument(
+        "--year",
+        type=int
+    )
+    args = CLI.parse_args()
+
+    n_workers = args.n_workers
+    year = args.year
 
     print("n_workers: ", n_workers, "year: ", year)
     run(n_workers, year)
