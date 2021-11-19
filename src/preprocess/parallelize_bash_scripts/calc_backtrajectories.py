@@ -100,6 +100,7 @@ class ParallelCaltra:
         return [t for t in blocked_times if t not in temp]
 
 def run(n_workers, year):
+    print("run")
     pc = ParallelCaltra(n_workers, year)
     pc.parallel_caltra()
 
