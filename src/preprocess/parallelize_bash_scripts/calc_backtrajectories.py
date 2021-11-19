@@ -68,7 +68,7 @@ def process_singlefile(date_hour):
 def get_blocked_times(d, steps=60):
     return pd.date_range(d + datetime.timedelta(hours=-(steps+1)), periods=steps+2,freq="1H").tolist()
 
-def remove_blocked_times(d, steps=60, blocked_times):
+def remove_blocked_times(d, blocked_times,steps=60):
     temp = get_blocked_times(d, steps)
     return [t for t in blocked_times if t not in temp]
 
