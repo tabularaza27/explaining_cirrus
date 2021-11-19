@@ -32,32 +32,73 @@ def process_singlefile(date_hour):
 
     os.system("{} {}".format(BACKTRAJECTORY_SCRIPT, date_hour))
 
+    # after successful run remove blocked times and file path from the global variables
+    d = datetime.datetime.strptime(date_hour, "%Y%m%d_%H")
+    BLOCKED_TIMES=remove_blocked_times(d)
+    FILEPATHS=[file for file in FILEPATHS if date_hour not in file]
 
-def parallel_caltra(n_workers, year, month):
+# def parallel_caltra(n_workers, year, month):
+#     """call bash script that calculates backtrajectories using lagranto in parallel using python multiprocessing
+#
+#     Args:
+#         n_workers (int):
+#         year (int):
+#         month (int):
+#
+#     """
+#     print("Start parallel merra preprocessing for month {} for year {} with {} workers".format(month, year,
+#                                                                                                n_workers))
+#
+#     os.system("rm {}/*tmp_{}{:02d}*".format(OUT_FILE_DIR,year,month))
+#     print("removed intermediate leftover files")
+#
+#     # link startfiles to output dir
+#     # todo now I just link all available startfiles
+#     os.system("ln -sf {}/* {}".format(START_FILE_DIR, OUT_FILE_DIR))
+#
+#     filepaths = glob.glob("{}/{}/*{}{:02d}*".format(START_FILE_DIR,year, year, month))
+#
+#     pool = mp.Pool(n_workers)
+#     for filepath in filepaths:
+#         date_hour = filepath.split("startf_")[1]
+#         pool.apply_async(process_singlefile, args=(date_hour,))
+#     pool.close()
+#     pool.join()
+
+def get_blocked_times(d, steps=60):
+    return pd.date_range(d + datetime.timedelta(hours=-(steps+1)), periods=steps+2,freq="1H").tolist()
+
+def remove_blocked_times(d, steps=60, blocked_times=BLOCKED_TIMES):
+    temp = get_blocked_times(d, steps)
+    return [t for t in blocked_times if t not in temp]
+
+def parallel_caltra(n_workers, year):
     """call bash script that calculates backtrajectories using lagranto in parallel using python multiprocessing
 
     Args:
         n_workers (int):
         year (int):
-        month (int):
-
     """
     print("Start parallel merra preprocessing for month {} for year {} with {} workers".format(month, year,
                                                                                                n_workers))
 
-    os.system("rm {}/*tmp_{}{:02d}*".format(OUT_FILE_DIR,year,month))
-    print("removed intermediate leftover files")
-
-    # link startfiles to output dir
-    # todo now I just link all available startfiles
-    os.system("ln -sf {}/* {}".format(START_FILE_DIR, OUT_FILE_DIR))
-
-    filepaths = glob.glob("{}/{}/*{}{:02d}*".format(START_FILE_DIR,year, year, month))
-
     pool = mp.Pool(n_workers)
-    for filepath in filepaths:
-        date_hour = filepath.split("startf_")[1]
-        pool.apply_async(process_singlefile, args=(date_hour,))
+    # randomly select filepath
+    while len(FILEPATHS) > 0:
+        file = np.random.choice(FILEPATHS)
+        date_hour = file.split("startf_")[1]
+        d = datetime.datetime.strptime(date_hour, "%Y%m%d_%H")
+        # get times that need to be locked for this files
+        file_block_times = get_blocked_times(d)
+        # check if these times are not locked
+        if len([t for t in file_block_times if t in BLOCKED_TIMES]) == 0:
+            print("All times for {} are available → run now".format(date_hour))
+            BLOCKED_TIMES += file_block_times
+            pool.apply_async(process_singlefile, args=(date_hour,))
+        else:
+            print("Dates for {} are occupied, try another file".format(date_hour))
+            continue
+
     pool.close()
     pool.join()
 
@@ -75,20 +116,22 @@ if __name__ == "__main__":
         "--year",
         type=int
     )
-
-    CLI.add_argument(
-        "--months",
-        nargs="*",
-        type=int
-    )
-
     args= CLI.parse_args()
 
     n_workers = args.n_workers
     year = args.year
-    months = args.months
 
     print("n_workers: ", n_workers,"year: ", year, "months:", months)
 
-    for month in months:
-        parallel_caltra(n_workers=n_workers, year=year, month=month)
+    # remove old tmp files
+    os.system("rm {}/*tmp_{}*".format(OUT_FILE_DIR, year))
+    print("removed intermediate leftover files")
+
+    # link startfiles to output dir
+    # todo now I just link all available startfiles
+    os.system("ln -sf {}/* {}".format(START_FILE_DIR, OUT_FILE_DIR))
+
+    FILEPATHS=glob.glob("{}/{}/*{}*_*".format(OUT_FILE_DIR,year, year))
+    BLOCKED_TIMES=[]
+
+    parallel_caltra(n_workers=n_workers, year=year)
