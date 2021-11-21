@@ -12,7 +12,7 @@ from src.ml_pipeline.experiment import get_experiment_assets, load_experiment, g
 from src.ml_pipeline.ml_preprocess import create_dataset
 
 
-def load_shap_values(df, experiment_name, project_name="icnc-xgboost"):
+def load_shap_values(experiment_name, project_name="icnc-xgboost"):
     """load shap values and shap idx from comet"""
     experiment = load_experiment(experiment_name, project_name)
     experiment_assets = experiment.get_asset_list()
