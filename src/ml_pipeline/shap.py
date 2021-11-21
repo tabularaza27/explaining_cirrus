@@ -79,7 +79,7 @@ def log_shap_plots(experiment_name, project_name="icnc-xgboost", summary_plots=T
         "region": [col for col in shap_df.columns if "lat_region" in col],
         "season": [col for col in shap_df.columns if "season" in col],
         "ic_cir": [col for col in shap_df.columns if "IC_CIR" in col],
-        "trajectory_features" [col for col in shap_df.columns if
+        "trajectory_features": [col for col in shap_df.columns if
                                col in ['cloud_start_time','liquid_origin', 'T_origin_condition', 'p_origin_condition',
                                        'RH_ice_origin_condition', 'T_rel_change', 'p_rel_change',
                                        'RH_ice_rel_change', 'T_rel_change_t-3', 'p_rel_change_t-3',
