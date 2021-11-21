@@ -12,7 +12,7 @@ from src.ml_pipeline.experiment import get_experiment_assets, load_experiment, g
 from src.ml_pipeline.ml_preprocess import create_dataset
 
 
-def load_shap_values(experiment_name, project_name="icnc-xgboost"):
+def load_shap_values(df, experiment_name, project_name="icnc-xgboost"):
     """load shap values and shap idx from comet"""
     experiment = load_experiment(experiment_name, project_name)
     experiment_assets = experiment.get_asset_list()
@@ -43,12 +43,13 @@ def load_shap_values(experiment_name, project_name="icnc-xgboost"):
     asset_id = get_asset_id(experiment_assets, "fileName", "config")
     experiment_config = experiment.get_asset(asset_id, return_type="json")
 
-    # load and create dataset
-    df = pd.read_pickle("/net/n2o/wolke/kjeggle/Notebooks/DataCube/df_pre_filtering.pickle")
-    # Drop NaN
-    df = df.dropna()
-    # Filter for Temperature
-    df = df.query("ta <= {}".format(TEMP_THRES))
+    # # load and create dataset
+    df = pd.read_pickle("/net/n2o/wolke/kjeggle/Notebooks/DataCube/merge_trajectory_features_2008.pickle") # todo make dynamic
+    # df = pd.read_pickle("/net/n2o/wolke/kjeggle/Notebooks/DataCube/df_pre_filtering.pickle")
+    # # Drop NaN
+    # df = df.dropna()
+    # # Filter for Temperature
+    # df = df.query("ta <= {}".format(TEMP_THRES))
 
     X_train, X_val, X_test, y_train, y_val, y_test = create_dataset(df, **experiment_config)
     shap_df = X_test[X_test.index.isin(shap_idx)]
