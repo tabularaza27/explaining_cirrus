@@ -125,10 +125,10 @@ def log_transform(df, column_names, zero_handling="add_constant", drop_original=
         if df.query("{} == 0".format(col))[col].count() > 0:
             print("{} contains zero values".format(col))
             if zero_handling == "add_constant":
-                df["{}_log".format(col)] = (df[col] + 1e-25).transform(np.log)
+                df["{}_log".format(col)] = (df[col] + 1e-25).transform(np.log10)
             elif zero_handling == "drop":
                 df = df.query("{} > 0".format(col))
-                df["{}_log".format(col)] = (df[col]).transform(np.log)
+                df["{}_log".format(col)] = (df[col]).transform(np.log10)
             elif zero_handling == "error":
                 raise ValueError("zero values not allowed for this variable")
 
@@ -139,7 +139,7 @@ def log_transform(df, column_names, zero_handling="add_constant", drop_original=
         # only positive values
         else:
             print("{} contains positive values only".format(col))
-            df["{}_log".format(col)] = (df[col]).transform(np.log)
+            df["{}_log".format(col)] = (df[col]).transform(np.log10)
 
         if drop_original:
             df.drop(col, axis=1, inplace=True)
