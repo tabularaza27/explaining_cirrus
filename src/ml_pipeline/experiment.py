@@ -79,8 +79,8 @@ def log_figures_to_experiment(validate_df, experiment, experiment_config=None):
         validate_df.hvplot.hexbin(x="predictions", y="ground_truth",
                                   xlabel="predictions ({})".format(target_variable),
                                   ylabel="ground_truth ({})".format(target_variable),
-                                  xlim=axes_lims, ylim=axes_lims, width=750,
-                                  height=500, title="ground truth vs. predictions"))
+                                  width=750, height=500,
+                                  title="ground truth vs. predictions") * hv.Slope(slope=1, y_intercept=0).opts(color='red'))
 
     # distributions ground_truth vs. predictions
     figures.append(validate_df.hvplot.hist(y=["ground_truth", "predictions"],
