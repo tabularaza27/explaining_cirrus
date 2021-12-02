@@ -46,10 +46,10 @@ do
   ln -sf ${era5filedir}/${yyyy}/${mm}/*${yyyy}${mm}${dd}_${hh}* .
 done
 
-# link startfile to output file
-
-
-
+# link startfile to output dir
+startf_file=startf_${dat}
+ln -sf ${outfiledir}/start_files/${dat_yyyy}/${startf_file} .
+echo $startf_file
 
 #ln -s /net/thermo/atmosdyn/era5/cdf/2008/01/
 
@@ -60,9 +60,6 @@ done
 #awk '{print $1,$2,$3/100}' startf_20080129_17_Pascal > startf_20080129_17
 
 ### calculate tra
-startf_file=startf_${dat}
-ln -sf ${outfiledir}/start_files/${dat_yyyy}/${startf_file} .
-echo $startf_file
 caltra ${dat} ${backdat} $startf_file tra_tmp_${dat}.1 -j
 #caltra ${dat} ${backdat} /home/binderh/prog/varia/kai/startf_20080129_17 tra_tmp_${dat}.1 -j
 

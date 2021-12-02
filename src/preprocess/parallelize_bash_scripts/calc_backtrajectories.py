@@ -16,6 +16,24 @@ BACKTRAJECTORY_SCRIPT = "/net/n2o/wolke/kjeggle/Repos/cirrus/src/preprocess/bash
 START_FILE_DIR = "/net/n2o/wolke_scratch/kjeggle/BACKTRAJECTORIES/start_files"  # get dir of config id
 OUT_FILE_DIR = "/net/n2o/wolke_scratch/kjeggle/BACKTRAJECTORIES/outfiles"
 
+### parallelize backtrajectory calculation ###
+# To be able to execute bash script from python they need to be executable, i.e:
+# `$ chmod u=rwx <file>`
+
+import multiprocessing as mp
+import glob
+import sys
+import os
+import datetime
+import time
+import pandas as pd
+import numpy as np
+import argparse
+
+BACKTRAJECTORY_SCRIPT = "/net/n2o/wolke/kjeggle/Repos/cirrus/src/preprocess/bash_scripts/calc_backtrajectories.sh"
+START_FILE_DIR = "/net/n2o/wolke_scratch/kjeggle/BACKTRAJECTORIES/start_files"  # get dir of config id
+OUT_FILE_DIR = "/net/n2o/wolke_scratch/kjeggle/BACKTRAJECTORIES/outfiles"
+
 
 # todo make dynamic → potentially use with config
 
@@ -57,35 +75,33 @@ class ParallelCaltra:
         self.BLOCKED_TIMES = ParallelCaltra.remove_blocked_times(d, self.BLOCKED_TIMES)
         self.FILEPATHS = [file for file in self.FILEPATHS if date_hour not in file]
 
+    def run_next_caltra(self):
+        file = np.random.choice(self.FILEPATHS)
+        date_hour = file.split("startf_")[1]
+        d = datetime.datetime.strptime(date_hour, "%Y%m%d_%H")
+        # get times that need to be locked for this files
+        file_block_times = ParallelCaltra.get_blocked_times(d)
+        # check if these times are not locked
+        if len([t for t in file_block_times if t in self.BLOCKED_TIMES]) == 0:
+            print("All times for {} are available → run now".format(date_hour))
+            self.BLOCKED_TIMES += file_block_times
+            self.process_singlefile(date_hour)
+        else:
+            print("Dates for {} are occupied, try another file".format(date_hour))
+
     def parallel_caltra(self):
         """call bash script that calculates backtrajectories using lagranto in parallel using python multiprocessing
 
-        Args:
-            n_workers (int):
-            year (int):
         """
         n_workers = self.n_workers
         year = self.year
 
-        print("Start parallel merra preprocessing for year {} with {} workers".format(year, n_workers))
+        print("Start parallel caltra for year {} with {} workers".format(year, n_workers))
 
         pool = mp.Pool(n_workers)
         # randomly select filepath
         while len(self.FILEPATHS) > 0:
-            file = np.random.choice(self.FILEPATHS)
-            date_hour = file.split("startf_")[1]
-            d = datetime.datetime.strptime(date_hour, "%Y%m%d_%H")
-            # get times that need to be locked for this files
-            file_block_times = ParallelCaltra.get_blocked_times(d)
-            # check if these times are not locked
-            if len([t for t in file_block_times if t in self.BLOCKED_TIMES]) == 0:
-                print("All times for {} are available → run now".format(date_hour))
-                time.sleep(np.random.randint(5,20))
-                self.BLOCKED_TIMES += file_block_times
-                pool.apply_async(self.process_singlefile, args=(date_hour,))
-            else:
-                print("Dates for {} are occupied, try another file".format(date_hour))
-                continue
+            pool.apply_async(self.run_next_caltra)
 
         pool.close()
         pool.join()
