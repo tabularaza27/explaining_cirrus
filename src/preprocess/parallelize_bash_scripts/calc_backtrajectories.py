@@ -50,7 +50,7 @@ class ParallelCaltra:
 
         # link startfiles to output dir
         # todo now I just link all available startfiles
-        os.system("ln -sf {}/* {}".format(START_FILE_DIR, OUT_FILE_DIR))
+        #os.system("ln -sf {}/* {}".format(START_FILE_DIR, OUT_FILE_DIR))
 
     def process_singlefile(self, date_hour):
         """call preprocessing bash script for given file pTH
