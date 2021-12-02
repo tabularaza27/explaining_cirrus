@@ -36,7 +36,7 @@ mkdir -p $target_dir
 cd $target_dir
 
 # link era5 files of the last 60 hours
-for i in {1..61}
+for i in {0..61}
 do
   hourbackdat=$(newtime ${dat} -$i) # subtract one hour
   yyyy=`echo $hourbackdat | cut -c 1-4`
