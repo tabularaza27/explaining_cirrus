@@ -76,6 +76,7 @@ class ParallelCaltra:
         self.FILEPATHS = [file for file in self.FILEPATHS if date_hour not in file]
 
     def run_next_caltra(self):
+        time.sleep(np.random.randint(2,7))
         file = np.random.choice(self.FILEPATHS)
         date_hour = file.split("startf_")[1]
         d = datetime.datetime.strptime(date_hour, "%Y%m%d_%H")
