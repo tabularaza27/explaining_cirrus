@@ -27,7 +27,7 @@ backdat=$(newtime ${dat} -60)  # 2.5d backward
 # target dir, caltra script will be executed here
 # directory where netcdf files are linked and where trajectories will be written
 target_dir=${outfiledir}/${yyyy}/${mm}/${dd}
-
+echo $target_dir
 # create target dir
 mkdir -p $target_dir
 cd $target_dir
