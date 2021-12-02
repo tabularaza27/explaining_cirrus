@@ -43,7 +43,7 @@ class ParallelCaltra:
         self.year = year
 
         self.BLOCKED_TIMES = []
-        self.FILEPATHS = glob.glob("{}/{}/*{}*_*".format(OUT_FILE_DIR, year, year))
+        self.FILEPATHS = glob.glob("{}/{}/*{}*_*".format(START_FILE_DIR, year, year))
         # remove old tmp files
         os.system("rm {}/*tmp_{}*".format(OUT_FILE_DIR, year))
         print("removed intermediate leftover files")
