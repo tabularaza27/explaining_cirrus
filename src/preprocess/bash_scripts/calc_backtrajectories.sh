@@ -60,7 +60,8 @@ done
 #awk '{print $1,$2,$3/100}' startf_20080129_17_Pascal > startf_20080129_17
 
 ### calculate tra
-startf_file=${outfiledir}/start_files/${dat_yyyy}/startf_${dat}
+startf_file=startf_${dat}
+ln -sf ${outfiledir}/start_files/${dat_yyyy}/${startf_file} .
 echo $startf_file
 caltra ${dat} ${backdat} $startf_file tra_tmp_${dat}.1 -j
 #caltra ${dat} ${backdat} /home/binderh/prog/varia/kai/startf_20080129_17 tra_tmp_${dat}.1 -j
