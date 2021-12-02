@@ -20,9 +20,6 @@ outfiledir=/net/n2o/wolke_scratch/kjeggle/BACKTRAJECTORIES/outfiles
 
 # define start and end date
 dat=$1
-yyyy=`echo $dat | cut -c 1-4`
-mm=`echo $dat | cut -c 5-6`
-dd=`echo $dat | cut -c 7-8`
 backdat=$(newtime ${dat} -60)  # 2.5d backward
 
 #cd /net/litho/atmosdyn/binderh/varia/kai/test
@@ -38,7 +35,7 @@ cd $target_dir
 # link era5 files of the last 60 hours
 for i in {1..61}
 do
-  hourbackdat=$(newtime ${dat} - $i) # subtract one hour
+  hourbackdat=$(newtime ${dat} -$i) # subtract one hour
   yyyy=`echo $hourbackdat | cut -c 1-4`
   mm=`echo $hourbackdat | cut -c 5-6`
   dd=`echo $hourbackdat | cut -c 7-8`
@@ -50,6 +47,11 @@ done
 
 # link era5 netcdf files to current working directory
 # commented out → do for whole month instead of for every file
+
+# define specs of start date
+yyyy=`echo $dat | cut -c 1-4`
+mm=`echo $dat | cut -c 5-6`
+dd=`echo $dat | cut -c 7-8`
 
 
 # convert pressure in startfile from Pa to hPa
