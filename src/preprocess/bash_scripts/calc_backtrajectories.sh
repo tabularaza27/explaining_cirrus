@@ -62,33 +62,33 @@ done
 ### calculate tra
 startf_file=${outfiledir}/start_files/${dat_yyyy}/startf_${dat}
 echo $startf_file
-#caltra ${dat} ${backdat} $startf_file tra_tmp_${dat}.1 -j
-##caltra ${dat} ${backdat} /home/binderh/prog/varia/kai/startf_20080129_17 tra_tmp_${dat}.1 -j
+caltra ${dat} ${backdat} $startf_file tra_tmp_${dat}.1 -j
+#caltra ${dat} ${backdat} /home/binderh/prog/varia/kai/startf_20080129_17 tra_tmp_${dat}.1 -j
+
+### add height to trajectories (in km)
+/home/binderh/prog/programs/height.to.traj/z2traj tra_tmp_${dat}.1 trah_tmp_${dat}.1
+
+### tra tracen
+if [ ! -f tracevars ];then
+    echo "T           1.    0    P" >> tracevars   # K
+    echo "Q        1000.    0    P" >> tracevars   # g/kg
+    echo "LWC   1000000.    0    P" >> tracevars   # mg/kg
+    echo "RWC   1000000.    0    P" >> tracevars   # mg/kg
+    echo "IWC   1000000.    0    P" >> tracevars   # mg/kg
+    echo "SWC   1000000.    0    P" >> tracevars   # mg/kg
+    echo "U           1.    0    P" >> tracevars   # m/s
+    echo "V           1.    0    P" >> tracevars   # m/s
+    echo "OMEGA       1.    0    P" >> tracevars   # Pa/s
+fi
+trace trah_tmp_${dat}.1 tra_traced_${dat}.1
 #
-#### add height to trajectories (in km)
-#/home/binderh/prog/programs/height.to.traj/z2traj tra_tmp_${dat}.1 trah_tmp_${dat}.1
+## append RHi
+##dim=`${LAGRANTO}/goodies/trainfo.sh ${tra_traced_${dat}.1} dim` #  dimensions of the trajectory file: #tra, #ntimes, #ncolumns
+##\rm -f rhi_to_tra.param
+##echo \"${inpfile}\"   > rhi_to_tra.param
+##echo \"${outfile}\"  >> rhi_to_tra.param
+##echo ${dim}          >> rhi_to_tra.param
 #
-#### tra tracen
-#if [ ! -f tracevars ];then
-#    echo "T           1.    0    P" >> tracevars   # K
-#    echo "Q        1000.    0    P" >> tracevars   # g/kg
-#    echo "LWC   1000000.    0    P" >> tracevars   # mg/kg
-#    echo "RWC   1000000.    0    P" >> tracevars   # mg/kg
-#    echo "IWC   1000000.    0    P" >> tracevars   # mg/kg
-#    echo "SWC   1000000.    0    P" >> tracevars   # mg/kg
-#    echo "U           1.    0    P" >> tracevars   # m/s
-#    echo "V           1.    0    P" >> tracevars   # m/s
-#    echo "OMEGA       1.    0    P" >> tracevars   # Pa/s
-#fi
-#trace trah_tmp_${dat}.1 tra_traced_${dat}.1
-##
-### append RHi
-###dim=`${LAGRANTO}/goodies/trainfo.sh ${tra_traced_${dat}.1} dim` #  dimensions of the trajectory file: #tra, #ntimes, #ncolumns
-###\rm -f rhi_to_tra.param
-###echo \"${inpfile}\"   > rhi_to_tra.param
-###echo \"${outfile}\"  >> rhi_to_tra.param
-###echo ${dim}          >> rhi_to_tra.param
-##
-##
-##### clean
+#
+#### clean
 #rm tra_tmp_${dat}.1 trah_tmp_${dat}.1 # startf_${dat}.1
