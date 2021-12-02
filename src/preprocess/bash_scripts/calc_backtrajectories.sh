@@ -20,13 +20,16 @@ outfiledir=/net/n2o/wolke_scratch/kjeggle/BACKTRAJECTORIES/outfiles
 
 # define start and end date
 dat=$1
+dat_yyyy=`echo $dat | cut -c 1-4`
+dat_mm=`echo $dat | cut -c 5-6`
+dat_dd=`echo $dat | cut -c 7-8`
 backdat=$(newtime ${dat} -60)  # 2.5d backward
 
 #cd /net/litho/atmosdyn/binderh/varia/kai/test
 
 # target dir, caltra script will be executed here
 # directory where netcdf files are linked and where trajectories will be written
-target_dir=${outfiledir}/${yyyy}/${mm}/${dd}
+target_dir=${outfiledir}/${dat_yyyy}/${dat_mm}/${dat_dd}
 echo $target_dir
 # create target dir
 mkdir -p $target_dir
@@ -53,17 +56,11 @@ done
 # link era5 netcdf files to current working directory
 # commented out → do for whole month instead of for every file
 
-# define specs of start date
-yyyy=`echo $dat | cut -c 1-4`
-mm=`echo $dat | cut -c 5-6`
-dd=`echo $dat | cut -c 7-8`
-
-
 # convert pressure in startfile from Pa to hPa
 #awk '{print $1,$2,$3/100}' startf_20080129_17_Pascal > startf_20080129_17
 
 ### calculate tra
-startf_file=${outfiledir}/start_files/${yyyy}/startf_${dat}
+startf_file=${outfiledir}/start_files/${dat_yyyy}/startf_${dat}
 echo $startf_file
 #caltra ${dat} ${backdat} $startf_file tra_tmp_${dat}.1 -j
 ##caltra ${dat} ${backdat} /home/binderh/prog/varia/kai/startf_20080129_17 tra_tmp_${dat}.1 -j
