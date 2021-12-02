@@ -40,7 +40,7 @@ do
   mm=`echo $hourbackdat | cut -c 5-6`
   dd=`echo $hourbackdat | cut -c 7-8`
   hh=`echo $hourbackdat | cut -c 10-11`
-  ln -sf /net/thermo/atmosdyn/era5/cdf/${yyyy}/${mm}/*${yyyy}${mm}${dd}_hh
+  ln -sf /net/thermo/atmosdyn/era5/cdf/${yyyy}/${mm}/*${yyyy}${mm}${dd}_${hh}
 done
 
 #ln -s /net/thermo/atmosdyn/era5/cdf/2008/01/
