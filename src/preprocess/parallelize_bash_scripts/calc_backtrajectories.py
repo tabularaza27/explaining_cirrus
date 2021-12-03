@@ -64,11 +64,11 @@ class ParallelCaltra:
         """
         print("Call Bash Script for date {}".format(date_hour))
 
-        target_filename = "tra_traced_{}.1"
+        target_filename = "tra_traced_{}.1".format(date_hour)
 
         yyyy=date_hour[0:4]
-        mm=date_hour[5:6]
-        dd=date_hour[7:8]
+        mm=date_hour[4:6]
+        dd=date_hour[6:8]
 
         # todo also check if exists in new dir structure
         if os.path.isfile(os.path.join(OUT_FILE_DIR,target_filename)) or os.path.isfile(os.path.join(OUT_FILE_DIR,yyyy,mm,dd,target_filename)):
