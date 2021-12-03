@@ -107,13 +107,54 @@ class ParallelCaltra:
 
         pool = mp.Pool(n_workers)
         # randomly select filepath
-        while len(self.FILEPATHS) > 0:
-            pool.apply_async(self.run_next_caltra)
+        # while len(self.FILEPATHS) > 0:
+        #     pool.apply_async(self.run_next_caltra)
+
+        for filepath in self.FILEPATHS:
+            date_hour = filepath.split("startf_")[1]
+            pool.apply_async(self.process_singlefile, args=(date_hour,))
 
         pool.close()
         pool.join()
 
 
+
+    @staticmethod
+    def get_blocked_times(d, steps=60):
+        return pd.date_range(d + datetime.timedelta(hours=-(steps + 1)), periods=steps + 2, freq="1H").tolist()
+
+    @staticmethod
+    def remove_blocked_times(d, blocked_times, steps=60):
+        temp = ParallelCaltra.get_blocked_times(d, steps)
+        return [t for t in blocked_times if t not in temp]
+
+def run(n_workers, year):
+    print("run")
+    pc = ParallelCaltra(n_workers, year)
+    pc.parallel_caltra()
+
+# def parallel_caltra(n_workers, year, month):
+#     """call bash script that calculates backtrajectories using lagranto in parallel using python multiprocessing
+#
+#     Args:
+#         n_workers (int):
+#         year (int):
+#         month (int):
+#
+#     """
+#     print("Start parallel merra preprocessing for month {} for year {} with {} workers".format(month, year,
+#                                                                                                n_workers))
+#
+#     os.system("rm {}/*tmp_{}{:02d}*".format(OUT_FILE_DIR,year,month))
+#     print("removed intermediate leftover files")
+#
+#     # link startfiles to output dir
+#     # todo now I just link all available startfiles
+#     os.system("ln -sf {}/* {}".format(START_FILE_DIR, OUT_FILE_DIR))
+#
+#     filepaths = glob.glob("{}/{}/*{}{:02d}*".format(START_FILE_DIR,year, year, month))
+#
+#     pool = mp.Pool(n_workers)
 
     @staticmethod
     def get_blocked_times(d, steps=60):
