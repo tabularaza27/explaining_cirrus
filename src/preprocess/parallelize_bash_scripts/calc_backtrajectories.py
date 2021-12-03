@@ -30,7 +30,8 @@ import pandas as pd
 import numpy as np
 import argparse
 
-BACKTRAJECTORY_SCRIPT = "/net/n2o/wolke/kjeggle/Repos/cirrus/src/preprocess/bash_scripts/calc_backtrajectories.sh"
+# BACKTRAJECTORY_SCRIPT = "/net/n2o/wolke/kjeggle/Repos/cirrus/src/preprocess/bash_scripts/calc_backtrajectories.sh"
+BACKTRAJECTORY_SCRIPT = "/net/n2o/wolke/kjeggle/Repos/cirrus/src/preprocess/bash_scripts/tmux_caltra.sh"
 START_FILE_DIR = "/net/n2o/wolke_scratch/kjeggle/BACKTRAJECTORIES/start_files"  # get dir of config id
 OUT_FILE_DIR = "/net/n2o/wolke_scratch/kjeggle/BACKTRAJECTORIES/outfiles"
 
@@ -64,7 +65,12 @@ class ParallelCaltra:
 
         target_filename = "tra_traced_{}.1"
 
-        if os.path.isfile(target_filename):
+        yyyy=date_hour[0:4]
+        mm=date_hour[5:6]
+        dd=date_hour[7:8]
+
+        # todo also check if exists in new dir structure
+        if os.path.isfile(os.path.join(OUT_FILE_DIR,target_filename)) or os.path.isfile(os.path.join(OUT_FILE_DIR,yyyy,mm,dd,target_filename)):
             print("file already exists")
         else:
             # run caltra
@@ -100,14 +106,8 @@ class ParallelCaltra:
 
         pool = mp.Pool(n_workers)
         # randomly select filepath
-        # while len(self.FILEPATHS) > 0:
-        #     pool.apply_async(self.run_next_caltra)
-
-        for file in self.FILEPATHS:
-            date_hour = file.split("startf_")[1]
-            print("start for:", date_hour)
-            pool.apply_async(self.process_singlefile, args=(date_hour,))
-
+        while len(self.FILEPATHS) > 0:
+            pool.apply_async(self.run_next_caltra)
 
         pool.close()
         pool.join()
