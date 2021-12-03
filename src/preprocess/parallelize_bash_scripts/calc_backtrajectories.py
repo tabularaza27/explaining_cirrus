@@ -77,6 +77,15 @@ class ParallelCaltra:
             # run caltra
             os.system("{} {}".format(BACKTRAJECTORY_SCRIPT, date_hour))
 
+        # check for finished file
+        while True:
+            if os.path.isfile(os.path.join(OUT_FILE_DIR, target_filename)) or os.path.isfile(
+                    os.path.join(OUT_FILE_DIR, yyyy, mm, dd, target_filename)):
+                print("Finished Caltra")
+                break
+            else:
+                time.sleep(1)
+
         # after successful run remove blocked times and file path from the global variables
         d = datetime.datetime.strptime(date_hour, "%Y%m%d_%H")
         self.BLOCKED_TIMES = ParallelCaltra.remove_blocked_times(d, self.BLOCKED_TIMES)
