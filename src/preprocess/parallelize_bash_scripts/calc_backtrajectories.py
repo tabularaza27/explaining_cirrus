@@ -76,7 +76,6 @@ class ParallelCaltra:
         self.FILEPATHS = [file for file in self.FILEPATHS if date_hour not in file]
 
     def run_next_caltra(self):
-        time.sleep(np.random.randint(2,7))
         file = np.random.choice(self.FILEPATHS)
         date_hour = file.split("startf_")[1]
         d = datetime.datetime.strptime(date_hour, "%Y%m%d_%H")
@@ -101,8 +100,14 @@ class ParallelCaltra:
 
         pool = mp.Pool(n_workers)
         # randomly select filepath
-        while len(self.FILEPATHS) > 0:
-            pool.apply_async(self.run_next_caltra)
+        # while len(self.FILEPATHS) > 0:
+        #     pool.apply_async(self.run_next_caltra)
+
+        for file in self.FILEPATHS:
+            date_hour = filepath.split("startf_")[1]
+            print("start for:", date_hour)
+            pool.apply_async(process_singlefile, args=(date_hour,))
+
 
         pool.close()
         pool.join()
