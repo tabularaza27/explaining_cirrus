@@ -1,6 +1,6 @@
 #!/bin/bash
 
-tmux new -s caltra_$1
+#tmux new -s caltra_$1
 
 module load dyn_tools
 
