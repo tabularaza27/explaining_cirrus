@@ -104,7 +104,7 @@ class ParallelCaltra:
         #     pool.apply_async(self.run_next_caltra)
 
         for file in self.FILEPATHS:
-            date_hour = filepath.split("startf_")[1]
+            date_hour = file.split("startf_")[1]
             print("start for:", date_hour)
             pool.apply_async(process_singlefile, args=(date_hour,))
 
