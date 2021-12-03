@@ -92,7 +92,8 @@ class ParallelCaltra:
         self.FILEPATHS = [file for file in self.FILEPATHS if date_hour not in file]
 
     def run_next_caltra(self):
-        file = np.random.choice(self.FILEPATHS)
+        LocalProcRandGen = np.random.RandomState()
+        file = LocalProcRandGen.choice(self.FILEPATHS)
         date_hour = file.split("startf_")[1]
         d = datetime.datetime.strptime(date_hour, "%Y%m%d_%H")
         # get times that need to be locked for this files
