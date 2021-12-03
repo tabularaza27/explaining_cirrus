@@ -72,16 +72,18 @@ class ParallelCaltra:
 
         # todo also check if exists in new dir structure
         if os.path.isfile(os.path.join(OUT_FILE_DIR,target_filename)) or os.path.isfile(os.path.join(OUT_FILE_DIR,yyyy,mm,dd,target_filename)):
-            print("file already exists")
+            print(date_hour, "file already exists")
         else:
             # run caltra
+            start_time=datetime.datetime.now()
             os.system("{} {}".format(BACKTRAJECTORY_SCRIPT, date_hour))
 
         # check for finished file
         while True:
             if os.path.isfile(os.path.join(OUT_FILE_DIR, target_filename)) or os.path.isfile(
                     os.path.join(OUT_FILE_DIR, yyyy, mm, dd, target_filename)):
-                print("Finished Caltra")
+                duration=datetime.datetime.now()-start_time
+                print("Finished Caltra for", date_hour, "in", str(duration))
                 break
             else:
                 time.sleep(1)
