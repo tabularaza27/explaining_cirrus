@@ -1,11 +1,13 @@
 #!/bin/bash
 
-#module load dyn_tools
-#
-#export MODEL=era5
-#export NETCDF_FORMAT=CF
-#export LAGRANTO=${DYN_TOOLS}/lagranto.era5
-#model
+tmux new -s caltra_$1
+
+module load dyn_tools
+
+export MODEL=era5
+export NETCDF_FORMAT=CF
+export LAGRANTO=${DYN_TOOLS}/lagranto.era5
+model
 
 # lagranto help page:
 # dyn_help lagranto
