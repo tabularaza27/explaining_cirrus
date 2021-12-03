@@ -107,12 +107,12 @@ class ParallelCaltra:
 
         pool = mp.Pool(n_workers)
         # randomly select filepath
-        # while len(self.FILEPATHS) > 0:
-        #     pool.apply_async(self.run_next_caltra)
+        while len(self.FILEPATHS) > 0:
+            pool.apply_async(self.run_next_caltra)
 
-        for filepath in self.FILEPATHS:
-            date_hour = filepath.split("startf_")[1]
-            pool.apply_async(self.process_singlefile, args=(date_hour,))
+        # for filepath in self.FILEPATHS:
+        #     date_hour = filepath.split("startf_")[1]
+        #     pool.apply_async(self.process_singlefile, args=(date_hour,))
 
         pool.close()
         pool.join()
