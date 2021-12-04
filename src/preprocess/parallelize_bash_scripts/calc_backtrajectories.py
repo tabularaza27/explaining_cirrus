@@ -88,25 +88,25 @@ class ParallelCaltra:
             else:
                 time.sleep(1)
 
-        # after successful run remove blocked times and file path from the global variables
-        d = datetime.datetime.strptime(date_hour, "%Y%m%d_%H")
-        self.BLOCKED_TIMES = ParallelCaltra.remove_blocked_times(d, self.BLOCKED_TIMES)
-        self.FILEPATHS = [file for file in self.FILEPATHS if date_hour not in file]
+        # # after successful run remove blocked times and file path from the global variables
+        # d = datetime.datetime.strptime(date_hour, "%Y%m%d_%H")
+        # self.BLOCKED_TIMES = ParallelCaltra.remove_blocked_times(d, self.BLOCKED_TIMES)
+        # self.FILEPATHS = [file for file in self.FILEPATHS if date_hour not in file]
 
     def run_next_caltra(self):
         LocalProcRandGen = np.random.RandomState()
         file = LocalProcRandGen.choice(self.FILEPATHS)
         date_hour = file.split("startf_")[1]
-        d = datetime.datetime.strptime(date_hour, "%Y%m%d_%H")
+        # d = datetime.datetime.strptime(date_hour, "%Y%m%d_%H")
         # get times that need to be locked for this files
-        file_block_times = ParallelCaltra.get_blocked_times(d)
+        # file_block_times = ParallelCaltra.get_blocked_times(d)
         # check if these times are not locked
-        if len([t for t in file_block_times if t in self.BLOCKED_TIMES]) == 0:
-            print("All times for {} are available → run now".format(date_hour))
-            self.BLOCKED_TIMES += file_block_times
-            self.process_singlefile(date_hour)
-        else:
-            print("Dates for {} are occupied, try another file".format(date_hour))
+        # if len([t for t in file_block_times if t in self.BLOCKED_TIMES]) == 0:
+        #     print("All times for {} are available → run now".format(date_hour))
+        #     self.BLOCKED_TIMES += file_block_times
+        self.process_singlefile(date_hour)
+        # else:
+        #     print("Dates for {} are occupied, try another file".format(date_hour))
 
     def parallel_caltra(self):
         """call bash script that calculates backtrajectories using lagranto in parallel using python multiprocessing
