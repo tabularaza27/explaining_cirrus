@@ -53,7 +53,7 @@ class ParallelCaltra:
 
         # link startfiles to output dir
         # todo now I just link all available startfiles
-        #os.system("ln -sf {}/* {}".format(START_FILE_DIR, OUT_FILE_DIR))
+        # os.system("ln -sf {}/* {}".format(START_FILE_DIR, OUT_FILE_DIR))
 
     def process_singlefile(self, date_hour):
         """call preprocessing bash script for given file pTH
@@ -67,30 +67,28 @@ class ParallelCaltra:
 
         target_filename = "tra_traced_{}.1".format(date_hour)
 
-        yyyy=date_hour[0:4]
-        mm=date_hour[4:6]
-        dd=date_hour[6:8]
+        yyyy = date_hour[0:4]
+        mm = date_hour[4:6]
+        dd = date_hour[6:8]
 
         # todo also check if exists in new dir structure
-        if os.path.isfile(os.path.join(OUT_FILE_DIR,target_filename)) or os.path.isfile(os.path.join(OUT_FILE_DIR,yyyy,mm,dd,target_filename)):
+        if os.path.isfile(os.path.join(OUT_FILE_DIR, target_filename)) or os.path.isfile(
+                os.path.join(OUT_FILE_DIR, yyyy, mm, dd, target_filename)):
             print(date_hour, "file already exists")
         else:
             # run caltra
-            start_time=datetime.datetime.now()
+            start_time = datetime.datetime.now()
             os.system("{} {}".format(BACKTRAJECTORY_SCRIPT, date_hour))
 
         # check for finished file
         while True:
             if os.path.isfile(os.path.join(OUT_FILE_DIR, target_filename)) or os.path.isfile(
                     os.path.join(OUT_FILE_DIR, yyyy, mm, dd, target_filename)):
-                duration=datetime.datetime.now()-start_time
+                duration = datetime.datetime.now() - start_time
                 print("Finished Caltra for", date_hour, "in", str(duration))
                 break
             else:
                 time.sleep(1)
-
-        gc.collect()
-        return
 
         # # after successful run remove blocked times and file path from the global variables
         # d = datetime.datetime.strptime(date_hour, "%Y%m%d_%H")
@@ -143,39 +141,79 @@ class ParallelCaltra:
         return [t for t in blocked_times if t not in temp]
 
 
-
 def run(n_workers, year):
     print("run")
     pc = ParallelCaltra(n_workers, year)
     pc.parallel_caltra()
 
-# def parallel_caltra(n_workers, year, month):
-#     """call bash script that calculates backtrajectories using lagranto in parallel using python multiprocessing
-#
-#     Args:
-#         n_workers (int):
-#         year (int):
-#         month (int):
-#
-#     """
-#     print("Start parallel merra preprocessing for month {} for year {} with {} workers".format(month, year,
-#                                                                                                n_workers))
-#
-#     os.system("rm {}/*tmp_{}{:02d}*".format(OUT_FILE_DIR,year,month))
-#     print("removed intermediate leftover files")
-#
-#     # link startfiles to output dir
-#     # todo now I just link all available startfiles
-#     os.system("ln -sf {}/* {}".format(START_FILE_DIR, OUT_FILE_DIR))
-#
-#     filepaths = glob.glob("{}/{}/*{}{:02d}*".format(START_FILE_DIR,year, year, month))
-#
-#     pool = mp.Pool(n_workers)
-#     for filepath in filepaths:
-#         date_hour = filepath.split("startf_")[1]
-#         pool.apply_async(process_singlefile, args=(date_hour,))
-#     pool.close()
-#     pool.join()
+
+def process_singlefile(date_hour):
+    """call preprocessing bash script for given file pTH
+
+    Args:
+        date_hour (str): yyyymmdd_hh
+
+    Returns:
+    """
+    print("Call Bash Script for date {}".format(date_hour))
+
+    target_filename = "tra_traced_{}.1".format(date_hour)
+
+    yyyy = date_hour[0:4]
+    mm = date_hour[4:6]
+    dd = date_hour[6:8]
+
+    # todo also check if exists in new dir structure
+    if os.path.isfile(os.path.join(OUT_FILE_DIR, target_filename)) or os.path.isfile(
+            os.path.join(OUT_FILE_DIR, yyyy, mm, dd, target_filename)):
+        print(date_hour, "file already exists")
+    else:
+        # run caltra
+        start_time = datetime.datetime.now()
+        os.system("{} {}".format(BACKTRAJECTORY_SCRIPT, date_hour))
+
+    # check for finished file
+    while True:
+        if os.path.isfile(os.path.join(OUT_FILE_DIR, target_filename)) or os.path.isfile(
+                os.path.join(OUT_FILE_DIR, yyyy, mm, dd, target_filename)):
+            duration = datetime.datetime.now() - start_time
+            print("Finished Caltra for", date_hour, "in", str(duration))
+            break
+        else:
+            time.sleep(1)
+
+
+def parallel_caltra(n_workers, year):
+    """call bash script that calculates backtrajectories using lagranto in parallel using python multiprocessing
+
+    Args:
+        n_workers (int):
+        year (int):
+
+    """
+    print("Start parallel merra preprocessing for year {} with {} workers".format(year, n_workers))
+
+    # os.system("rm {}/*tmp_{}{:02d}*".format(OUT_FILE_DIR, year, month))
+    # print("removed intermediate leftover files")
+
+    # link startfiles to output dir
+    # todo now I just link all available startfiles
+    # os.system("ln -sf {}/* {}".format(START_FILE_DIR, OUT_FILE_DIR))
+
+    filepaths = glob.glob("{}/{}/*{}*_*".format(START_FILE_DIR, year, year))
+    # filepaths = glob.glob("{}/{}/*{}{:02d}*".format(START_FILE_DIR, year, year, month))
+
+    pool = mp.Pool(n_workers)
+
+    while len(filepaths) > 0:
+        LocalProcRandGen = np.random.RandomState()
+        file = LocalProcRandGen.choice(filepaths)
+        date_hour = file.split("startf_")[1] #
+        pool.apply_async(process_singlefile, args=(date_hour,))
+
+    pool.close()
+    pool.join()
+
 
 if __name__ == "__main__":
     # python calc_backtrajectories.py --n_workers 8 --year 2008 #--months 1 2 3
@@ -196,7 +234,7 @@ if __name__ == "__main__":
     year = args.year
 
     print("n_workers: ", n_workers, "year: ", year)
-    run(n_workers, year)
+    parallel_caltra(n_workers, year)
 
 # FILEPATHS=glob.glob("{}/{}/*{}*_*".format(OUT_FILE_DIR,year, year))
 # BLOCKED_TIMES=[]
