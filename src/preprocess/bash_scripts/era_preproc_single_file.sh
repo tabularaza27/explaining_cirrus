@@ -34,8 +34,8 @@ if test -f "$FINAL_FILE"; then
 fi
 
 # 1. Rename r,q,t parameters (needed for afterburner), convert spectral to gaussian grid, set from  reduced gaussian to regular grid type
-#cdo -f nc -chparam,0.0.0,130,0.1.0,133,25.3.0,152 -sp2gpl -setgridtype,regular $filename ${Intermediate_File_Directory}/era5_date_${d}_time_${t}.nc
-cdo -f nc -chparam,0.0.0,130,0.1.0,133,25.3.0,152 $filename ${Intermediate_File_Directory}/era5_date_${d}_time_${t}.nc
+cdo -f nc -chparam,0.0.0,130,0.1.0,133,25.3.0,152 -sp2gpl -setgridtype,regular $filename ${Intermediate_File_Directory}/era5_date_${d}_time_${t}.nc
+#cdo -f nc -chparam,0.0.0,130,0.1.0,133,25.3.0,152 $filename ${Intermediate_File_Directory}/era5_date_${d}_time_${t}.nc
 
 # 2. calculate rh with r,q,t via the cdo afterburner. Bash script Here document Limit string must be at beginning of line (https://tldp.org/LDP/abs/html/here-docs.html)
 cdo after ${Intermediate_File_Directory}/era5_date_${d}_time_${t}.nc ${Intermediate_File_Directory}/rh_era5_date_${d}_time_${t}.nc << BREAK

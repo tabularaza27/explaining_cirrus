@@ -50,9 +50,9 @@
   "test_config": {
     "config_id": "test_config",
     "latmin": 0,
-    "latmax": 60,
-    "lonmin": -75,
-    "lonmax": -15,
+    "latmax": 80,
+    "lonmin": -140,
+    "lonmax": 40,
     "horizontal_resolution": 0.25,
     "temporal_resolution": "1H",
     "altitude_min": 3960,
