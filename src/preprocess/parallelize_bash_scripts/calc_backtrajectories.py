@@ -206,6 +206,9 @@ def parallel_caltra(n_workers, year):
     pool = mp.Pool(n_workers)
 
     while len(filepaths) > 0:
+        # todo I think while loop is leaking memory, check if process is available befor apply_asyncd
+        # todo implement check for when all backtrajectories are calculated
+        # todo implement function that not 2 backtrajectories have to access same source files
         LocalProcRandGen = np.random.RandomState()
         file = LocalProcRandGen.choice(filepaths)
         date_hour = file.split("startf_")[1] #
