@@ -307,6 +307,7 @@ def vert_trafo(ds, altitude_min, altitude_max, layer_thickness):
         )
         da.attrs.update(ds[var_name].attrs)
         da = da.rename({"hlev_center": "lev"})
+        ds = da.transpose("time", "lev", "lat", "lon")
         ds_hlev["{}".format(var_name)] = da
         # var_dict[var_name] = da
 
