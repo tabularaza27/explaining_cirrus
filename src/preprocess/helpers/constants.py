@@ -24,7 +24,7 @@ MERRA_REGRID_FILESTUMPY = "merra2_regrid"
 MERRA_CDO_SCRIPT_PATH = '/home/kjeggle/cirrus/src/preprocess/bash_scripts/merra_horizontal_remap.sh'
 
 # ERA
-ERA_INCOMING_DIR = '/net/n2o/wolke_scratch/kjeggle/ERA5/ECMWF_incoming/ERA5'
+ERA_INCOMING_DIR = '/net/n2o/wolke_scratch/kjeggle/ERA5/ECMWF_incoming'
 ERA_CDO_SCRIPT_PATH = '/home/kjeggle/cirrus/src/preprocess/bash_scripts/era_preproc_single_file.sh'
 ERA_PRE_PROC_DIR = 'ERA5/preproc'
 ERA_IM_DIR = 'ERA5/intermediate'
