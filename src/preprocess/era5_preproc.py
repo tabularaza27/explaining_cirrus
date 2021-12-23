@@ -144,8 +144,8 @@ def calc_e_sat_i(tk):
     return e_sat_w
 
 # todo double check
-def calc_rh_ice(rh_w, tk):
-    """calculate relative humidity w.r.t. ice for given temp
+def calc_rh(ds):
+    """calculate relative humidity w.r.t. water and ice for given temp
 
     RH_{ice} = RH_{w} * \frac{e_{sat_w}}{e_{sat_i}}$
 
@@ -164,12 +164,19 @@ def calc_rh_ice(rh_w, tk):
         rh_w: relative humidity w.r.t water
         tk: temperature in Kelvin
     """
-    e_sat_w = calc_e_sat_w(tk)
-    e_sat_i = calc_e_sat_i(tk)
+    e_sat_w = calc_e_sat_w(ds["t"])
+    e_sat_i = calc_e_sat_i(ds["t"])
 
+    # calculate partial pressure of water (https://cran.r-project.org/web/packages/humidity/vignettes/humidity-measures.html)
+    e = ds["q"] * ds["plev_center"] / (0.622 + 0.378 * ds["q"])
+
+    rh_w = e/e_sat_w
     rh_ice = rh_w * e_sat_w / e_sat_i
 
-    return rh_ice
+    ds["rh"] = rh_w
+    ds["rh_ice"] = rh_ice
+
+    return ds
 
 def calc_iwc(ds):
     """transform specific iwc (ciwc)  [kg kg**-1] to iwc [kg m**-3]
@@ -339,7 +346,7 @@ def run_preprocess_pipeline(date, config_id):
     ds = calc_trans_w(ds)
     ds = calc_iwc(ds)
     ds = calc_hlevs(ds)
-    ds["rh_ice"] = calc_rh_ice(ds.rh, ds.t)
+    ds = calc_rh(ds)
     ds_hlev = vert_trafo(ds, altitude_min, altitude_max, layer_thickness)
 
     return ds_hlev
