@@ -33,6 +33,11 @@ def load_ds(date, config_id):
     era_pre_proc_dir = get_data_product_dir(config_id, ERA_PRE_PROC_DIR)
     path = "{}/all_era5_date_{}_time_*.nc".format(era_pre_proc_dir, date_str)
     ds = xr.open_mfdataset(path)
+
+    min_lev = 45  #
+    max_lev = 137  # closer to ground → min/max in terms of pressure
+    ds = ds.sel(lev=slice(min_lev, max_lev), nhyi=slice(min_lev - 1, max_lev + 1), nhym=slice(min_lev - 1, max_lev))
+
     ds = ds.load()  # load from dask arrays into memory
 
     return ds
@@ -46,8 +51,8 @@ def calc_plevs(ds):
     surface_pressure.attrs.update({"long_name": "surface pressure"})
 
     # create stacked pressure level variable to be able to multiply with a nd b constants
-    surface_pressure_stacked_m = np.hstack([surface_pressure for i in range(0, 137)])  # for level centers
-    surface_pressure_stacked_i = np.hstack([surface_pressure for i in range(0, 138)])  # for level edges
+    surface_pressure_stacked_m = np.hstack([surface_pressure for i in range(0, ds.dims["nhym"])])  # for level centers
+    surface_pressure_stacked_i = np.hstack([surface_pressure for i in range(0, ds.dims["nhyi"])])  # for level edges
 
     ds = ds.assign(sp_stacked_m=(["time", "nhym", "lat", "lon"], surface_pressure_stacked_m))  # level centers
     ds = ds.assign(sp_stacked_i=(["time", "nhyi", "lat", "lon"], surface_pressure_stacked_i))  # level edges
@@ -87,13 +92,13 @@ def calc_hlevs(ds):
     rolling_da = rolling.construct(nhyi="z_win")  # construct returns data array view of rolling object
     #     log_div = np.log(rolling_da.isel(z_win=1)) - np.log(rolling_da.isel(z_win=0)) # 𝑙𝑛(𝑝1𝑝2) == ln(p1)-ln(p2)
     log_div = np.log(rolling_da.isel(z_win=1) / rolling_da.isel(z_win=0))
-    ds = ds.assign(log_div=(["time", "lev", "lat", "lon"], log_div.isel(nhyi=slice(1, 138)).values))
+    ds = ds.assign(log_div=(["time", "lev", "lat", "lon"], log_div.isel(nhyi=slice(1, ds.dims["nhyi"])).values))
 
     # calculate geometric layer thickness with hypsometric equation
     delta_z = R / g * ds.t * ds.log_div #  todo use virtual temperature
 
     # set layer thickness of top layer to 5000 (doesnt really matter what value it is, since we are not interested in data at those heights but currently it is infinity which fucks up the cumsum)
-    delta_z[:, 0, :, :] = np.ones((ds.dims["time"], ds.dims["lat"], ds.dims["lon"])) * 5000
+    # delta_z[:, 0, :, :] = np.ones((ds.dims["time"], ds.dims["lat"], ds.dims["lon"])) * 5000
 
     # add geometric height at surface (geopotential / gravitational acceleration)
     surface_geometric_height = (ds.z / g).values
@@ -166,6 +171,26 @@ def calc_rh_ice(rh_w, tk):
 
     return rh_ice
 
+def calc_iwc(ds):
+    """transform specific iwc (ciwc)  [kg kg**-1] to iwc [kg m**-3]
+
+    https://glossary.ametsoc.org/wiki/Virtual_temperature
+
+    1. calculate virtual temperature: T_v = T(1+r_v/ε)/(1+r_v); ε = 0.622, r_v = approximated by specific humidity
+    2. calculate air density via ideal gas law: air_density=air_pressure/(virtual_air_temperature*R_air) [kg m-3]
+    3. calculate iwc: iwc = ciwc * air_density
+    """
+    epsilon = 0.622  # ratio of the gas constants of air and water vapor
+    ds["t_v"] = ds.t * (1 + ds.q / epsilon) / (1 + ds.q)  # calculate virtual temp
+    ds["airdens"] = ds.plev_center / (R * ds["t_v"])
+    ds["era_iwc"] = ds["ciwc"] * ds["airdens"]
+
+    ds.era_iwc.attrs.update({"units": "kg m**-3",
+                             "standard_name": "ice water content"
+                             })
+
+    return ds
+
 
 def calc_trans_w(ds):
     """transform vertical velocity from Pa s**-1 to m s**-1
@@ -193,7 +218,7 @@ def calc_trans_w(ds):
 def vert_trafo(ds, altitude_min, altitude_max, layer_thickness):
     """vertical coordinate transformation from model to pressure levels
 
-    all variables are transformed linear
+    cloud cover and iwc are transformed conservative, all other variables are transformed linear
 
     Args:
         ds (xr.Dataset): dataset with hybrid sigma pressure levels
@@ -205,9 +230,22 @@ def vert_trafo(ds, altitude_min, altitude_max, layer_thickness):
         xr.Dataset: dataset with geometric height as vertical coordinate
     """
 
-    target_level_center = get_height_levels(altitude_min, altitude_max, layer_thickness, position="center") # height levels for linear trafo on level center
-    lin_vars = ["etadot", "t", "w","w_trans", "u", "v", "rh", "rh_ice","plev_center"]
+    cons_vars = ["cc","era_iwc"]
+    lin_vars = ["etadot", "t", "w", "w_trans", "u", "v", "rh", "rh_ice", "plev_center"]
 
+    target_level_center = get_height_levels(altitude_min, altitude_max, layer_thickness,
+                                            position="center")  # height levels for linear trafo on level center
+    target_level_edge = get_height_levels(altitude_min, altitude_max, layer_thickness,
+                                          position="edge")  # height levels for conservative trafo on level edge
+
+    ### conservative transformation ###
+    for var in cons_vars:
+        new_var = "{}_ext".format(var)
+
+        ds[new_var] = ds[var] * ds.delta_z
+        ds[new_var].attrs.update({"units": "{} m".format(ds[var].attrs["units"])})
+
+    # select variables to be transformed
     var_dict = dict()
 
     # create grid for vertical transformation
@@ -216,6 +254,40 @@ def vert_trafo(ds, altitude_min, altitude_max, layer_thickness):
         periodic=False,
         coords={'Z': {'center': 'lev', 'outer': 'nhyi'}}
     )
+
+    for var_name in cons_vars:
+        var_name = "{}_ext".format(var_name)
+
+        da = grid.transform(
+            ds[var_name],
+            'Z',
+            np.flip(target_level_edge),
+            target_data=ds.hlev_edge,
+            method="conservative",
+        )
+        da.attrs.update(ds[var_name].attrs)
+        var_dict[var_name] = da
+
+    # create new dataset with transformed variables
+    ds_hlev = xr.Dataset(var_dict)
+    ds_hlev = ds_hlev.reindex(hlev_edge=np.flip(ds_hlev.hlev_edge))  # reindex so level is in descending order again
+    ds_hlev = ds_hlev.rename({"hlev_edge": "lev"})
+    ds_hlev.lev.attrs.update({"units": "m",
+                              "standard_name": "altitude",
+                              "long_name": "altitude at level center",
+                              "axis": "Z"
+                              })
+
+    ds_hlev = ds_hlev.transpose("time", "lev", "lat", "lon")
+
+    # (values /  thickness) → convert extensive variables to intensive variables again
+    for var in cons_vars:
+        ext_var = "{}_ext".format(var)
+
+        ds_hlev[var] = ds_hlev[ext_var] / layer_thickness
+        ds_hlev[var].attrs.update({"units": ds[var].attrs["units"]})
+
+    ### linear transformation ###
 
     for var_name in lin_vars:
         da = grid.transform(
@@ -226,17 +298,19 @@ def vert_trafo(ds, altitude_min, altitude_max, layer_thickness):
             method="linear"
         )
         da.attrs.update(ds[var_name].attrs)
-        var_dict[var_name] = da
+        da = da.rename({"hlev_center": "lev"})
+        ds_hlev["{}_lin".format(var_name)] = da
+        # var_dict[var_name] = da
 
-    # create hlev dataset from transformed dataarrays and set standard coordinate order and attributes
-    ds_hlev = xr.Dataset(var_dict).transpose("time", "hlev_center", "lat", "lon")
-
-    ds_hlev = ds_hlev.rename({"hlev_center": "lev"})
-    ds_hlev.lev.attrs.update({"units": "m",
-                              "standard_name": "altitude",
-                              "long_name": "altitude at level center",
-                              "axis": "Z"
-                              })
+    # # create hlev dataset from transformed dataarrays and set standard coordinate order and attributes
+    # ds_hlev = xr.Dataset(var_dict).transpose("time", "hlev_center", "lat", "lon")
+    #
+    # ds_hlev = ds_hlev.rename({"hlev_center": "lev"})
+    # ds_hlev.lev.attrs.update({"units": "m",
+    #                           "standard_name": "altitude",
+    #                           "long_name": "altitude at level center",
+    #                           "axis": "Z"
+    #                           })
 
     # add 2D variables
     ds_hlev["lnsp"] = ds["lnsp"]
@@ -263,6 +337,7 @@ def run_preprocess_pipeline(date, config_id):
     check_for_nans(ds)
     ds = calc_plevs(ds)
     ds = calc_trans_w(ds)
+    ds = calc_iwc(ds)
     ds = calc_hlevs(ds)
     ds["rh_ice"] = calc_rh_ice(ds.rh, ds.t)
     ds_hlev = vert_trafo(ds, altitude_min, altitude_max, layer_thickness)
