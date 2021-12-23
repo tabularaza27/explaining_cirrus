@@ -307,7 +307,7 @@ def vert_trafo(ds, altitude_min, altitude_max, layer_thickness):
         )
         da.attrs.update(ds[var_name].attrs)
         da = da.rename({"hlev_center": "lev"})
-        ds_hlev["{}_lin".format(var_name)] = da
+        ds_hlev["{}".format(var_name)] = da
         # var_dict[var_name] = da
 
     # # create hlev dataset from transformed dataarrays and set standard coordinate order and attributes
