@@ -34,7 +34,7 @@ if test -f "$FINAL_FILE"; then
 fi
 
 # 1 copy grb file to nc file
-cdo -f nc copy -setgridtype,regular $filename ${FINAL_FILE}
+cdo -f nc copy $filename ${FINAL_FILE}
 
 
 ## 1. Rename r,q,t parameters (needed for afterburner), convert spectral to gaussian grid, set from  reduced gaussian to regular grid type
