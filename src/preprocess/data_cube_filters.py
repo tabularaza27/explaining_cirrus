@@ -19,6 +19,8 @@ VAR_PROPERTIES = {
     'cloud_cover': {'scale': 'lin', 'source': 'dardar', 'type': 'cirrus_var', 'load': True},
     'dz_top': {'scale': 'lin', 'source': 'dardar', 'type': 'cirrus_var', 'load': True},
     'instrument_flag': {'scale': 'lin', 'source': 'dardar', 'type': 'cirrus_var', 'load': True},
+    'era_iwc': {'scale': 'lin', 'source': 'era5', 'type': 'driver', 'load': True},
+    'cc': {'scale': 'lin', 'source': 'era5', 'type': 'driver', 'load': True},
     't': {'scale': 'lin', 'source': 'era5', 'type': 'driver', 'load': True},
     'ta': {'scale': 'lin', 'source': 'era5', 'type': 'driver', 'load': True},
     'w': {'scale': 'lin', 'source': 'era5', 'type': 'driver', 'load': True},
