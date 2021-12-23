@@ -18,9 +18,6 @@ from src.preprocess.helpers.constants import R, g
 from src.preprocess.helpers.constants import ERA_PRE_PROC_DIR
 from src.scaffolding.scaffolding import get_data_product_dir, get_height_levels, get_config, get_alt_range
 
-# HLEVS = pd.read_csv("/home/kjeggle/cirrus/src/config_files/height_levels.csv", index_col=0) # todo make dynamic
-# TARGET_LEVEL_CENTER = HLEVS["lev"].dropna()
-
 
 def load_ds(date, config_id):
     """loads file for given date and adds first timestamp of next day (needed for the hourly upsampling)
