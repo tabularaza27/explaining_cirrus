@@ -14,14 +14,20 @@ model
 # for particular calls:
 # lagrantohelp create_startf
 
+config_id=$1 # config_id needs to be specified as second positional cmd argument when calling this file
+dat=$2 # date of start file
+
 # input directory: ERA5 netcdf files
 era5filedir=/net/thermo/atmosdyn/era5/cdf
 
-# output directory
+# get directories for given config
+outfiledir=`python -c "from src.scaffolding.scaffolding import get_data_product_dir; from src.preprocess.helpers.constants import BACKTRAJ_OUTFILES; dir=get_data_product_dir('${config_id}', BACKTRAJ_OUTFILES); print(dir)"`
+startfiledir=`python -c "from src.scaffolding.scaffolding import get_data_product_dir; from src.preprocess.helpers.constants import BACKTRAJ_STARTFILES; dir=get_data_product_dir('${config_id}', BACKTRAJ_STARTFILES); print(dir)"`
+
+
 outfiledir=/net/n2o/wolke_scratch/kjeggle/BACKTRAJECTORIES/outfiles
 
 # define start and end date
-dat=$1
 dat_yyyy=`echo $dat | cut -c 1-4`
 dat_mm=`echo $dat | cut -c 5-6`
 dat_dd=`echo $dat | cut -c 7-8`
@@ -50,7 +56,7 @@ done
 
 # link startfile to output dir
 startf_file=startf_${dat}
-ln -sf ${outfiledir}/start_files/${dat_yyyy}/${startf_file} .
+ln -sf ${startfiledir}/${dat_yyyy}/${startf_file} .
 echo $startf_file
 
 #ln -s /net/thermo/atmosdyn/era5/cdf/2008/01/

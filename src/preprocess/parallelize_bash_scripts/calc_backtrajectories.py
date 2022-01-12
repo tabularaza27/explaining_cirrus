@@ -171,7 +171,7 @@ def process_singlefile(date_hour , config_id):
     else:
         # run caltra
         start_time = datetime.datetime.now()
-        os.system("{} {}".format(BACKTRAJECTORY_SCRIPT, date_hour))
+        os.system("{} {}".format(BACKTRAJECTORY_SCRIPT, config_id, date_hour))
 
     # check for finished file
     while True:
@@ -210,7 +210,7 @@ def parallel_caltra(n_workers, year, config_id):
         LocalProcRandGen = np.random.RandomState()
         file = LocalProcRandGen.choice(filepaths)
         date_hour = file.split("startf_")[1] #
-        pool.apply_async(process_singlefile, args=(date_hour,))
+        pool.apply_async(process_singlefile, args=(date_hour, config_id))
 
     pool.close()
     pool.join()
