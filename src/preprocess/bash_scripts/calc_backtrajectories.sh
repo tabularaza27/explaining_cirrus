@@ -24,8 +24,7 @@ era5filedir=/net/thermo/atmosdyn/era5/cdf
 outfiledir=`python -c "from src.scaffolding.scaffolding import get_data_product_dir; from src.preprocess.helpers.constants import BACKTRAJ_OUTFILES; dir=get_data_product_dir('${config_id}', BACKTRAJ_OUTFILES); print(dir)"`
 startfiledir=`python -c "from src.scaffolding.scaffolding import get_data_product_dir; from src.preprocess.helpers.constants import BACKTRAJ_STARTFILES; dir=get_data_product_dir('${config_id}', BACKTRAJ_STARTFILES); print(dir)"`
 
-
-outfiledir=/net/n2o/wolke_scratch/kjeggle/BACKTRAJECTORIES/outfiles
+#outfiledir=/net/n2o/wolke_scratch/kjeggle/BACKTRAJECTORIES/outfiles # move out files to north atlantic domain
 
 # define start and end date
 dat_yyyy=`echo $dat | cut -c 1-4`
