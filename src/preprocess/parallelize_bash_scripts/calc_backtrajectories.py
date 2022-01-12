@@ -149,7 +149,7 @@ def process_singlefile(date_hour , config_id):
     else:
         # run caltra
         start_time = datetime.datetime.now()
-        os.system("{} {}".format(BACKTRAJECTORY_SCRIPT, config_id, date_hour))
+        os.system("{} {} {}".format(BACKTRAJECTORY_SCRIPT, config_id, date_hour))
 
     # check for finished file
     while True:
