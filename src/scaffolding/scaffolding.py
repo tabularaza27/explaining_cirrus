@@ -106,7 +106,10 @@ def setup_config_directories(config_id):
             DATA_CUBE_PRE_PROC_DIR,
             DATA_CUBE_FILTERED_DIR,
             DATA_CUBE_DF_DIR,
-            DATA_CUBE_FEATURE_ENGINEERED_DF_DIR
+            DATA_CUBE_FEATURE_ENGINEERED_DF_DIR,
+            BACKTRAJECTORIES,
+            BACKTRAJ_OUTFILES,
+            BACKTRAJ_STARTFILES
             ]
 
     print("##### start creating directories for config {}".format(config_id))

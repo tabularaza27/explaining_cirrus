@@ -32,13 +32,12 @@ import pandas as pd
 import numpy as np
 import argparse
 
+from src.scaffolding.scaffolding import get_data_product_dir
+from src.preprocess.helpers.constants import BACKTRAJECTORIES, BACKTRAJ_OUTFILES, BACKTRAJ_STARTFILES
+
+
 # BACKTRAJECTORY_SCRIPT = "/net/n2o/wolke/kjeggle/Repos/cirrus/src/preprocess/bash_scripts/calc_backtrajectories.sh"
 BACKTRAJECTORY_SCRIPT = "/net/n2o/wolke/kjeggle/Repos/cirrus/src/preprocess/bash_scripts/tmux_caltra.sh"
-START_FILE_DIR = "/net/n2o/wolke_scratch/kjeggle/BACKTRAJECTORIES/start_files"  # get dir of config id
-OUT_FILE_DIR = "/net/n2o/wolke_scratch/kjeggle/BACKTRAJECTORIES/outfiles"
-
-
-# todo make dynamic → potentially use with config
 
 class ParallelCaltra:
     def __init__(self, n_workers, year):
@@ -147,16 +146,18 @@ def run(n_workers, year):
     pc.parallel_caltra()
 
 
-def process_singlefile(date_hour):
+def process_singlefile(date_hour , config_id):
     """call preprocessing bash script for given file pTH
 
     Args:
         date_hour (str): yyyymmdd_hh
+        config_id (str)
 
     Returns:
     """
     print("Call Bash Script for date {}".format(date_hour))
 
+    out_file_dir = get_data_product_dir(config_id, OUT_FILE_DIR)
     target_filename = "tra_traced_{}.1".format(date_hour)
 
     yyyy = date_hour[0:4]
@@ -183,25 +184,22 @@ def process_singlefile(date_hour):
             time.sleep(1)
 
 
-def parallel_caltra(n_workers, year):
+def parallel_caltra(n_workers, year, config_id):
     """call bash script that calculates backtrajectories using lagranto in parallel using python multiprocessing
 
     Args:
         n_workers (int):
         year (int):
-
     """
-    print("Start parallel merra preprocessing for year {} with {} workers".format(year, n_workers))
+    print("set directory variables")
+    start_file_dir = get_data_product_dir(config_id, START_FILE_DIR)
+
+    print("Start parallel caltra preprocessing for year {} with {} workers".format(year, n_workers))
 
     # os.system("rm {}/*tmp_{}{:02d}*".format(OUT_FILE_DIR, year, month))
     # print("removed intermediate leftover files")
 
-    # link startfiles to output dir
-    # todo now I just link all available startfiles
-    # os.system("ln -sf {}/* {}".format(START_FILE_DIR, OUT_FILE_DIR))
-
-    filepaths = glob.glob("{}/{}/*{}*_*".format(START_FILE_DIR, year, year))
-    # filepaths = glob.glob("{}/{}/*{}{:02d}*".format(START_FILE_DIR, year, year, month))
+    filepaths = glob.glob("{}/{}/*{}*_*".format(start_file_dir, year, year))
 
     pool = mp.Pool(n_workers)
 
@@ -219,8 +217,14 @@ def parallel_caltra(n_workers, year):
 
 
 if __name__ == "__main__":
-    # python calc_backtrajectories.py --n_workers 8 --year 2008 #--months 1 2 3
+    # python calc_backtrajectories.py --config_id north_atlantic --n_workers 8 --year 2008
     CLI = argparse.ArgumentParser()
+
+    CLI.add_argument(
+        "--config_id",
+        type=str
+    )
+
     CLI.add_argument(
         "--n_workers",
         type=int,
