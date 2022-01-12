@@ -4,4 +4,4 @@
 config_id=$1
 dat=$2
 
-tmux new -d -s caltra_${dat} "bash /net/n2o/wolke/kjeggle/Repos/cirrus/src/preprocess/bash_scripts/calc_backtrajectories.sh ${config_id} ${dat}"
+tmux new -d -s caltra_"${dat}" "bash /net/n2o/wolke/kjeggle/Repos/cirrus/src/preprocess/bash_scripts/calc_backtrajectories.sh ${config_id} ${dat}"
