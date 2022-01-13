@@ -30,7 +30,7 @@ startfiledir=`python -c "from src.scaffolding.scaffolding import get_data_produc
 dat_yyyy=`echo $dat | cut -c 1-4`
 dat_mm=`echo $dat | cut -c 5-6`
 dat_dd=`echo $dat | cut -c 7-8`
-backdat=$(newtime ${dat} -60)  # 2.5d backward
+backdat=$(newtime ${dat} -10)  # 2.5d backward
 
 #cd /net/litho/atmosdyn/binderh/varia/kai/test
 
@@ -43,7 +43,7 @@ mkdir -p $target_dir
 cd $target_dir
 
 # link era5 files of the last 60 hours
-for i in {0..61}
+for i in {0..11}
 do
   hourbackdat=$(newtime ${dat} -$i) # subtract one hour
   yyyy=`echo $hourbackdat | cut -c 1-4`
@@ -84,7 +84,7 @@ if [ ! -f tracevars ];then
     echo "U           1.    0    P" >> tracevars   # m/s
     echo "V           1.    0    P" >> tracevars   # m/s
     echo "OMEGA       1.    0    P" >> tracevars   # Pa/s
-    echo "o3       1000     0    O" >> tracevars   # g/kg
+    echo "o3       1000.    0    O" >> tracevars   # g/kg
     echo "cc          1.    0    O" >> tracevars   # percentage
 fi
 trace trah_tmp_${dat}.1 tra_traced_${dat}.1
