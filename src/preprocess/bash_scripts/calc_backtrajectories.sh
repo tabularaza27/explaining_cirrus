@@ -76,15 +76,6 @@ caltra ${dat} ${backdat} $startf_file tra_tmp_${dat}.1 -j
 ### tra tracen
 if [ ! -f tracevars ];then
     echo "T           1.    0    P" >> tracevars   # K
-#    echo "Q        1000.    0    P" >> tracevars   # g/kg
-#    echo "LWC   1000000.    0    P" >> tracevars   # mg/kg
-#    echo "RWC   1000000.    0    P" >> tracevars   # mg/kg
-#    echo "IWC   1000000.    0    P" >> tracevars   # mg/kg
-#    echo "SWC   1000000.    0    P" >> tracevars   # mg/kg
-#    echo "U           1.    0    P" >> tracevars   # m/s
-#    echo "V           1.    0    P" >> tracevars   # m/s
-#    echo "OMEGA       1.    0    P" >> tracevars   # Pa/s
-#    echo "o3       1000.    0    O" >> tracevars   # g/kg
     echo "cc          1.    0    O" >> tracevars   # percentage
 fi
 trace trah_tmp_${dat}.1 tra_traced_${dat}.1
