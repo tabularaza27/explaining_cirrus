@@ -169,24 +169,30 @@ class Filepaths:
         self.start_file_dir = get_data_product_dir(config_id, BACKTRAJ_STARTFILES)
         self.year=year
         self.filepath_list = glob.glob("{}/{}/*{}*_*".format(self.start_file_dir, self.year, self.year))
+        self.already_calculated=[]
 
     def get_random_file(self):
+        """get random file from files that were not already calculated"""
+        remaining_files = [file for file in self.filepath_list if file not in self.already_calculated]
         LocalProcRandGen = np.random.RandomState()
-        file = LocalProcRandGen.choice(self.filepath_list)
+        file = LocalProcRandGen.choice(remaining_files)
         return file
 
     def update_filepaths(self, date_hour):
-        """removes startfile with corresponding date_hour from filepath list
+        """adds startfile with corresponding date_hour to already calculated list
 
         is called once the caltra for this date hour was calculated
         """
         fp = os.path.join(self.start_file_dir, str(self.year), "startf_{}".format(date_hour))
-        try:
-            self.filepath_list.remove(fp)
-        except ValueError:
-            print("{} is not part of startf filepath list and can not be removed")
 
-        print("Remaining Caltra Startfiles: {}".format(len(self.filepath_list)))
+        if fp not in self.already_calculated:
+            self.already_calculated.append(fp)
+            print("Added {} to already calculated files".format(fp))
+        else:
+            print("{} is already part of calculated files".format(fp))
+
+        remaining_files = [file for file in self.filepath_list if file not in self.already_calculated]
+        print("Remaining Caltra Startfiles: {}".format(len(remaining_files)))
 
 
 
