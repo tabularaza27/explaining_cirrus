@@ -187,9 +187,9 @@ class Filepaths:
 
         if fp not in self.already_calculated:
             self.already_calculated.append(fp)
-            print("Added {} to already calculated files".format(fp))
+            print("Added {} to already calculated files".format(date_hour))
         else:
-            print("{} is already part of calculated files".format(fp))
+            print("{} is already part of calculated files".format(date_hour))
 
         remaining_files = [file for file in self.filepath_list if file not in self.already_calculated]
         print("Remaining Caltra Startfiles: {}".format(len(remaining_files)))
