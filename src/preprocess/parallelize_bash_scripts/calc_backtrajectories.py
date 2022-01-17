@@ -133,6 +133,7 @@ def process_singlefile(date_hour , config_id):
         config_id (str)
 
     Returns:
+        date_hour (str) : return date_hour str so it can be removed from the filepaths list
     """
     print("Call Bash Script for date {}".format(date_hour))
 
@@ -146,6 +147,7 @@ def process_singlefile(date_hour , config_id):
     if os.path.isfile(os.path.join(out_file_dir, target_filename)) or os.path.isfile(
             os.path.join(out_file_dir, yyyy, mm, dd, target_filename)):
         print(date_hour, "file already exists")
+        return date_hour
     else:
         # run caltra
         start_time = datetime.datetime.now()
@@ -157,9 +159,25 @@ def process_singlefile(date_hour , config_id):
                 os.path.join(out_file_dir, yyyy, mm, dd, target_filename)):
             duration = datetime.datetime.now() - start_time
             print("Finished Caltra for", date_hour, "in", str(duration))
-            break
+            return date_hour
         else:
             time.sleep(1)
+
+
+class Filepaths:
+    def __init__(self, config_id, year):
+        self.start_file_dir = get_data_product_dir(config_id, BACKTRAJ_STARTFILES)
+        self.year=year
+        self.filepath_list = glob.glob("{}/{}/*{}*_*".format(self.start_file_dir, self.year, self.year))
+
+    def update_filepaths(self, date_hour):
+        """removes startfile with corresponding date_hour from filepath list
+
+        is called once the caltra for this date hour was calculated
+        """
+        fp = os.path.join(self.start_file_dir,self.year,"startf_{}".format(date_hour))
+        self.filepath_list.remove(fp)
+
 
 
 def parallel_caltra(n_workers, year, config_id):
@@ -169,27 +187,25 @@ def parallel_caltra(n_workers, year, config_id):
         n_workers (int):
         year (int):
     """
-    print("set directory variables")
-    start_file_dir = get_data_product_dir(config_id, BACKTRAJ_STARTFILES)
-
     print("Start parallel caltra preprocessing for year {} with {} workers".format(year, n_workers))
 
     # os.system("rm {}/*tmp_{}{:02d}*".format(OUT_FILE_DIR, year, month))
     # print("removed intermediate leftover files")
 
-    filepaths = glob.glob("{}/{}/*{}*_*".format(start_file_dir, year, year))
+    filepaths = Filepaths(config_id, year)
 
     pool = mp.Pool(n_workers)
 
 
-    while len(filepaths) > 0:
+    while len(filepaths.filepath_list) > 0:
         # todo I think while loop is leaking memory, check if process is available befor apply_async
         # todo implement check for when all backtrajectories are calculated
         # todo implement function that not 2 backtrajectories have to access same source files
+        print("Pending Caltra Startfiles: {}".format(len(filepaths.filepath_list)))
         LocalProcRandGen = np.random.RandomState()
         file = LocalProcRandGen.choice(filepaths)
         date_hour = file.split("startf_")[1] #
-        pool.apply_async(process_singlefile, args=(date_hour, config_id))
+        pool.apply_async(process_singlefile, args=(date_hour, config_id), callback=filepaths.update_filepaths)
 
     pool.close()
     pool.join()
