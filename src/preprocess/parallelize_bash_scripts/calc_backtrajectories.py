@@ -170,6 +170,11 @@ class Filepaths:
         self.year=year
         self.filepath_list = glob.glob("{}/{}/*{}*_*".format(self.start_file_dir, self.year, self.year))
 
+    def get_random_file(self):
+        LocalProcRandGen = np.random.RandomState()
+        file = LocalProcRandGen.choice(self.filepath_list)
+        return file
+
     def update_filepaths(self, date_hour):
         """removes startfile with corresponding date_hour from filepath list
 
@@ -201,13 +206,11 @@ def parallel_caltra(n_workers, year, config_id):
 
     pool = mp.Pool(n_workers)
 
-
     while len(filepaths.filepath_list) > 0:
         # todo I think while loop is leaking memory, check if process is available befor apply_async
         # todo implement check for when all backtrajectories are calculated
         # todo implement function that not 2 backtrajectories have to access same source files
-        LocalProcRandGen = np.random.RandomState()
-        file = LocalProcRandGen.choice(filepaths.filepath_list)
+        file = filepaths.get_random_file()
         date_hour = file.split("startf_")[1] #
         pool.apply_async(process_singlefile, args=(date_hour, config_id), callback=filepaths.update_filepaths)
 
