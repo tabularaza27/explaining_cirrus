@@ -175,8 +175,13 @@ class Filepaths:
 
         is called once the caltra for this date hour was calculated
         """
-        fp = os.path.join(self.start_file_dir,self.year,"startf_{}".format(date_hour))
-        self.filepath_list.remove(fp)
+        fp = os.path.join(self.start_file_dir, self.year, "startf_{}".format(date_hour))
+        try:
+            self.filepath_list.remove(fp)
+        except ValueError:
+            print("{} is not part of startf filepath list and can not be removed")
+
+        print("Remaining Caltra Startfiles: {}".format(len(self.filepath_list)))
 
 
 
@@ -201,7 +206,6 @@ def parallel_caltra(n_workers, year, config_id):
         # todo I think while loop is leaking memory, check if process is available befor apply_async
         # todo implement check for when all backtrajectories are calculated
         # todo implement function that not 2 backtrajectories have to access same source files
-        print("Pending Caltra Startfiles: {}".format(len(filepaths.filepath_list)))
         LocalProcRandGen = np.random.RandomState()
         file = LocalProcRandGen.choice(filepaths.filepath_list)
         date_hour = file.split("startf_")[1] #
