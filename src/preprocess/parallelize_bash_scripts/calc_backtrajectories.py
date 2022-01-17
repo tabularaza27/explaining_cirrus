@@ -203,7 +203,7 @@ def parallel_caltra(n_workers, year, config_id):
         # todo implement function that not 2 backtrajectories have to access same source files
         print("Pending Caltra Startfiles: {}".format(len(filepaths.filepath_list)))
         LocalProcRandGen = np.random.RandomState()
-        file = LocalProcRandGen.choice(filepaths)
+        file = LocalProcRandGen.choice(filepaths.filepath_list)
         date_hour = file.split("startf_")[1] #
         pool.apply_async(process_singlefile, args=(date_hour, config_id), callback=filepaths.update_filepaths)
 
