@@ -175,7 +175,7 @@ class Filepaths:
 
         is called once the caltra for this date hour was calculated
         """
-        fp = os.path.join(self.start_file_dir, self.year, "startf_{}".format(date_hour))
+        fp = os.path.join(self.start_file_dir, str(self.year), "startf_{}".format(date_hour))
         try:
             self.filepath_list.remove(fp)
         except ValueError:
