@@ -10,7 +10,7 @@ import re
 import datetime
 import gc
 import time
-import libtmux
+import subprocess
 import pandas as pd
 import numpy as np
 import argparse
@@ -129,9 +129,9 @@ BACKTRAJECTORY_SCRIPT = "/net/n2o/wolke/kjeggle/Repos/cirrus/src/preprocess/bash
 
 def get_number_of_caltra_sessions():
     """returns number of currently executing caltra runs in tmux sessions"""
-    server = libtmux.Server()
-    sessions = server.list_sessions()
-    parallel_caltra_sessions = [sess for sess in sessions if "caltra_" in sess.name]
+    output = subprocess.check_output("tmux ls", shell=True).decode("utf-8")
+    tmux_sessions = output.split("\n")
+    parallel_caltra_sessions = [sess for sess in tmux_sessions if "caltra_" in sess]
     n_sessions = len(parallel_caltra_sessions)
     return n_sessions
 
