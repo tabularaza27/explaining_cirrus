@@ -132,7 +132,7 @@ def get_number_of_caltra_sessions():
     server = libtmux.Server()
     sessions = server.list_sessions()
     parallel_caltra_sessions = [sess for sess in sessions if "caltra_" in sess.name]
-    n_sessions = parallel_caltra_sessions
+    n_sessions = len(parallel_caltra_sessions)
     return n_sessions
 
 def process_singlefile(date_hour , config_id, max_concurrency=32):
