@@ -6,6 +6,7 @@ import multiprocessing as mp
 import glob
 import sys
 import os
+import re
 import datetime
 import gc
 import time
@@ -164,37 +165,35 @@ def process_singlefile(date_hour , config_id):
             time.sleep(1)
 
 
-class Filepaths:
-    def __init__(self, config_id, year):
-        self.start_file_dir = get_data_product_dir(config_id, BACKTRAJ_STARTFILES)
-        self.year=year
-        self.filepath_list = glob.glob("{}/{}/*{}*_*".format(self.start_file_dir, self.year, self.year))
-        self.already_calculated=[]
-
-    def get_random_file(self):
-        """get random file from files that were not already calculated"""
-        remaining_files = [file for file in self.filepath_list if file not in self.already_calculated]
-        LocalProcRandGen = np.random.RandomState()
-        file = LocalProcRandGen.choice(remaining_files)
-        return file
-
-    def update_filepaths(self, date_hour):
-        """adds startfile with corresponding date_hour to already calculated list
-
-        is called once the caltra for this date hour was calculated
-        """
-        fp = os.path.join(self.start_file_dir, str(self.year), "startf_{}".format(date_hour))
-
-        if fp not in self.already_calculated:
-            self.already_calculated.append(fp)
-            print("Added {} to already calculated files".format(date_hour))
-        else:
-            print("{} is already part of calculated files".format(date_hour))
-
-        remaining_files = [file for file in self.filepath_list if file not in self.already_calculated]
-        print("Remaining Caltra Startfiles: {}".format(len(remaining_files)))
-
-
+# class Filepaths:
+#     def __init__(self, config_id, year):
+#         self.start_file_dir = get_data_product_dir(config_id, BACKTRAJ_STARTFILES)
+#         self.year=year
+#         self.filepath_list = glob.glob("{}/{}/*{}*_*".format(self.start_file_dir, self.year, self.year))
+#         self.already_calculated=[]
+#
+#     def get_random_file(self):
+#         """get random file from files that were not already calculated"""
+#         remaining_files = [file for file in self.filepath_list if file not in self.already_calculated]
+#         LocalProcRandGen = np.random.RandomState()
+#         file = LocalProcRandGen.choice(remaining_files)
+#         return file
+#
+#     def update_filepaths(self, date_hour):
+#         """adds startfile with corresponding date_hour to already calculated list
+#
+#         is called once the caltra for this date hour was calculated
+#         """
+#         fp = os.path.join(self.start_file_dir, str(self.year), "startf_{}".format(date_hour))
+#
+#         if fp not in self.already_calculated:
+#             self.already_calculated.append(fp)
+#             print("Added {} to already calculated files".format(date_hour))
+#         else:
+#             print("{} is already part of calculated files".format(date_hour))
+#
+#         remaining_files = [file for file in self.filepath_list if file not in self.already_calculated]
+#         print("Remaining Caltra Startfiles: {}".format(len(remaining_files)))
 
 def parallel_caltra(n_workers, year, config_id):
     """call bash script that calculates backtrajectories using lagranto in parallel using python multiprocessing
@@ -208,17 +207,34 @@ def parallel_caltra(n_workers, year, config_id):
     # os.system("rm {}/*tmp_{}{:02d}*".format(OUT_FILE_DIR, year, month))
     # print("removed intermediate leftover files")
 
-    filepaths = Filepaths(config_id, year)
-
     pool = mp.Pool(n_workers)
 
-    while len(filepaths.filepath_list) > 0:
-        # todo I think while loop is leaking memory, check if process is available befor apply_async
-        # todo implement check for when all backtrajectories are calculated
-        # todo implement function that not 2 backtrajectories have to access same source files
-        file = filepaths.get_random_file()
-        date_hour = file.split("startf_")[1] #
-        pool.apply_async(process_singlefile, args=(date_hour, config_id), callback=filepaths.update_filepaths)
+    # check caltras that have already been calculted
+    out_file_dir=get_data_product_dir(config_id,BACKTRAJ_OUTFILES)
+    already_calculated =glob.glob(os.path.join(out_file_dir,  "**/**/**/tra_traced*"), recursive=False)
+    calculated_caltras = [re.findall("[0-9]{8}_[0-9]{2}", file)[0] for file in already_calculated] # list of date_hour of already calculated caltras
+
+    # get start files
+    start_file_dir = get_data_product_dir(config_id, BACKTRAJ_STARTFILES)
+    startfile_list = glob.glob("{}/{}/*{}*_*".format(start_file_dir, year, year))
+
+    # caltras to be calculated: start_files - already calculated caltras
+    filepaths = [file for file in startfile_list if re.findall("[0-9]{8}_[0-9]{2}",file)[0] not in calculated_caltras]
+    np.random.shuffle(filepaths) # randomize order so parallel caltras are less likely to use same input files
+
+    print("total startfiles: {}, alread calculated: {}, to be calculated: {}".format(len(startfile_list), len(calculated_caltras), len(filepaths)))
+
+    for file in filepaths:
+        date_hour = file.split("startf_")[1]  #
+        pool.apply_async(process_singlefile, args=(date_hour, config_id))
+
+    # while len(filepaths.filepath_list) > 0:
+    #     # todo I think while loop is leaking memory, check if process is available befor apply_async
+    #     # todo implement check for when all backtrajectories are calculated
+    #     # todo implement function that not 2 backtrajectories have to access same source files
+    #     file = filepaths.get_random_file()
+    #     date_hour = file.split("startf_")[1] #
+    #     pool.apply_async(process_singlefile, args=(date_hour, config_id), callback=filepaths.update_filepaths)
 
     pool.close()
     pool.join()
