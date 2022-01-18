@@ -10,6 +10,7 @@ import re
 import datetime
 import gc
 import time
+import libtmux
 import pandas as pd
 import numpy as np
 import argparse
@@ -126,16 +127,34 @@ BACKTRAJECTORY_SCRIPT = "/net/n2o/wolke/kjeggle/Repos/cirrus/src/preprocess/bash
 #     pc = ParallelCaltra(n_workers, year)
 #     pc.parallel_caltra()
 
-def process_singlefile(date_hour , config_id):
+def get_number_of_caltra_sessions():
+    """returns number of currently executing caltra runs in tmux sessions"""
+    server = libtmux.Server()
+    sessions = server.list_sessions()
+    parallel_caltra_sessions = [sess for sess in sessions if "caltra_" in sess.name]
+    n_sessions = parallel_caltra_sessions
+    return n_sessions
+
+def process_singlefile(date_hour , config_id, max_concurrency=32):
     """call preprocessing bash script for given file pTH
 
     Args:
         date_hour (str): yyyymmdd_hh
-        config_id (str)
+        config_id (str):
+        max_concurrency (int): maximum number of parallel caltra executions
 
     Returns:
         date_hour (str) : return date_hour str so it can be removed from the filepaths list
     """
+
+    print("Start processiong for date {}".format(date_hour))
+    print("Checking for free capacity for {}".format(date_hour))
+    start_queue_time = datetime.datetime.now()
+    while get_number_of_caltra_sessions() >= max_concurrency:
+        time.sleep(10)
+    duration = datetime.datetime.now() - start_queue_time
+    print("Queueing time for", date_hour, ":", str(duration))
+
     print("Call Bash Script for date {}".format(date_hour))
 
     out_file_dir = get_data_product_dir(config_id, BACKTRAJ_OUTFILES)
@@ -153,16 +172,17 @@ def process_singlefile(date_hour , config_id):
         # run caltra
         start_time = datetime.datetime.now()
         os.system("{} {} {}".format(BACKTRAJECTORY_SCRIPT, config_id, date_hour))
+        return date_hour
 
-    # check for finished file
-    while True:
-        if os.path.isfile(os.path.join(out_file_dir, target_filename)) or os.path.isfile(
-                os.path.join(out_file_dir, yyyy, mm, dd, target_filename)):
-            duration = datetime.datetime.now() - start_time
-            print("Finished Caltra for", date_hour, "in", str(duration))
-            return date_hour
-        else:
-            time.sleep(1)
+    # # check for finished file
+    # while True:
+    #     if os.path.isfile(os.path.join(out_file_dir, target_filename)) or os.path.isfile(
+    #             os.path.join(out_file_dir, yyyy, mm, dd, target_filename)):
+    #         duration = datetime.datetime.now() - start_time
+    #         print("Finished Caltra for", date_hour, "in", str(duration))
+    #         return date_hour
+    #     else:
+    #         time.sleep(1)
 
 
 # class Filepaths:
@@ -226,7 +246,7 @@ def parallel_caltra(n_workers, year, config_id):
 
     for file in filepaths:
         date_hour = file.split("startf_")[1]  #
-        pool.apply_async(process_singlefile, args=(date_hour, config_id))
+        pool.apply_async(process_singlefile, args=(date_hour, config_id, n_workers))
 
     # while len(filepaths.filepath_list) > 0:
     #     # todo I think while loop is leaking memory, check if process is available befor apply_async
