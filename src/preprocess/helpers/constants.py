@@ -33,8 +33,8 @@ BACKTRAJ_STARTFILES = "BACKTRAJECTORIES/start_files"
 BACKTRAJ_OUTFILES = "BACKTRAJECTORIES/outfiles"
 BACKTRAJ_DF_DIR = "BACKTRAJECTORIES/dataframes"
 BACKTRAJ_MERRATRACED = "BACKTRAJECTORIES/merra_traced"
-BACKTRAJ_DF_FILESTUMPY = "backtraj_traced"
-BACKTRAJ_FEATURE_ENGINEERED_FILESTUMPY = "backtraj_traced_feature_engineered"
+BACKTRAJ_DF_FILESTUMPY = "backtraj_traced_df"
+BACKTRAJ_FEATURE_ENGINEERED_FILESTUMPY = "backtraj_traced_feature_engineered_df"
 
 
 ## Dardar ##
