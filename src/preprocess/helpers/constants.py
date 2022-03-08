@@ -16,7 +16,7 @@ g = 9.80665  # Standard gravity
 # structure of directories: BASE_DIRECTORS + <config_id> + Directory Path
 # base directory under which all config ids are saved
 if host == "euler":
-    BASE_DIRECTORY = "/cluster/home/kjeggle/Data/CIRRUS_PIPELINE/"
+    BASE_DIRECTORY = "/cluster/scratch/kjeggle/CIRRUS_PIPELINE"
 else:
     BASE_DIRECTORY = "/net/n2o/wolke_scratch/kjeggle/CIRRUS_PIPELINE"
 CONFIGS = "/home/kjeggle/cirrus/src/config_files/configs.json"  # location of configs.json
