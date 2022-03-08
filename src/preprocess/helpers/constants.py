@@ -1,16 +1,27 @@
+import socket
+
+# get host name to check if we are on euler
+hostname = socket.gethostname()
+if hostname.startswith("eu"):
+    host = "euler"
+else:
+    host = "iac"
+
 ### physical constants ###
 R = 287.058  # specific gas constant (for dry air)
 g = 9.80665  # Standard gravity
 
-
 ### directories ###
 
 # structure of directories: BASE_DIRECTORS + <config_id> + Directory Path
-
-CONFIGS = "/home/kjeggle/cirrus/src/config_files/configs.json" # location of configs.json
-BASE_DIRECTORY = "/net/n2o/wolke_scratch/kjeggle/CIRRUS_PIPELINE" # base directory under which all config ids are saved
-CONFIG_FILE_DIR = "CONFIG_FILES" # dir where config files like template.nc for a specific config id are saved
-TEMPLATE_PATH="CONFIG_FILES/template.nc"
+# base directory under which all config ids are saved
+if host == "euler":
+    BASE_DIRECTORY = "/cluster/home/kjeggle/Data/CIRRUS_PIPELINE/"
+else:
+    BASE_DIRECTORY = "/net/n2o/wolke_scratch/kjeggle/CIRRUS_PIPELINE"
+CONFIGS = "/home/kjeggle/cirrus/src/config_files/configs.json"  # location of configs.json
+CONFIG_FILE_DIR = "CONFIG_FILES"  # dir where config files like template.nc for a specific config id are saved
+TEMPLATE_PATH = "CONFIG_FILES/template.nc"
 
 ## Reanalysis ##
 
@@ -36,7 +47,6 @@ BACKTRAJ_MERRATRACED = "BACKTRAJECTORIES/merra_traced"
 BACKTRAJ_DF_FILESTUMPY = "backtraj_traced_df"
 BACKTRAJ_FEATURE_ENGINEERED_FILESTUMPY = "backtraj_traced_feature_engineered_df"
 
-
 ## Dardar ##
 DARDAR_INCOMING_DIR = "/net/n2o/wolke_scratch/kjeggle/DARDAR_NICE/DARNI_L2_PRO.v1.10"
 DARDAR_GRIDDED_DIR = "DARDAR_NICE/gridded"
@@ -55,5 +65,5 @@ OBSERVATION_VICINITY_DF_FILESTUMPY = "observation_vicinity_df"
 INTERVIEW_GRAPHICS_DIR = "/net/n2o/wolke/kjeggle/Graphics/PhDInterview"
 
 ### misc ##
-TEMP_THRES = 235.15 # cirrus cloud threshold
+TEMP_THRES = 235.15  # cirrus cloud threshold
 CLM_V2_ICE_CLOUD_MASKS = [1, 2, 9, 10]  # maybe add 10 → top of convective towers
