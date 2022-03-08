@@ -103,6 +103,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--n_trials",
         default=50,
+        type=int,
         help="number of trials in the hparam tuning",
     )
     args = parser.parse_args()
