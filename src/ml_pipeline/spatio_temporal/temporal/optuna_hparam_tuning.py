@@ -1,5 +1,6 @@
 from pprint import pprint
 import gc
+import argparse
 
 import pandas as pd
 
@@ -98,15 +99,21 @@ def objective(trial: optuna.trial.Trial, df: pd.DataFrame) -> float:
 
 if __name__ == "__main__":
 
+    parser = argparse.ArgumentParser(description="PyTorch Lightning example.")
+    parser.add_argument(
+        "--n_trials",
+        default=50,
+        help="number of trials in the hparam tuning",
+    )
+    args = parser.parse_args()
+    n_trials=args.n_trials
+
     # load only one month for now
     config_id = "larger_domain_high_res"
     year = 2008
     month = 1
 
-    datacube_dir = get_data_product_dir(config_id, DATA_CUBE_FILTERED_DIR)
     datacube_df_dir = get_data_product_dir(config_id, DATA_CUBE_DF_DIR)
-    backtraj_df_dir = get_data_product_dir(config_id, BACKTRAJ_DF_DIR)
-    merra_traced_df_dir = get_data_product_dir(config_id, BACKTRAJ_MERRATRACED)
 
     # read datacube merged with trajectories
     month_dfs = []
@@ -116,6 +123,7 @@ if __name__ == "__main__":
         month_dfs.append(month_df)
 
     df = pd.concat(month_dfs)
+    print("loaded data frame")
 
     # free up some memory
     del month_df
@@ -128,7 +136,7 @@ if __name__ == "__main__":
     # Execute an optimization by using the above objective function wrapped by `lambda`.
     # https://optuna.readthedocs.io/en/stable/faq.html
     study = optuna.create_study(direction="minimize", pruner=pruner, sampler=sampler)
-    study.optimize(lambda trial: objective(trial, df), n_trials=50)
+    study.optimize(lambda trial: objective(trial, df), n_trials=n_trials)
 
     print("Number of finished trials: {}".format(len(study.trials)))
 
