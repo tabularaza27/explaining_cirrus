@@ -24,8 +24,10 @@ def experiment_setup(df, p, optuna=False, trial=None):
     comet_logger.log_hyperparams(p)
 
     callbacks = [LogCallback()]
-    early_stop_callback = pl.callbacks.early_stopping.EarlyStopping(monitor="val_loss", min_delta=0.001, patience=15)
-    callbacks.append(early_stop_callback)
+
+    if p["early_stopping"]:
+        early_stop_callback = pl.callbacks.early_stopping.EarlyStopping(monitor="val_loss", min_delta=0.001, patience=15)
+        callbacks.append(early_stop_callback)
 
     if optuna:
         callbacks.append(PyTorchLightningPruningCallback(trial, monitor="val_loss"))

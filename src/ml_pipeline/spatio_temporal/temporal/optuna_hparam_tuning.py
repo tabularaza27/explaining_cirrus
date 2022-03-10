@@ -38,6 +38,7 @@ base_hparams = dict(
     learning_rate=0.001,
     attention=True,
     grad_clip=True,
+    early_stopping=True
 )
 
 
@@ -112,7 +113,6 @@ if __name__ == "__main__":
     # load only one month for now
     config_id = "larger_domain_high_res"
     year = 2008
-    month = 1
 
     datacube_df_dir = get_data_product_dir(config_id, DATA_CUBE_DF_DIR)
 

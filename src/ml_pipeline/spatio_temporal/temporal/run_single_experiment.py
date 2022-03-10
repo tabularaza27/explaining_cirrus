@@ -35,6 +35,7 @@ hparams = dict(
     learning_rate=8.54e-4,
     attention=True,
     grad_clip=True,
+    early_stopping=True
 )
 
 if __name__ == "__main__":
@@ -46,8 +47,25 @@ if __name__ == "__main__":
         type=int,
         help="use data up until which month, min:2, max: 13",
     )
+
+    parser.add_argument(
+        "--early_stopping",
+        default=True,
+        type=bool,
+        help="use early stopping"
+    )
+
+    parser.add_argument(
+        "--max_epochs",
+        default=30,
+        type=int,
+        help="number of epochs model trains"
+    )
+
     args = parser.parse_args()
     n_month=args.n_month
+    hparams["early_stopping"]=args.early_stopping
+    hparams["max_epochs"]=args.max_epochs
 
     # load only one month for now
     config_id = "larger_domain_high_res"
