@@ -1,5 +1,6 @@
 import gc
 import argparse
+from pprint import pprint
 
 import pandas as pd
 
@@ -67,6 +68,8 @@ if __name__ == "__main__":
     hparams["early_stopping"]=args.early_stopping
     hparams["max_epochs"]=args.max_epochs
 
+    pprint(hparams)
+
     # load only one month for now
     config_id = "larger_domain_high_res"
     year = 2008
@@ -98,4 +101,5 @@ if __name__ == "__main__":
     torch.save(trainer.model.state_dict(), 'lstm_model')
     comet_logger.experiment.log_model('model_0', './lstm_model')
     comet_logger.log_graph(model=trainer.model)
+    comet_logger.log_hyperparams(hparams)
     comet_logger.experiment.end()
