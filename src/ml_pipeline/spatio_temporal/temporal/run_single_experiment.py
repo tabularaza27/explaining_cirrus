@@ -49,10 +49,10 @@ if __name__ == "__main__":
         help="use data up until which month, min:2, max: 13",
     )
 
+    # use: --early-stopping | --no-early-stopping
     parser.add_argument(
         "--early_stopping",
-        default=True,
-        type=bool,
+        action=argparse.BooleanOptionalAction,
         help="use early stopping"
     )
 
