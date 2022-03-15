@@ -288,7 +288,7 @@ class LSTMRegressor(pl.LightningModule):
             logger=True, on_epoch=True)
 
         self.log_dict({f"org_rmse_{stage}": org_rmse, f"org_mean_error_{stage}": org_me, f"org_mae_{stage}": org_mae,
-                       f"org_spearmanr_{stage}": spearmanr, f"org_r2_{stage}": r2},
+                       f"org_spearmanr_{stage}": org_spearmanr, f"org_r2_{stage}": org_r2},
                       logger=True, on_epoch=True)
 
         # log gradients as histograms
