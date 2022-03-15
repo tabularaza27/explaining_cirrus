@@ -2,12 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sklearn
 import scipy
+from scipy.special import exp10
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 import pytorch_lightning as pl
+
 
 class LogCallback(pl.callbacks.Callback):
 
@@ -21,18 +23,87 @@ class LogCallback(pl.callbacks.Callback):
         # get predictions for whole test dataset
         y = torch.concat(trainer.model.test_results["y"]).cpu().reshape(-1).numpy()
         y_hat = torch.concat(trainer.model.test_results["y_hat"]).cpu().reshape(-1).numpy()
+        diff = y - y_hat  # residuals
+
+        # inverse log10 transform transform back to original scale
+        y_org = exp10(y)
+        y_hat_org = exp10(y_hat)
+        diff_org = y_org - y_hat_org
 
         # get comet logger
         comet_logger_idx = np.argmax([isinstance(logger, pl.loggers.comet.CometLogger) for logger in trainer.logger])
         comet_logger = trainer.logger[comet_logger_idx]
 
-        plt.hist([y_hat, y], bins=100, alpha=0.5, density=True)
-        plt.xlabel("log(iwc)")
-        plt.ylabel("density")
-        plt.legend(["predicted", "ground_truth"])
-        plt.title("predictand distribution")
+        # creating figure
 
-        comet_logger.experiment.log_figure(figure=plt, figure_name="test_set_prediction_distribution")
+        # get percentile for zooming in on axis
+        percentile = 99
+        y_org_percentile = np.percentile(y_org, percentile)
+        diff_org_percentile = np.percentile(diff_org, percentile)
+        diff_org_low_percentile = np.percentile(diff_org, 100 - percentile)
+
+        fig, axs = plt.subplots(4, 2, figsize=(20, 20))
+
+        # predictand vs. ground truth
+        axs[0, 0].hist([y_hat, y], bins=100, alpha=0.5, density=True)
+        axs[0, 0].set_xlabel("log(iwc)")
+        axs[0, 0].set_ylabel("density")
+        axs[0, 0].legend(["predicted", "ground_truth"])
+        axs[0, 0].set_title("predictand distribution (log scale)")
+
+        axs[0, 1].hist([y_hat_org, y_org], bins=1000, alpha=0.5, density=True)
+        axs[0, 1].set_xlabel("iwc)")
+        axs[0, 1].set_ylabel("density")
+        axs[0, 1].legend(["predicted", "ground_truth"])
+        axs[0, 1].set_title("predictand distribution")
+        axs[0, 1].set_xlim([0, y_org_percentile])
+
+        # predictand vs.ground truth scatter
+        axs[1, 0].scatter(y, y_hat, s=1, alpha=0.8)
+        axs[1, 0].plot(y, y, "r-")
+        axs[1, 0].set_xlabel("log(iwc)")
+        axs[1, 0].set_ylabel("log(iwc) predicted")
+        axs[1, 0].legend(["predicted", "ground_truth"])
+        axs[1, 0].set_title("scatter y vs y_hat (log scale)")
+
+        axs[1, 1].scatter(y_org, y_hat_org, s=1, alpha=0.8)
+        axs[1, 1].plot(y_org, y_org, "r-")
+        axs[1, 1].set_xlabel("iwc")
+        axs[1, 1].set_ylabel("iwc predicted")
+        axs[1, 1].legend(["predicted", "ground_truth"])
+        axs[1, 1].set_title("scatter y vs y_hat")
+        axs[1, 1].set_xlim([0, y_org_percentile])
+        axs[1, 1].set_ylim([0, y_org_percentile])
+
+        # residuals
+        axs[2, 0].hist(diff, bins=100, density=True)
+        axs[2, 0].set_xlabel("residuals (log scale)")
+        axs[2, 0].set_ylabel("density")
+        axs[2, 0].set_title("residuals (log scale)")
+
+        axs[2, 1].hist(diff_org, bins=1000, density=True)
+        axs[2, 1].set_xlabel("residuals")
+        axs[2, 1].set_ylabel("density")
+        axs[2, 1].set_title("residuals")
+        axs[2, 1].set_xlim([diff_org_low_percentile, diff_org_percentile])
+
+        # predicted vs. residuals
+        axs[3, 0].scatter(diff, y_hat, alpha=0.8, s=1)
+        axs[3, 0].set_xlabel("residuals (log scale)")
+        axs[3, 0].set_ylabel("log(iwc) predicted")
+        axs[3, 0].set_title("prediction vs. residual (log scale)")
+
+        axs[3, 1].scatter(diff_org, y_hat_org, alpha=0.8, s=1)
+        axs[3, 1].set_xlabel("residuals")
+        axs[3, 1].set_ylabel("iwc predicted")
+        axs[3, 1].set_title("prediction vs. residual")
+        axs[3, 1].set_xlim([0, diff_org_percentile])
+        axs[3, 1].set_ylim([0, y_org_percentile])
+
+        plt.tight_layout()
+        plt.show()
+
+        comet_logger.experiment.log_figure(figure=fig, figure_name="test_set_prediction_distribution")
 
 
 class LSTMRegressor(pl.LightningModule):
@@ -190,14 +261,34 @@ class LSTMRegressor(pl.LightningModule):
 
     def additional_logging(self, y_hat, y, stage):
         # additional logging
-        y_hat = y_hat.cpu().reshape(-1)
-        y = y.cpu().reshape(-1)
+        y_hat = y_hat.cpu().reshape(-1).numpy()
+        y = y.cpu().reshape(-1).numpy()
+
+        # get original scale, i.e. inverse log10 transform
+        y_hat_org = exp10(y_hat)
+        y_org = exp10(y)
+
+        # calc metric on log scale
         rmse = np.sqrt(sklearn.metrics.mean_squared_error(y_hat, y))
         spearmanr = scipy.stats.spearmanr(y_hat, y).correlation
         r2 = sklearn.metrics.r2_score(y, y_hat)
         mae = sklearn.metrics.mean_absolute_error(y_hat, y)
+        me = np.mean(y_hat - y)
 
-        self.log_dict({f"rmse_{stage}": rmse, f"mae_{stage}": mae, f"spearmanr_{stage}": spearmanr, f"r2_{stage}": r2},
+        # calc metrics on original scale
+        org_rmse = np.sqrt(sklearn.metrics.mean_squared_error(y_hat_org, y_org))
+        org_spearmanr = scipy.stats.spearmanr(y_hat_org, y_org).correlation
+        org_r2 = sklearn.metrics.r2_score(y, y_hat_org)
+        org_mae = sklearn.metrics.mean_absolute_error(y_hat_org, y_org)
+        org_me = np.mean(y_hat_org - y_org)
+
+        self.log_dict(
+            {f"rmse_{stage}": rmse, f"mean_error_{stage}": me, f"mae_{stage}": mae, f"spearmanr_{stage}": spearmanr,
+             f"r2_{stage}": r2},
+            logger=True, on_epoch=True)
+
+        self.log_dict({f"org_rmse_{stage}": org_rmse, f"org_mean_error_{stage}": org_me, f"org_mae_{stage}": org_mae,
+                       f"org_spearmanr_{stage}": spearmanr, f"org_r2_{stage}": r2},
                       logger=True, on_epoch=True)
 
         # log gradients as histograms

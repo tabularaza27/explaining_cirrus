@@ -1,6 +1,13 @@
 import numpy as np
 
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import minmax_scale
+from sklearn.preprocessing import MaxAbsScaler
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import Normalizer
+from sklearn.preprocessing import QuantileTransformer
+from sklearn.preprocessing import PowerTransformer
 
 import torch
 from torch.utils.data import Dataset, DataLoader, random_split
@@ -31,11 +38,12 @@ class BacktrajDataModule(pl.LightningDataModule):
       and processing work in one place.
     '''
 
-    def __init__(self, traj_df, batch_size=128, num_workers=0,
+    def __init__(self, traj_df, scaler=StandardScaler(), batch_size=128, num_workers=0,
                  features=["p", "GPH", "T", "Q", "U", "V", "OMEGA", "o3", "RH_ice"]):
         super().__init__()
 
         self.traj_df = traj_df
+        self.scaler = scaler
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.features = features
