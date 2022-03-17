@@ -100,22 +100,21 @@ class BacktrajDataModule(pl.LightningDataModule):
         self.df_val = self.traj_df[self.traj_df.trajectory_id.isin(self.val_traj_ids)]
         self.df_test = self.traj_df[self.traj_df.trajectory_id.isin(self.test_traj_ids)]
 
-        preprocessing = StandardScaler()
-        preprocessing.fit(self.df_train[self.features])
+        self.scaler.fit(self.df_train[self.features])
 
         # if stage == 'fit' or stage is None:
-        self.X_train = preprocessing.transform(self.df_train[self.features]).reshape(int(self.df_train.shape[0] / 61),
+        self.X_train = self.scaler.transform(self.df_train[self.features]).reshape(int(self.df_train.shape[0] / 61),
                                                                                      61,
                                                                                      len(self.features))  # n_samples, n_timesteps, n_features
         self.X_train = np.flip(self.X_train, axis=1).copy()  # flip time so that last index is timestep 0, i.e end of
         #             self.y_train = self.y_train.values.reshape((-1, 1))
-        self.X_val = preprocessing.transform(self.df_val[self.features]).reshape(int(self.df_val.shape[0] / 61), 61,
+        self.X_val = self.scaler.transform(self.df_val[self.features]).reshape(int(self.df_val.shape[0] / 61), 61,
                                                                                  len(self.features))  # n_samples, n_timesteps, n_features
         self.X_val = np.flip(self.X_val, axis=1).copy()
         #             self.y_val = self.y_val.values.reshape((-1, 1))
 
         # if stage == 'test' or stage is None:
-        self.X_test = preprocessing.transform(self.df_test[self.features]).reshape(int(self.df_test.shape[0] / 61), 61,
+        self.X_test = self.scaler.transform(self.df_test[self.features]).reshape(int(self.df_test.shape[0] / 61), 61,
                                                                                    len(self.features))  # n_samples, n_timesteps, n_features
         self.X_test = np.flip(self.X_test, axis=1).copy()
         #             self.y_test = self.y_test.values.reshape((-1, 1))
