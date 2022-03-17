@@ -21,8 +21,6 @@ def experiment_setup(df, p, optuna=False, trial=None):
         project_name=COMET_PROJECT,
         auto_histogram_gradient_logging=True
     )
-    comet_logger.log_hyperparams(p)
-
     callbacks = [LogCallback()]
 
     if p["early_stopping"]:
@@ -51,8 +49,6 @@ def experiment_setup(df, p, optuna=False, trial=None):
         # fast_dev_run=1
     )
 
-    print(trainer.callbacks)
-
     model = LSTMRegressor(
         n_features=p['n_features'],
         hidden_size=p['hidden_size'],
@@ -72,7 +68,5 @@ def experiment_setup(df, p, optuna=False, trial=None):
         features=p['features'],
         num_workers=16
     )
-
-    comet_logger.log_hyperparams({"start_time": dm.traj_df.date.min(), "end_time": dm.traj_df.date.max()})
 
     return trainer, model, dm, comet_logger
