@@ -66,6 +66,7 @@ def experiment_setup(df, p, optuna=False, trial=None):
         traj_df=df,
         batch_size=p['batch_size'],
         features=p['features'],
+        scaler=p['scaler'],
         num_workers=16
     )
 

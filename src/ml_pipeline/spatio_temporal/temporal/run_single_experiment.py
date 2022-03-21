@@ -4,6 +4,15 @@ from pprint import pprint
 
 import pandas as pd
 
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import minmax_scale
+from sklearn.preprocessing import MaxAbsScaler
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import Normalizer
+from sklearn.preprocessing import QuantileTransformer
+from sklearn.preprocessing import PowerTransformer
+
 import torch
 import torch.nn as nn
 
@@ -102,4 +111,5 @@ if __name__ == "__main__":
     comet_logger.experiment.log_model('model_0', './lstm_model')
     comet_logger.log_graph(model=trainer.model)
     comet_logger.log_hyperparams(hparams)
+    comet_logger.log_hyperparams({"start_time": dm.traj_df.date.min(), "end_time": dm.traj_df.date.max()})
     comet_logger.experiment.end()
