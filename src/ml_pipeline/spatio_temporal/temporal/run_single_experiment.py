@@ -92,9 +92,11 @@ if __name__ == "__main__":
         print(month)
         month_df = pd.read_pickle(datacube_df_dir + "/dardar_traj_traced_{}{:02d}.pickle".format(year, month))
         month_dfs.append(month_df)
+        print(month_df.columns)
 
     df = pd.concat(month_dfs)
     print("loaded data frame")
+    print(df.columns)
 
     # free up some memory
     del month_df
