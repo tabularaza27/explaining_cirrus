@@ -86,11 +86,18 @@ if __name__ == "__main__":
 
     datacube_df_dir = get_data_product_dir(config_id, DATA_CUBE_DF_DIR)
 
+    # configure columns to load
+    coord_vars = ['lev', 'lat', 'lon', 'latr', 'lonr', 'time', 'date', 'timestep', 'trajectory_id', 'cloud_cover']
+    static_features = ["land_water_mask", "season", "nightday_flag"]
+    predictands = ['iwc', 'icnc_5um']
+
+    load_vars = coord_vars + hparams["features"] + static_features + predictands
+
     # read datacube merged with trajectories
     month_dfs = []
     for month in range(1, n_month):
         print(month)
-        month_df = pd.read_pickle(datacube_df_dir + "/dardar_traj_traced_{}{:02d}.pickle".format(year, month))
+        month_df = pd.read_feather(datacube_df_dir + "/dardar_traj_traced_{}{:02d}.ftr".format(year, month), columns=load_vars)
         month_dfs.append(month_df)
 
     df = pd.concat(month_dfs)
