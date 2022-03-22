@@ -28,7 +28,7 @@ COMET_PROJECT = "cirrus-temporal"
 
 # base features
 features = ["p", "GPH", "T", "U", "V", "OMEGA", "o3", "RH_ice", 'DU001_traj', 'DU002_traj', 'DU003_traj', 'DU004_traj',
-            'DU005_traj', 'SO2_traj', 'SO4_traj']
+            'DU005_traj', 'SO2_traj', 'SO4_traj','z_traj']
 
 # base hparams
 hparams = dict(
@@ -36,6 +36,7 @@ hparams = dict(
     batch_size=150,
     dense_layer_size=80,
     criterion=nn.MSELoss(),  # nn.HuberLoss(),
+    scaler=StandardScaler(),
     max_epochs=60,
     features=features,
     n_features=len(features),
