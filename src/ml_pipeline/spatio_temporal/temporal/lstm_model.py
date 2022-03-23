@@ -42,7 +42,7 @@ class LogCallback(pl.callbacks.Callback):
         diff_org_percentile = np.percentile(diff_org, percentile)
         diff_org_low_percentile = np.percentile(diff_org, 100 - percentile)
 
-        fig, axs = plt.subplots(4, 2, figsize=(20, 20))
+        fig, axs = plt.subplots(2, 2, figsize=(20, 20))
 
         # predictand vs. ground truth
         axs[0, 0].hist([y_hat, y], bins=100, alpha=0.5, density=True)
@@ -58,47 +58,47 @@ class LogCallback(pl.callbacks.Callback):
         axs[0, 1].set_title("predictand distribution")
         axs[0, 1].set_xlim([0, y_org_percentile])
 
-        # predictand vs.ground truth scatter
-        axs[1, 0].scatter(y, y_hat, s=1, alpha=0.8)
-        axs[1, 0].plot(y, y, "r-")
-        axs[1, 0].set_xlabel("log(iwc)")
-        axs[1, 0].set_ylabel("log(iwc) predicted")
-        axs[1, 0].legend(["predicted", "ground_truth"])
-        axs[1, 0].set_title("scatter y vs y_hat (log scale)")
-
-        axs[1, 1].scatter(y_org, y_hat_org, s=1, alpha=0.8)
-        axs[1, 1].plot(y_org, y_org, "r-")
-        axs[1, 1].set_xlabel("iwc")
-        axs[1, 1].set_ylabel("iwc predicted")
-        axs[1, 1].legend(["predicted", "ground_truth"])
-        axs[1, 1].set_title("scatter y vs y_hat")
-        axs[1, 1].set_xlim([0, y_org_percentile])
-        axs[1, 1].set_ylim([0, y_org_percentile])
+        # # predictand vs.ground truth scatter
+        # axs[1, 0].scatter(y, y_hat, s=1, alpha=0.8)
+        # axs[1, 0].plot(y, y, "r-")
+        # axs[1, 0].set_xlabel("log(iwc)")
+        # axs[1, 0].set_ylabel("log(iwc) predicted")
+        # axs[1, 0].legend(["predicted", "ground_truth"])
+        # axs[1, 0].set_title("scatter y vs y_hat (log scale)")
+        #
+        # axs[1, 1].scatter(y_org, y_hat_org, s=1, alpha=0.8)
+        # axs[1, 1].plot(y_org, y_org, "r-")
+        # axs[1, 1].set_xlabel("iwc")
+        # axs[1, 1].set_ylabel("iwc predicted")
+        # axs[1, 1].legend(["predicted", "ground_truth"])
+        # axs[1, 1].set_title("scatter y vs y_hat")
+        # axs[1, 1].set_xlim([0, y_org_percentile])
+        # axs[1, 1].set_ylim([0, y_org_percentile])
 
         # residuals
-        axs[2, 0].hist(diff, bins=100, density=True)
-        axs[2, 0].set_xlabel("residuals (log scale)")
-        axs[2, 0].set_ylabel("density")
-        axs[2, 0].set_title("residuals (log scale)")
+        axs[1, 0].hist(diff, bins=100, density=True)
+        axs[1, 0].set_xlabel("residuals (log scale)")
+        axs[1, 0].set_ylabel("density")
+        axs[1, 0].set_title("residuals (log scale)")
 
-        axs[2, 1].hist(diff_org, bins=1000, density=True)
-        axs[2, 1].set_xlabel("residuals")
-        axs[2, 1].set_ylabel("density")
-        axs[2, 1].set_title("residuals")
-        axs[2, 1].set_xlim([diff_org_low_percentile, diff_org_percentile])
+        axs[1, 1].hist(diff_org, bins=1000, density=True)
+        axs[1, 1].set_xlabel("residuals")
+        axs[1, 1].set_ylabel("density")
+        axs[1, 1].set_title("residuals")
+        axs[1, 1].set_xlim([diff_org_low_percentile, diff_org_percentile])
 
-        # predicted vs. residuals
-        axs[3, 0].scatter(diff, y_hat, alpha=0.8, s=1)
-        axs[3, 0].set_xlabel("residuals (log scale)")
-        axs[3, 0].set_ylabel("log(iwc) predicted")
-        axs[3, 0].set_title("prediction vs. residual (log scale)")
-
-        axs[3, 1].scatter(diff_org, y_hat_org, alpha=0.8, s=1)
-        axs[3, 1].set_xlabel("residuals")
-        axs[3, 1].set_ylabel("iwc predicted")
-        axs[3, 1].set_title("prediction vs. residual")
-        axs[3, 1].set_xlim([0, diff_org_percentile])
-        axs[3, 1].set_ylim([0, y_org_percentile])
+        # # predicted vs. residuals scatter
+        # axs[3, 0].scatter(diff, y_hat, alpha=0.8, s=1)
+        # axs[3, 0].set_xlabel("residuals (log scale)")
+        # axs[3, 0].set_ylabel("log(iwc) predicted")
+        # axs[3, 0].set_title("prediction vs. residual (log scale)")
+        #
+        # axs[3, 1].scatter(diff_org, y_hat_org, alpha=0.8, s=1)
+        # axs[3, 1].set_xlabel("residuals")
+        # axs[3, 1].set_ylabel("iwc predicted")
+        # axs[3, 1].set_title("prediction vs. residual")
+        # axs[3, 1].set_xlim([0, diff_org_percentile])
+        # axs[3, 1].set_ylim([0, y_org_percentile])
 
         plt.tight_layout()
         plt.show()
