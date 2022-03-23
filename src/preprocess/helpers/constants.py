@@ -61,6 +61,12 @@ DATA_ONLY_DF_FILESTUMPY = "ice_in_cloud_df"
 OBSERVATIONS_DF_FILESTUMPY = "observations_df"
 OBSERVATION_VICINITY_DF_FILESTUMPY = "observation_vicinity_df"
 
+## IC_CIR ##
+IC_CIR_INCOMING = "/net/n2o/wolke_scratch/kjeggle/IC_CIR/incoming"
+IC_CIR_INTERMEDIATE = "IC_CIR/intermediate" # remapped to domain and resolution
+IC_CIR_PREPROC = "IC_CIR/preproc" # remapped to domain and resolution
+
+
 ## Graphics ##
 INTERVIEW_GRAPHICS_DIR = "/net/n2o/wolke/kjeggle/Graphics/PhDInterview"
 
