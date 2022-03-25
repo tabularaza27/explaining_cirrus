@@ -38,6 +38,7 @@ hparams = dict(
     criterion=nn.MSELoss(),  # nn.HuberLoss(),
     scaler=StandardScaler(),
     max_epochs=60,
+    predictand="iwc",
     features=features,
     n_features=len(features),
     hidden_size=64,

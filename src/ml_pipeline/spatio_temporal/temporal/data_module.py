@@ -39,13 +39,15 @@ class BacktrajDataModule(pl.LightningDataModule):
     '''
 
     def __init__(self, traj_df, scaler=StandardScaler(), batch_size=128, num_workers=0,
-                 features=["p", "GPH", "T", "Q", "U", "V", "OMEGA", "o3", "RH_ice"]):
+                 features=["p", "GPH", "T", "Q", "U", "V", "OMEGA", "o3", "RH_ice"],
+                 predictand="iwc"):
         super().__init__()
 
         self.traj_df = traj_df
         self.scaler = scaler
         self.batch_size = batch_size
         self.num_workers = num_workers
+        self.predictand = predictand
         self.features = features
         self.X_train = None
         self.y_train = None
@@ -87,7 +89,7 @@ class BacktrajDataModule(pl.LightningDataModule):
         self.traj_df = self.traj_df[self.traj_df.trajectory_id.isin(tids)]
 
         # only for selecting trajectory ids using function from xgboost preproc
-        X_train, X_val, X_test, y_train, y_val, y_test = split_train_val_test(self.traj_df.query("timestep==0"), "iwc",
+        X_train, X_val, X_test, y_train, y_val, y_test = split_train_val_test(self.traj_df.query("timestep==0"), self.predictand,
                                                                               random_state=1, train_size=0.8)
 
         # save traj ids
@@ -122,15 +124,15 @@ class BacktrajDataModule(pl.LightningDataModule):
         # create train/val/test arrays
         #         print(self.df_train.shape)
         #         self.X_train = self.df_train[self.features].values.reshape(int(self.df_train.shape[0]/61), 61, len(self.features)) # n_samples, n_timesteps, n_features
-        self.y_train = self.df_train.query("timestep==0")["iwc"].values
+        self.y_train = self.df_train.query("timestep==0")[self.predictand].values
         self.y_train = np.log10(self.y_train)
 
         #         self.X_val = self.df_val[self.features].values.reshape(int(self.df_val.shape[0]/61), 61, len(self.features)) # n_samples, n_timesteps, n_features
-        self.y_val = self.df_val.query("timestep==0")["iwc"].values
+        self.y_val = self.df_val.query("timestep==0")[self.predictand].values
         self.y_val = np.log10(self.y_val)
 
         #         self.X_test = self.df_test[self.features].values.reshape(int(self.df_test.shape[0]/61), 61, len(self.features)) # n_samples, n_timesteps, n_features
-        self.y_test = self.df_test.query("timestep==0")["iwc"].values
+        self.y_test = self.df_test.query("timestep==0")[self.predictand].values
         self.y_test = np.log10(self.y_test)
 
     def train_dataloader(self):

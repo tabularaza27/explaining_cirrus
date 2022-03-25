@@ -46,13 +46,13 @@ class LogCallback(pl.callbacks.Callback):
 
         # predictand vs. ground truth
         axs[0, 0].hist([y_hat, y], bins=100, alpha=0.5, density=True)
-        axs[0, 0].set_xlabel("log(iwc)")
+        axs[0, 0].set_xlabel("log({})".format(trainer.datamodule.predictand))
         axs[0, 0].set_ylabel("density")
         axs[0, 0].legend(["predicted", "ground_truth"])
         axs[0, 0].set_title("predictand distribution (log scale)")
 
         axs[0, 1].hist([y_hat_org, y_org], bins=1000, alpha=0.5, density=True)
-        axs[0, 1].set_xlabel("iwc)")
+        axs[0, 1].set_xlabel(trainer.datamodule.predictand)
         axs[0, 1].set_ylabel("density")
         axs[0, 1].legend(["predicted", "ground_truth"])
         axs[0, 1].set_title("predictand distribution")
@@ -61,15 +61,15 @@ class LogCallback(pl.callbacks.Callback):
         # # predictand vs.ground truth scatter
         # axs[1, 0].scatter(y, y_hat, s=1, alpha=0.8)
         # axs[1, 0].plot(y, y, "r-")
-        # axs[1, 0].set_xlabel("log(iwc)")
-        # axs[1, 0].set_ylabel("log(iwc) predicted")
+        # axs[1, 0].set_xlabel("log({})".format(trainer.datamodule.predictand))
+        # axs[1, 0]..set_xlabel("log({}) predicted".format(trainer.datamodule.predictand))
         # axs[1, 0].legend(["predicted", "ground_truth"])
         # axs[1, 0].set_title("scatter y vs y_hat (log scale)")
         #
         # axs[1, 1].scatter(y_org, y_hat_org, s=1, alpha=0.8)
         # axs[1, 1].plot(y_org, y_org, "r-")
-        # axs[1, 1].set_xlabel("iwc")
-        # axs[1, 1].set_ylabel("iwc predicted")
+        # axs[1, 1].set_xlabel(trainer.datamodule.predictand)
+        # axs[1, 1].set_ylabel("{} predicted".format(trainer.datamodule.predictand)
         # axs[1, 1].legend(["predicted", "ground_truth"])
         # axs[1, 1].set_title("scatter y vs y_hat")
         # axs[1, 1].set_xlim([0, y_org_percentile])

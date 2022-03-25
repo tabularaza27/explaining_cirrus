@@ -31,6 +31,7 @@ base_hparams = dict(
     criterion=nn.MSELoss(),  # nn.HuberLoss(),
     max_epochs=30,
     features=features,
+    predictand="iwc",
     n_features=len(features),
     hidden_size=50,
     num_layers=5,
