@@ -278,7 +278,7 @@ class LSTMRegressor(pl.LightningModule):
         # calc metrics on original scale
         org_rmse = np.sqrt(sklearn.metrics.mean_squared_error(y_hat_org, y_org))
         org_spearmanr = scipy.stats.spearmanr(y_hat_org, y_org).correlation
-        org_r2 = sklearn.metrics.r2_score(y, y_hat_org)
+        org_r2 = sklearn.metrics.r2_score(y_org, y_hat_org)
         org_mae = sklearn.metrics.mean_absolute_error(y_hat_org, y_org)
         org_me = np.mean(y_hat_org - y_org)
 
