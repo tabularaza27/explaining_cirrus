@@ -139,7 +139,7 @@ class BacktrajDataModule(pl.LightningDataModule):
         train_dataset = BacktrajDataset(self.X_train, self.y_train)
         train_loader = DataLoader(train_dataset,
                                   batch_size=self.batch_size,
-                                  shuffle=False,
+                                  shuffle=True,
                                   num_workers=self.num_workers)
 
         return train_loader
@@ -148,7 +148,7 @@ class BacktrajDataModule(pl.LightningDataModule):
         val_dataset = BacktrajDataset(self.X_val, self.y_val)
         val_loader = DataLoader(val_dataset,
                                 batch_size=self.batch_size,
-                                shuffle=False,
+                                shuffle=True,
                                 num_workers=self.num_workers)
 
         return val_loader
@@ -157,7 +157,7 @@ class BacktrajDataModule(pl.LightningDataModule):
         test_dataset = BacktrajDataset(self.X_test, self.y_test)
         test_loader = DataLoader(test_dataset,
                                  batch_size=self.batch_size,
-                                 shuffle=False,
+                                 shuffle=True,
                                  num_workers=self.num_workers)
 
         return test_loader
