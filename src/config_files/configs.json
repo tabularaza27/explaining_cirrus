@@ -47,6 +47,18 @@
     "altitude_max": 20880,
     "layer_thickness": 300
   },
+  "larger_domain_high_res_all_traj": {
+    "config_id": "larger_domain_high_res_all_traj",
+    "latmin": 0,
+    "latmax": 80,
+    "lonmin": -140,
+    "lonmax": 40,
+    "horizontal_resolution": 0.25,
+    "temporal_resolution": "1H",
+    "altitude_min": 3960,
+    "altitude_max": 20880,
+    "layer_thickness": 300
+  },
   "test_config": {
     "config_id": "test_config",
     "latmin": 0,
