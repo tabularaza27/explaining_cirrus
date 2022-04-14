@@ -4,11 +4,13 @@ import os
 from sklearn.model_selection import train_test_split
 
 from src.preprocess.helpers.constants import DATA_CUBE_FEATURE_ENGINEERED_DF_DIR
-from src.preprocess.helpers.constants import DATA_ONLY_DF_FILESTUMPY, OBSERVATIONS_DF_FILESTUMPY, OBSERVATION_VICINITY_DF_FILESTUMPY
+from src.preprocess.helpers.constants import DATA_ONLY_DF_FILESTUMPY, OBSERVATIONS_DF_FILESTUMPY, \
+    OBSERVATION_VICINITY_DF_FILESTUMPY
 
-CAT_VARS = ["season","lat_region","IC_CIR","clm_v2",'nightday_flag','land_water_mask','instrument_flag']
-LOG_TRANS_VARS = ['DU',"SO4","SO2", 'DU001','DU002','DU003','DU004','DU005']
-BASE_PREDICTORS = [ 't', 'w', 'u', 'v', 'rh_ice','SO4','season'] #' lat_region','dz_top',"IC_CIR"] # DU, clm_v2
+CAT_VARS = ["season", "lat_region", "IC_CIR", "clm_v2", 'nightday_flag', 'land_water_mask', 'instrument_flag']
+LOG_TRANS_VARS = ['DU', "SO4", "SO2", 'DU001', 'DU002', 'DU003', 'DU004', 'DU005']
+BASE_PREDICTORS = ['t', 'w', 'u', 'v', 'rh_ice', 'SO4', 'season']  # ' lat_region','dz_top',"IC_CIR"] # DU, clm_v2
+
 
 # other predictor variables: 'DU001','DU002','DU003','DU004','DU005','DU','clm_v2', 'nightday_flag','land_water_mask','instrument_flag', 'layer_index'
 
@@ -24,13 +26,14 @@ def load_feature_engineered_df(df_type, year):
     Returns:
 
     """
-    filepath_map = {"observations": OBSERVATIONS_DF_FILESTUMPY,"observation_vicinity": OBSERVATION_VICINITY_DF_FILESTUMPY, "data_only": DATA_ONLY_DF_FILESTUMPY}
-    filepath = os.path.join(DATA_CUBE_FEATURE_ENGINEERED_DF_DIR, "{}_feature_engineered_{}.pickle".format(filepath_map[df_type], year))
-    print("load file: {}". format(filepath))
+    filepath_map = {"observations": OBSERVATIONS_DF_FILESTUMPY,
+                    "observation_vicinity": OBSERVATION_VICINITY_DF_FILESTUMPY, "data_only": DATA_ONLY_DF_FILESTUMPY}
+    filepath = os.path.join(DATA_CUBE_FEATURE_ENGINEERED_DF_DIR,
+                            "{}_feature_engineered_{}.pickle".format(filepath_map[df_type], year))
+    print("load file: {}".format(filepath))
     df = pd.read_pickle(filepath)
 
     return df
-
 
 
 def create_filter_string(filters):
@@ -227,6 +230,7 @@ def split_train_test(df, predictand, random_state, test_size=0.2):
 
     return X_train, X_test, y_train, y_test
 
+
 def split_train_val_test(df, predictand, random_state, train_size=0.8):
     """splits between training, validation and test set
 
@@ -252,7 +256,8 @@ def split_train_val_test(df, predictand, random_state, train_size=0.8):
     val_cells, test_cells = train_test_split(rem_cells, test_size=0.5, random_state=random_state)
 
     # split dataframe
-    df_train, df_val, df_test = df[df.grid_cell.isin(train_cells)], df[df.grid_cell.isin(val_cells)], df[df.grid_cell.isin(test_cells)]
+    df_train, df_val, df_test = df[df.grid_cell.isin(train_cells)], df[df.grid_cell.isin(val_cells)], df[
+        df.grid_cell.isin(test_cells)]
 
     # drop grid cell variable
     df_train.drop("grid_cell", inplace=True, axis=1)

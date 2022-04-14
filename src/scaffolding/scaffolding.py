@@ -112,7 +112,6 @@ def setup_config_directories(config_id):
             BACKTRAJ_STARTFILES,
             BACKTRAJ_DF_DIR,
             BACKTRAJ_MERRATRACED,
-            IC_CIR_INCOMING,
             IC_CIR_INTERMEDIATE,
             IC_CIR_PREPROC
             ]
