@@ -68,12 +68,25 @@ class BacktrajDataset(Dataset):
     def __getitem__(self, index):
         return self.X_seq[index, :, :], self.X_static[index], self.y[index], self.coords[index]
 
-    def _prepare_weights(self):
+    def _prepare_weights(self, reweight, bin_width=10, lds=False, lds_kernel='gaussian', lds_ks=5, lds_sigma=2):
+        """
 
-        if self.reweight == "none":
+        Args:
+            reweight:
+            bin_width:
+            lds:
+            lds_kernel:
+            lds_ks:
+            lds_sigma:
+
+        Returns:
+
+        """
+
+        if reweight == "none":
             return None
 
-        decimals = int(np.log10(self.bin_width))
+        decimals = int(np.log10(bin_width))
         y_rounded = np.round(self.y.cpu().numpy(), decimals)
 
         bins, bins_frequency = np.unique(y_rounded, return_counts=True)
@@ -81,15 +94,15 @@ class BacktrajDataset(Dataset):
         bin_dict = {bin: frequency for bin, frequency in zip(bins, bins_frequency)}
 
         # frequency per bin
-        if self.reweight == 'sqrt_inv':
+        if reweight == 'sqrt_inv':
             bin_dict = {k: np.sqrt(v) for k, v in bin_dict.items()}
-        elif self.reweight == 'inverse':
+        elif reweight == 'inverse':
             bin_dict = {k: np.clip(v, 5, 1000) for k, v in bin_dict.items()}  # clip weights for inverse re-weight
         num_per_label = np.vectorize(bin_dict.get)(y_rounded)
 
-        if self.lds:
-            lds_kernel_window = get_lds_kernel_window(self.lds_kernel, self.lds_ks, self.lds_sigma)
-            print(f'Using LDS: [{self.lds_kernel.upper()}] ({self.lds_ks}/{self.lds_sigma})')
+        if lds:
+            lds_kernel_window = get_lds_kernel_window(lds_kernel, lds_ks, lds_sigma)
+            print(f'Using LDS: [{lds_kernel.upper()}] ({lds_ks}/{lds_sigma})')
             smoothed_value = convolve1d(
                 np.asarray([v for _, v in bin_dict.items()]), weights=lds_kernel_window, mode='constant')
             smoothed_value_dict = {key: val for key, val in zip(bin_dict.keys(), smoothed_value)}
