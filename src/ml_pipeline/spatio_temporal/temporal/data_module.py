@@ -60,13 +60,15 @@ class BacktrajDataset(Dataset):
         self.X_static = torch.tensor(X_static).float()
         self.y = torch.tensor(y).float()
         self.coords = torch.tensor(coords).float()
-        self.weights = self._prepare_weights()
+        self.weights = self._prepare_weights(reweight=reweight, lds=lds, lds_kernel=lds_kernel, lds_ks=lds_ks, lds_sigma=lds_sigma)
 
     def __len__(self):
         return self.X_seq.shape[0]
 
     def __getitem__(self, index):
-        return self.X_seq[index, :, :], self.X_static[index], self.y[index], self.coords[index]
+        weight = np.asarray([self.weights[index]]).astype('float32') if self.weights is not None else np.asarray(
+            [np.float32(1.)])
+        return self.X_seq[index, :, :], self.X_static[index], self.y[index], weight, self.coords[index]
 
     def _prepare_weights(self, reweight, bin_width=10, lds=False, lds_kernel='gaussian', lds_ks=5, lds_sigma=2):
         """
