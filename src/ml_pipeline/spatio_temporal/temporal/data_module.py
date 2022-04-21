@@ -267,10 +267,8 @@ class BacktrajDataModule(pl.LightningDataModule):
                 # add oh_encoded_features to feature lists and df
                 if feature in self.sequential_features:
                     self.sequential_features.append(col)
-                    self.sequential_features.remove(feature)
                 else:
                     self.static_features.append(col)
-                    self.static_features.remove(feature)
 
                 # add oh encoded features to df
                 self.traj_df[col] = oh_df[col]
