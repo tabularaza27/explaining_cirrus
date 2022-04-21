@@ -65,9 +65,9 @@ def experiment_setup(df, p, optuna=False, trial=None):
     dm = BacktrajDataModule(
         traj_df=df,
         batch_size=p['batch_size'],
-        predictand=p['predictand'],
-        features=p['features'],
-        scaler=p['scaler'],
+        predictands=p['predictand'],
+        sequential_features=p['features'],
+        sequential_scaler=p['scaler'],
         num_workers=16
     )
 
