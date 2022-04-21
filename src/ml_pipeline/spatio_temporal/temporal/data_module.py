@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+from sklearn.base import TransformerMixin
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import minmax_scale
 from sklearn.preprocessing import MaxAbsScaler
@@ -119,8 +120,8 @@ class BacktrajDataModule(pl.LightningDataModule):
                  static_features: list = ['land_water_mask', 'season', 'nightday_flag'],
                  predictands: list = ["iwc"],
                  log_transform_predictands: list = ["iwc", "icnc_5um", "icnc_100um"],
-                 sequential_scaler: sklearn.base.TransformerMixin = StandardScaler(),
-                 static_scaler: sklearn.base.TransformerMixin = StandardScaler(),
+                 sequential_scaler: TransformerMixin = StandardScaler(),
+                 static_scaler: TransformerMixin = StandardScaler(),
                  batch_size: int = 128,
                  train_size: float = 0.8,
                  num_workers: int = 0,
