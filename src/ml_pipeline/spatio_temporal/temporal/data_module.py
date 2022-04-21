@@ -63,10 +63,10 @@ class BacktrajDataset(Dataset):
         self.weights = self._prepare_weights()
 
     def __len__(self):
-        return self.X.shape[0]
+        return self.X_seq.shape[0]
 
     def __getitem__(self, index):
-        return self.X[index, :, :], self.X_static[index], self.y[index], self.coords[index]
+        return self.X_seq[index, :, :], self.X_static[index], self.y[index], self.coords[index]
 
     def _prepare_weights(self):
 
