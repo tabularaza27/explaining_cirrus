@@ -333,7 +333,7 @@ class BacktrajDataModule(pl.LightningDataModule):
                                                  any(map(var.startswith, CAT_VARS))]
 
         # init scalers for sequential and static features
-        self.sequential_scaler.fit(self.df_train[self.scaling_sequential_features])
+        self.sequential_scaler.fit(self.df_train[self.cont_sequential_features_list])
         self.static_scaler.fit(self.df_train.query("timestep==0")[self.cont_static_features_list])
 
         # create scaled np.ndarrays
