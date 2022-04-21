@@ -218,6 +218,14 @@ class BacktrajDataModule(pl.LightningDataModule):
         self.columns = None  # todo delete ?
         self.preprocessing = None  # todo delete ?
 
+        # feature name lists
+        # sequential features
+        self.cont_sequential_features_list = []
+        self.categorical_sequential_feature_list = []
+        # static features
+        self.cont_static_features_list = []
+        self.categorical_static_features_list = []
+
         # todo preproc for static features
         # todo add data filters
         # todo train/val/test loaders
@@ -431,7 +439,7 @@ class BacktrajDataModule(pl.LightningDataModule):
         elif var_type == "static":
             X_cont = self.static_scaler.transform(
                 df.query("timestep==0")[self.cont_static_features_list])  # n_samples, # n_features
-            X_cat = df.query("timestep==0")[self.categorical_static_feature_list].values
+            X_cat = df.query("timestep==0")[self.categorical_static_features_list].values
 
             X = np.concatenate((X_cont, X_cat), axis=1)
 
