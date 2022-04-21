@@ -460,7 +460,7 @@ class BacktrajDataModule(pl.LightningDataModule):
         predictand_df = df.query("timestep==0")[self.predictands]
         # log transform predictands
         if len(self.log_transform_predictands) > 0:
-            predictand_df = log_transform(df=self.predictand_df,
+            predictand_df = log_transform(df=predictand_df,
                                           column_names=self.log_transform_predictands,
                                           zero_handling="add_constant",
                                           drop_original=False)
