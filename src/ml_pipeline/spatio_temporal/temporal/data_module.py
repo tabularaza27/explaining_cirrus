@@ -20,6 +20,7 @@ import pytorch_lightning as pl
 from src.ml_pipeline.ml_preprocess import split_train_val_test, log_transform
 from src.ml_pipeline.ml_preprocess import CAT_VARS
 from src.ml_pipeline.spatio_temporal.temporal.temporal_ml_model_helpers import *
+from src.preprocess.helpers.common_helpers import pd_dtime_to_std_seconds, std_seconds_to_pd_dtime
 
 
 class BacktrajDataset(Dataset):
@@ -234,6 +235,10 @@ class BacktrajDataModule(pl.LightningDataModule):
         if "grid_cell" not in self.traj_df.columns:
             self.traj_df["grid_cell"] = self.traj_df["date"].astype("str") + self.traj_df["lat"].astype("str") + \
                                         self.traj_df["lon"].astype("str")
+
+        # create std time column (time of observation), necessary to create torch tensor, i.e. needs to be numeric
+        if "std_time" not in self.traj_df.columns:
+            self.traj_df["std_time"] = pd_dtime_to_std_seconds(self.traj_df["time"])
 
         # filter dataframe
         self.traj_df = filter_temporal_df(self.traj_df, self.data_filters)

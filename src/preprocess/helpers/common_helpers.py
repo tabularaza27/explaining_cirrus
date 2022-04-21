@@ -1,6 +1,8 @@
 """Collection of common preprocessing helpers"""
 
 import numpy as np
+import pandas as pd
+
 
 def check_for_nans(ds):
     """Checks for each variable in data set if it contains nan values and raises Error if it does so"""
@@ -41,7 +43,7 @@ def custom_mode(ndarray, axis):
             int(np.__version__.split('.')[1]) >= 9]):
         modals, counts = np.unique(ndarray, return_counts=True)
         index = np.argmax(counts)
-        return modals[index] #, counts[index]
+        return modals[index]  # , counts[index]
 
     # Sort array
     sort = np.sort(ndarray, axis=axis)
@@ -73,3 +75,14 @@ def custom_mode(ndarray, axis):
     index = np.ogrid[slices]
     index.insert(axis, np.argmax(counts, axis=axis))
     return sort[index]  # , counts[index]
+
+
+def pd_dtime_to_std_seconds(dt: pd.Series):
+    """convert pandas datetime series to int series, i.e. seconds since unix origin"""
+    std_time = (dt - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
+    return std_time
+
+
+def std_seconds_to_pd_dtime(std_time: pd.Series):
+    """convert seconds since unix series (int) origin to pandas datetime series"""
+    return pd.to_datetime(std_time, unit="s", origin="unix")
