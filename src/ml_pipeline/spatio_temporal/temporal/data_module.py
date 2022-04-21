@@ -243,7 +243,7 @@ class BacktrajDataModule(pl.LightningDataModule):
             self.static_features].convert_dtypes()  # converts to best possible datatypes
 
         # add lat/lon region feature
-        if self.sequential_features is not None:
+        if self.regional_feature_resolution is not None:
             self.traj_df["lat_region"] = (np.round(
                 self.traj_df.lat * (1 / self.regional_feature_resolution)) * self.regional_feature_resolution).astype(
                 'int')
@@ -259,7 +259,7 @@ class BacktrajDataModule(pl.LightningDataModule):
             oh_df = pd.get_dummies(self.traj_df[feature], prefix=feature)
 
             for col in oh_df.columns:
-                # add oh_encoded_features and remove original feature fro feature lists
+                # add oh_encoded_features to feature lists and df
                 if feature in self.sequential_features:
                     self.sequential_features.append(col)
                     self.sequential_features.remove(feature)
@@ -269,6 +269,12 @@ class BacktrajDataModule(pl.LightningDataModule):
 
                 # add oh encoded features to df
                 self.traj_df[col] = oh_df[col]
+
+            # remove original feature fro feature lists
+            if feature in self.sequential_features:
+                self.sequential_features.remove(feature)
+            else:
+                self.static_features.remove(feature)
 
         # todo remove I don't use it
         # create static df, i.e. data that is only available for timestep==0, i.e. predictands & static_features
