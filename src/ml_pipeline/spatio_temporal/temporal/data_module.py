@@ -422,7 +422,7 @@ class BacktrajDataModule(pl.LightningDataModule):
             X_cont = self.sequential_scaler.transform(df[self.cont_sequential_features_list]).reshape(
                 int(df.shape[0] / 61), 61,
                 len(self.cont_sequential_features_list))  # n_samples, # n_timesteps, # n_features
-            X_cat = df[[self.categorical_sequential_feature_list]].values.reshape(int(df.shape[0] / 61), 61,
+            X_cat = df[self.categorical_sequential_feature_list].values.reshape(int(df.shape[0] / 61), 61,
                                                                                   len(self.categorical_sequential_feature_list))
 
             X = np.concatenate((X_cont, X_cat), axis=2)
@@ -431,7 +431,7 @@ class BacktrajDataModule(pl.LightningDataModule):
         elif var_type == "static":
             X_cont = self.static_scaler.transform(
                 df.query("timestep==0")[self.cont_static_features_list])  # n_samples, # n_features
-            X_cat = df.query("timestep==0")[[self.categorical_static_feature_list]].values
+            X_cat = df.query("timestep==0")[self.categorical_static_feature_list].values
 
             X = np.concatenate((X_cont, X_cat), axis=1)
 
