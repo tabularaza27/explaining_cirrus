@@ -277,7 +277,7 @@ class BacktrajDataModule(pl.LightningDataModule):
         self.reweight_lead_predictand = reweight_lead_predictand
 
         # get index for lead predicatand for use in BacktrajDataset
-        if self.multiple_predictand_reweight_type == "lead_predictand":
+        if (self.multiple_predictand_reweight_type == "lead_predictand") and (self.reweight!="none") and (len(self.predictands)>1):
             self.reweight_lead_predictand_idx = self.predictands.index(self.reweight_lead_predictand)
         else:
             self.reweight_lead_predictand_idx = None
