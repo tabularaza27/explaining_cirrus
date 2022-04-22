@@ -92,7 +92,8 @@ class BacktrajDataset(Dataset):
         return self.X_seq.shape[0]
 
     def __getitem__(self, index):
-        weight = self.weights[index].astype('float32') if self.weights is not None else np.ones(shape=3).astype('float32')
+        # retrieve weights, if None, return array with ones
+        weight = self.weights[index].astype('float32') if self.weights is not None else np.ones(shape=self.n_predictands).astype('float32')
         return self.X_seq[index, :, :], self.X_static[index], self.y[index], weight, self.coords[index]
 
     @staticmethod
