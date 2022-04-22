@@ -60,7 +60,7 @@ class BacktrajDataset(Dataset):
         self.X_static = torch.tensor(X_static).float()
         self.y = torch.tensor(y).float()
         self.coords = torch.tensor(coords).float()
-        self.weights = self._prepare_weights(reweight=reweight, lds=lds, lds_kernel=lds_kernel, lds_ks=lds_ks, lds_sigma=lds_sigma)
+        # self.weights = BacktrajDataset.prepare_weights(reweight=reweight, lds=lds, lds_kernel=lds_kernel, lds_ks=lds_ks, lds_sigma=lds_sigma)
 
     def __len__(self):
         return self.X_seq.shape[0]
@@ -70,10 +70,18 @@ class BacktrajDataset(Dataset):
             [np.float32(1.)])
         return self.X_seq[index, :, :], self.X_static[index], self.y[index], weight, self.coords[index]
 
-    def _prepare_weights(self, reweight, bin_width=10, lds=False, lds_kernel='gaussian', lds_ks=5, lds_sigma=2):
-        """
+    @staticmethod
+    def prepare_weights(y: torch.Tensor,
+                         reweight: str,
+                         bin_width: int = 10,
+                         lds: bool = False,
+                         lds_kernel: str = 'gaussian',
+                         lds_ks: int = 5,
+                         lds_sigma: int = 2):
+        """calculate weights for one predictand
 
         Args:
+            y: shape: (n_samples)
             reweight:
             bin_width:
             lds:
@@ -88,8 +96,11 @@ class BacktrajDataset(Dataset):
         if reweight == "none":
             return None
 
+        # transform torch.Tensor to numpy.ndarray
+        y = y.cpu().numpy()
+
         decimals = int(np.log10(bin_width))
-        y_rounded = np.round(self.y.cpu().numpy(), decimals)
+        y_rounded = np.round(y, decimals)
 
         bins, bins_frequency = np.unique(y_rounded, return_counts=True)
 
