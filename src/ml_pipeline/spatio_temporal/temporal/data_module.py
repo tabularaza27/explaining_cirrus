@@ -43,7 +43,7 @@ class BacktrajDataset(Dataset):
         Args:
             X_seq: n_samples x n_timesteps x n_sequential_features
             X_static: n_samples x x_static_features
-            y: n_samples x n_target_variables # todo reshape for case with only one predictand
+            y: n_samples x n_target_variables
             coords: n_samples x 4 → (time, lev, lat, lon)
             reweight:
             multiple_predictand_reweight_type: "individual", "lead_predictand"
@@ -61,7 +61,6 @@ class BacktrajDataset(Dataset):
         self.coords = torch.tensor(coords).float()
         self.n_predictands = y.shape[1]
 
-        # todo put in outer loop
         if reweight == "none":
             self.weights = None
         elif self.n_predictands == 1:
@@ -222,7 +221,6 @@ class BacktrajDataModule(pl.LightningDataModule):
         self.predictands = predictands
         self.sequential_features = sequential_features
         self.static_features = static_features
-        self.static_df = pd.DataFrame()
 
         ### init placeholder variables for train/val/test splits ###
 
@@ -285,8 +283,6 @@ class BacktrajDataModule(pl.LightningDataModule):
         ### helpers ###
 
         self.coords = ["std_time", "lev", "lat", "lon"]
-        self.columns = None  # todo delete ?
-        self.preprocessing = None  # todo delete ?
 
         # feature name lists
         # sequential features
@@ -296,11 +292,6 @@ class BacktrajDataModule(pl.LightningDataModule):
         self.cont_static_features_list = []
         self.categorical_static_features_list = []
 
-        # todo preproc for static features
-        # todo add data filters
-        # todo train/val/test loaders
-        # todo init variables
-        # todo save coords
         # todo save y_preds if multitask, i.e. is it working with current setup
         #
 
@@ -357,15 +348,16 @@ class BacktrajDataModule(pl.LightningDataModule):
             else:
                 self.static_features.remove(feature)
 
-        # todo remove I don't use it
-        # create static df, i.e. data that is only available for timestep==0, i.e. predictands & static_features
-        self.static_df = self.traj_df.query("timestep==0")[
-            self.predictands + self.static_features + ["grid_cell", "trajectory_id"]]
-
         # todo kickout outliers on log transformed y data
 
     def setup(self, stage=None):
-        '''
+        '''preprocessing
+
+        - split train/val/test
+        - scale continuous features
+        - concate oh encoded features with cont. features
+        - create static feature arrays
+        - create prediction arrays and log scale if required
         '''
 
         if stage == 'fit' and self.X_train_sequential is not None:
