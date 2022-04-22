@@ -434,6 +434,8 @@ class BacktrajDataModule(pl.LightningDataModule):
                                         y=self.y_train,
                                         coords=self.coords_train,
                                         reweight=self.reweight,
+                                        multiple_predictand_reweight_type=self.multiple_predictand_reweight_type,
+                                        reweight_lead_predictand_idx=self.reweight_lead_predictand_idx,
                                         reweight_bin_width=self.reweight_bin_width,
                                         lds=self.lds,
                                         lds_kernel=self.lds_kernel,
@@ -452,12 +454,7 @@ class BacktrajDataModule(pl.LightningDataModule):
             X_static=self.X_val_static,
             y=self.y_val,
             coords=self.coords_val,
-            reweight=self.reweight,
-            reweight_bin_width=self.reweight_bin_width,
-            lds=self.lds,
-            lds_kernel=self.lds_kernel,
-            lds_ks=self.lds_ks,
-            lds_sigma=self.lds_sigma
+            reweight="none",
         )
         val_loader = DataLoader(val_dataset,
                                 batch_size=self.batch_size,
@@ -472,12 +469,7 @@ class BacktrajDataModule(pl.LightningDataModule):
             X_static=self.X_test_static,
             y=self.y_test,
             coords=self.coords_test,
-            reweight=self.reweight,
-            reweight_bin_width=self.reweight_bin_width,
-            lds=self.lds,
-            lds_kernel=self.lds_kernel,
-            lds_ks=self.lds_ks,
-            lds_sigma=self.lds_sigma
+            reweight="none",
         )
         test_loader = DataLoader(test_dataset,
                                  batch_size=self.batch_size,
