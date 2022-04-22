@@ -30,6 +30,8 @@ class BacktrajDataset(Dataset):
                  y: np.ndarray,
                  coords: np.ndarray,
                  reweight: str = 'none',
+                 multiple_predictand_reweight_type: str = "individual",
+                 reweight_lead_predictand_idx: int = 0,
                  reweight_bin_width: int = 10,
                  lds: bool = False,
                  lds_kernel: str = "gaussian",
@@ -41,26 +43,47 @@ class BacktrajDataset(Dataset):
         Args:
             X_seq: n_samples x n_timesteps x n_sequential_features
             X_static: n_samples x x_static_features
-            y: n_samples x n_target_variables
+            y: n_samples x n_target_variables # todo reshape for case with only one predictand
             coords: n_samples x 4 → (time, lev, lat, lon)
             reweight:
+            multiple_predictand_reweight_type: "individual", "lead_predictand"
+            reweight_lead_predictand_idx:  index of predictand that is used for calculating deep imbalanced regression weights
+                                               only used if multiple_predictand_reweight_type=="lead_predicatne" and reweight!="none"
             reweight_bin_width:
             lds:
             lds_kernel:
             lds_ks:
             lds_sigma:
         """
-
-        # validity check
-        assert reweight in {'none', 'inverse', 'sqrt_inv'}
-        assert reweight != 'none' if lds else True, \
-            "Set reweight to \'sqrt_inv\' (default) or \'inverse\' when using LDS"
-
         self.X_seq = torch.tensor(X_seq).float()
         self.X_static = torch.tensor(X_static).float()
         self.y = torch.tensor(y).float()
         self.coords = torch.tensor(coords).float()
-        # self.weights = BacktrajDataset.prepare_weights(reweight=reweight, lds=lds, lds_kernel=lds_kernel, lds_ks=lds_ks, lds_sigma=lds_sigma)
+
+        # todo put in outer loop
+        if y.shape[1] == 1:
+            # only one predictor, no multi task learning
+            self.weights = BacktrajDataset.prepare_weights(y, reweight=reweight, lds=lds, lds_kernel=lds_kernel,
+                                                           lds_ks=lds_ks, lds_sigma=lds_sigma)
+        elif multiple_predictand_reweight_type == "individual":
+            # calculate weights for each predictand individually
+            # weights has same shape as y → n_samples x n_predictors
+            self.weights = np.array(
+                [BacktrajDataset.prepare_weights(y_i, reweight=reweight, lds=lds, lds_kernel=lds_kernel, lds_ks=lds_ks,
+                                                 lds_sigma=lds_sigma) for y_i in y.T]).T
+        elif multiple_predictand_reweight_type == "lead_predictand":
+            # calculate weights based on lead predictand and use same weights for every predictand
+            lead_predictand_weights = BacktrajDataset.prepare_weights(y[:, reweight_lead_predictand_idx],
+                                                                      reweight=reweight, lds=lds, lds_kernel=lds_kernel,
+                                                                      lds_ks=lds_ks, lds_sigma=lds_sigma)
+            lead_predictand_weights = np.expand_dims(lead_predictand_weights,
+                                                     1)  # expand dimensionality → shape: n_samples x 1
+            self.weights = np.repeat(lead_predictand_weights, repeats=y.shape[1],
+                                     axis=1)  # "copy" weights to use for each predictor → shape: n_samples x n_predictors
+        else:
+            raise ValueError(
+                'multiple_predictand_reweight_type needs to be in ["individual", "lead_predictand"], is: {}'.format(
+                    multiple_predictand_reweight_type))
 
     def __len__(self):
         return self.X_seq.shape[0]
@@ -71,13 +94,13 @@ class BacktrajDataset(Dataset):
         return self.X_seq[index, :, :], self.X_static[index], self.y[index], weight, self.coords[index]
 
     @staticmethod
-    def prepare_weights(y: torch.Tensor,
-                         reweight: str,
-                         bin_width: int = 10,
-                         lds: bool = False,
-                         lds_kernel: str = 'gaussian',
-                         lds_ks: int = 5,
-                         lds_sigma: int = 2):
+    def prepare_weights(y: np.ndarray,
+                        reweight: str,
+                        bin_width: int = 10,
+                        lds: bool = False,
+                        lds_kernel: str = 'gaussian',
+                        lds_ks: int = 5,
+                        lds_sigma: int = 2):
         """calculate weights for one predictand
 
         Args:
@@ -92,12 +115,13 @@ class BacktrajDataset(Dataset):
         Returns:
 
         """
+        # validity check
+        assert reweight in {'none', 'inverse', 'sqrt_inv'}
+        assert reweight != 'none' if lds else True, \
+            "Set reweight to \'sqrt_inv\' (default) or \'inverse\' when using LDS"
 
         if reweight == "none":
             return None
-
-        # transform torch.Tensor to numpy.ndarray
-        y = y.cpu().numpy()
 
         decimals = int(np.log10(bin_width))
         y_rounded = np.round(y, decimals)
@@ -154,6 +178,8 @@ class BacktrajDataModule(pl.LightningDataModule):
                  num_workers: int = 0,
                  regional_feature_resolution=10,
                  reweight: str = 'none',
+                 multiple_predictand_reweight_type: str = "individually",
+                 reweight_lead_predictand: str = "iwc",
                  reweight_bin_width: int = 10,
                  lds: bool = False,
                  lds_kernel: str = "gaussian",
@@ -173,6 +199,9 @@ class BacktrajDataModule(pl.LightningDataModule):
             num_workers:
             regional_feature_resolution: in degrees. if None, no regional feature is used
             reweight:
+            multiple_predictand_reweight_type: "individual", "lead_predictand"
+            reweight_lead_predictand: predictand that is used for calculating deep imbalanced regression weights
+                                               only used if multiple_predictand_reweight_type=="lead_predicatne" and reweight!="none"
             reweight_bin_width:
             lds:
             lds_kernel:
@@ -180,6 +209,8 @@ class BacktrajDataModule(pl.LightningDataModule):
             lds_sigma:
         """
         super().__init__()
+
+        # todo assertions
 
         ### init df, features and predictands ###
 
@@ -227,7 +258,7 @@ class BacktrajDataModule(pl.LightningDataModule):
         # data preproc
         self.sequential_scaler = sequential_scaler
         self.static_scaler = static_scaler
-        self.log_transform_predictands = log_transform_predictands
+        self.log_transform_predictands = [p for p in log_transform_predictands if p in predictands] # only transform predictands that are active
         self.regional_feature_resolution = regional_feature_resolution
 
         # deep imbalanced regression
@@ -237,6 +268,16 @@ class BacktrajDataModule(pl.LightningDataModule):
         self.lds_kernel = lds_kernel
         self.lds_ks = lds_ks
         self.lds_sigma = lds_sigma
+
+        # for dir on multi task regression
+        self.multiple_predictand_reweight_type = multiple_predictand_reweight_type
+        self.reweight_lead_predictand = reweight_lead_predictand
+
+        # get index for lead predicatand for use in BacktrajDataset
+        if self.multiple_predictand_reweight_type == "lead_predictand":
+            self.reweight_lead_predictand_idx = self.predictands.index(self.reweight_lead_predictand)
+        else:
+            self.reweight_lead_predictand_idx = None
 
         ### helpers ###
 
@@ -457,7 +498,7 @@ class BacktrajDataModule(pl.LightningDataModule):
                 int(df.shape[0] / 61), 61,
                 len(self.cont_sequential_features_list))  # n_samples, # n_timesteps, # n_features
             X_cat = df[self.categorical_sequential_feature_list].values.reshape(int(df.shape[0] / 61), 61,
-                                                                                  len(self.categorical_sequential_feature_list))
+                                                                                len(self.categorical_sequential_feature_list))
 
             X = np.concatenate((X_cont, X_cat), axis=2)
             X = np.flip(X, axis=1).copy()  # flip time so that last index is timestep 0, i.e end of trajectory
@@ -491,7 +532,8 @@ class BacktrajDataModule(pl.LightningDataModule):
                                           zero_handling="add_constant",
                                           drop_original=False)
 
-            predictand_column_names = [p + "_log" if p in self.log_transform_predictands else p for p in self.predictands]
+            predictand_column_names = [p + "_log" if p in self.log_transform_predictands else p for p in
+                                       self.predictands]
 
             predictand_df = predictand_df[predictand_column_names]
 
