@@ -59,11 +59,12 @@ class BacktrajDataset(Dataset):
         self.X_static = torch.tensor(X_static).float()
         self.y = torch.tensor(y).float()
         self.coords = torch.tensor(coords).float()
+        self.n_predictands = y.shape[1]
 
         # todo put in outer loop
         if reweight == "none":
             self.weights = None
-        elif y.shape[1] == 1:
+        elif self.n_predictands == 1:
             # only one predictor, no multi task learning
             self.weights = BacktrajDataset.prepare_weights(y, reweight=reweight, lds=lds, lds_kernel=lds_kernel,
                                                            lds_ks=lds_ks, lds_sigma=lds_sigma)
@@ -80,7 +81,7 @@ class BacktrajDataset(Dataset):
                                                                       lds_ks=lds_ks, lds_sigma=lds_sigma)
             lead_predictand_weights = np.expand_dims(lead_predictand_weights,
                                                      1)  # expand dimensionality → shape: n_samples x 1
-            self.weights = np.repeat(lead_predictand_weights, repeats=y.shape[1],
+            self.weights = np.repeat(lead_predictand_weights, repeats=self.n_predictands,
                                      axis=1)  # "copy" weights to use for each predictor → shape: n_samples x n_predictors
         else:
             raise ValueError(
@@ -91,8 +92,7 @@ class BacktrajDataset(Dataset):
         return self.X_seq.shape[0]
 
     def __getitem__(self, index):
-        weight = np.asarray([self.weights[index]]).astype('float32') if self.weights is not None else np.asarray(
-            [np.float32(1.)])
+        weight = self.weights[index].astype('float32') if self.weights is not None else np.ones(shape=3).astype('float32')
         return self.X_seq[index, :, :], self.X_static[index], self.y[index], weight, self.coords[index]
 
     @staticmethod
