@@ -61,7 +61,9 @@ class BacktrajDataset(Dataset):
         self.coords = torch.tensor(coords).float()
 
         # todo put in outer loop
-        if y.shape[1] == 1:
+        if reweight == "none":
+            self.weights = None
+        elif y.shape[1] == 1:
             # only one predictor, no multi task learning
             self.weights = BacktrajDataset.prepare_weights(y, reweight=reweight, lds=lds, lds_kernel=lds_kernel,
                                                            lds_ks=lds_ks, lds_sigma=lds_sigma)
