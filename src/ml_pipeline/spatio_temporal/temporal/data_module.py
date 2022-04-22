@@ -181,7 +181,7 @@ class BacktrajDataModule(pl.LightningDataModule):
                  num_workers: int = 0,
                  regional_feature_resolution=10,
                  reweight: str = 'none',
-                 multiple_predictand_reweight_type: str = "individually",
+                 multiple_predictand_reweight_type: str = "individual",
                  reweight_lead_predictand: str = "iwc",
                  reweight_bin_width: int = 10,
                  lds: bool = False,
