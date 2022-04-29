@@ -63,20 +63,21 @@ class WeightedFocalL1Loss(ImbalancedRegressionLoss):
 
 
 class MultiTaskLearningLoss(nn.Module):
+    """Multitask Learning Loss
+
+            Weight losses of individual tasks and sum to total loss.
+
+            Loss weighting strategies:
+            - equal weights
+            - uncertainty weighting [Kendall et al. 2018]
+              implementations:
+              https://towardsdatascience.com/multi-task-learning-with-pytorch-and-fastai-6d10dc7ce855
+              https://github.com/yaringal/multi-task-learning-example/blob/master/multi-task-learning-example-pytorch.ipynb
+
+            Can be combined with deep imbalanced regression, just pass a sample based criterion, e.g. weighted_focal_l1
+    """
     def __init__(self, task_num: int, criterion: nn.Module, mtl_weighting_type: str = "equal"):
-        """Multitask Learning Loss
-
-        Weight losses of individual tasks and sum to total loss.
-
-        Loss weighting strategies:
-        - equal weights
-        - uncertainty weighting [Kendall et al. 2018]
-          implementations:
-          https://towardsdatascience.com/multi-task-learning-with-pytorch-and-fastai-6d10dc7ce855
-          https://github.com/yaringal/multi-task-learning-example/blob/master/multi-task-learning-example-pytorch.ipynb
-
-        Can be combined with deep imbalanced regression, just pass a sample based criterion, e.g. weighted_focal_l1
-
+        """
         Args:
             task_num: number of predictands
             criterion: pytorch loss (nn.Module) to calculate individual losses
