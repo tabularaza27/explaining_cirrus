@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class RMSELoss(nn.Module):
     def __init__(self):
         super().__init__()
@@ -33,7 +34,18 @@ def weighted_focal_mse_loss(inputs, targets, weights=None, activate='sigmoid', b
     return loss
 
 
-class WeightedFocalMSELoss(nn.Module):
+class ImbalancedRegressionLoss(nn.Module):
+    """wrapper loss function for imbalanced regression losses, i.e. sample based weighting"""
+
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, yhat, y, weights):
+        pass
+
+
+class WeightedFocalMSELoss(ImbalancedRegressionLoss):
+    # todo add hparam args
     def __init__(self):
         super().__init__()
 
@@ -41,9 +53,87 @@ class WeightedFocalMSELoss(nn.Module):
         return weighted_focal_mse_loss(yhat, y, weights)
 
 
-class WeightedFocalL1Loss(nn.Module):
+class WeightedFocalL1Loss(ImbalancedRegressionLoss):
     def __init__(self):
+        # todo add hparam args
         super().__init__()
 
     def forward(self, yhat, y, weights):
         return weighted_focal_l1_loss(yhat, y, weights)
+
+
+class MultiTaskLearningLoss(nn.Module):
+    def __init__(self, task_num: int, criterion: nn.Module, mtl_weighting_type: str = "equal"):
+        """Multitask Learning Loss
+
+        Weight losses of individual tasks and sum to total loss.
+
+        Loss weighting strategies:
+        - equal weights
+        - uncertainty weighting [Kendall et al. 2018]
+          implementations:
+          https://towardsdatascience.com/multi-task-learning-with-pytorch-and-fastai-6d10dc7ce855
+          https://github.com/yaringal/multi-task-learning-example/blob/master/multi-task-learning-example-pytorch.ipynb
+
+        Can be combined with deep imbalanced regression, just pass a sample based criterion, e.g. weighted_focal_l1
+
+        Args:
+            task_num: number of predictands
+            criterion: pytorch loss (nn.Module) to calculate individual losses
+            mtl_weighting_type: weighting of individual losses
+        """
+        super().__init__()
+
+        assert mtl_weighting_type in ["equal","uncertainty"], 'mtl_weighting_type must be in ["equal","uncertainty"], ' \
+                                                              'is {}'.format(mtl_weighting_type)
+
+        self.task_num = task_num
+        self.criterion = criterion
+        self.log_vars = nn.Parameter(torch.zeros(task_num))
+        self.mtl_weighting_type = mtl_weighting_type  # "equal", "uncertainty"
+
+    def forward(self, yhat: list[torch.Tensor], y: list[torch.Tensor], weights: list[torch.Tensor] = None):
+        # if deep imbalanced regression weighted loss pass weights, for test split all weights are 1
+        if isinstance(self.criterion, ImbalancedRegressionLoss):
+            losses = torch.Tensor(
+                [self.criterion(yhat[:, i], y[:, i], weights=weights[:, i]) for i in range(0, self.task_num)])
+        else:
+            losses = torch.Tensor([self.criterion(yhat[:, i], y[:, i]) for i in range(0, self.task_num)])
+
+        # equal weights
+        if self.mtl_weighting_type == "equal":
+            weighted_losses = losses / self.task_num
+        elif self.mtl_weighting_type == "uncertainty":
+            precisions = torch.exp(-self.log_vars)  # n_samples, n_predictands
+            weighted_loss = precisions * losses + self.log_vars  # n_samples, n_predictands
+
+        # todo log weight, log individual losses
+
+        return torch.sum(losses)
+
+
+def is_sample_based_weighted_loss(criterion: nn.Module) -> bool:
+    """checks wether criterion is sample based weighted loss for deep imbalanced regression, i.e. if forward method
+    expects weights as argument
+    """
+    if isinstance(criterion, ImbalancedRegressionLoss):
+        return True
+    if isinstance(criterion, MultiTaskLearningLoss) and isinstance(criterion.criterion, ImbalancedRegressionLoss):
+        return True
+    else:
+        return False
+
+#
+# def get_loss_module(loss, *args, **kwargs):
+#     """returns instance of Loss """
+#     losses = nn.ModuleDict([
+#         ["rmse", RMSELoss(*args, **kwargs)],
+#         ["mse", nn.MSELoss(*args, **kwargs)],
+#         ["l1", nn.L1Loss(*args, **kwargs)],
+#         ["weighted_focal_mse", WeightedFocalMSELoss(*args, **kwargs)],
+#         ["weighted_focal_l1", WeightedFocalL1Loss(*args, **kwargs)],
+#         ["mtl", MultiTaskLearningLoss(*args, **kwargs)]
+#     ])
+#
+#     return losses[loss]
+
