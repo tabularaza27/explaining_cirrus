@@ -298,7 +298,7 @@ class LogCallback(pl.callbacks.Callback):
 
 class SimpleAttention(nn.Module):
     def __init__(self, layer_size, *args, **kwargs):
-        super().__init__(layer_size)
+        super().__init__()
         self.input_size = layer_size
         self.attention_layer = nn.Linear(self.input_size, self.input_size)
         self.u_layer = nn.Linear(self.input_size, self.input_size, bias=False)
