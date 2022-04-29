@@ -366,6 +366,11 @@ class LSTMRegressor(pl.LightningModule):
         # multi task loss
         # keys in hparam dicts
 
+        assert isinstance(criterion, MultiTaskLearningLoss) if len(predictands) > 1 else True, "Use multi task " \
+                                                                                               "learning loss if " \
+                                                                                               "training multiple " \
+                                                                                               "predictands "
+
         ### init hparams ###
 
         # init general hparams
