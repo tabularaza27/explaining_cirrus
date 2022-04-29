@@ -359,7 +359,7 @@ class LSTMRegressor(pl.LightningModule):
                  learning_rate: float,
                  criterion,
                  grad_clip=False):
-        super(LSTMRegressor, self).__init__()
+        super().__init__()
 
         ### assertions ###
 
