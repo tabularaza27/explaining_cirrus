@@ -103,14 +103,12 @@ class MultiTaskLearningLoss(nn.Module):
 
         # equal weights
         if self.mtl_weighting_type == "equal":
-            weighted_losses = losses / self.task_num
+            weighted_losses = losses / self.task_num # n_samples, n_predictands
         elif self.mtl_weighting_type == "uncertainty":
             precisions = torch.exp(-self.log_vars)  # n_samples, n_predictands
-            weighted_loss = precisions * losses + self.log_vars  # n_samples, n_predictands
+            weighted_losses = precisions * losses + self.log_vars  # n_samples, n_predictands
 
-        # todo log weight, log individual losses
-
-        return torch.sum(weighted_loss)
+        return torch.sum(weighted_losses)
 
 
 def is_sample_based_weighted_loss(criterion: nn.Module) -> bool:
