@@ -440,6 +440,7 @@ class BacktrajDataModule(pl.LightningDataModule):
                                         lds_kernel=self.lds_kernel,
                                         lds_ks=self.lds_ks,
                                         lds_sigma=self.lds_sigma)
+        self.train_dataset = train_dataset
         train_loader = DataLoader(train_dataset,
                                   batch_size=self.batch_size,
                                   shuffle=True,
