@@ -110,7 +110,7 @@ class MultiTaskLearningLoss(nn.Module):
 
         # todo log weight, log individual losses
 
-        return torch.sum(losses)
+        return torch.sum(weighted_loss)
 
 
 def is_sample_based_weighted_loss(criterion: nn.Module) -> bool:
