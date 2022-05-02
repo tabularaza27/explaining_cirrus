@@ -36,7 +36,8 @@ class BacktrajDataset(Dataset):
                  lds: bool = False,
                  lds_kernel: str = "gaussian",
                  lds_ks: int = 5,
-                 lds_sigma: int = 2
+                 lds_sigma: int = 2,
+                 gpu=True
                  ):
         """
 
@@ -55,10 +56,15 @@ class BacktrajDataset(Dataset):
             lds_ks:
             lds_sigma:
         """
-        self.X_seq = torch.tensor(X_seq).float()
-        self.X_static = torch.tensor(X_static).float()
-        self.y = torch.tensor(y).float()
-        self.coords = torch.tensor(coords).float()
+        if gpu:
+            device = torch.device("cuda:0")
+        else:
+            device = None
+
+        self.X_seq = torch.tensor(X_seq, device=device).float()
+        self.X_static = torch.tensor(X_static, device=device).float()
+        self.y = torch.tensor(y, device=device).float()
+        self.coords = torch.tensor(coords, device=device).float()
         self.n_predictands = y.shape[1]
 
         if reweight == "none":
