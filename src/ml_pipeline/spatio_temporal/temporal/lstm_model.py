@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import sklearn
 import scipy
 from scipy.special import exp10
@@ -11,6 +10,7 @@ import torch.nn.functional as F
 import pytorch_lightning as pl
 
 from src.ml_pipeline.spatio_temporal.temporal.custom_loss_functions import *
+from src.ml_pipeline.spatio_temporal.temporal.temporal_ml_model_helpers import create_ditribution_figures
 
 
 class LogCallback(pl.callbacks.Callback):
@@ -20,93 +20,23 @@ class LogCallback(pl.callbacks.Callback):
         pl_module.test_results = {"y": [], "y_hat": []}
 
     def on_test_end(self, trainer, pl_module):
-        # log distributions of prediction vs. target variable
-
-        # get predictions for whole test dataset
-        y = torch.concat(trainer.model.test_results["y"]).cpu().reshape(-1).numpy()
-        y_hat = torch.concat(trainer.model.test_results["y_hat"]).cpu().reshape(-1).numpy()
-        diff = y - y_hat  # residuals
-
-        # inverse log10 transform transform back to original scale
-        y_org = exp10(y)
-        y_hat_org = exp10(y_hat)
-        diff_org = y_org - y_hat_org
+        """create distribution/residual figures for predictands"""
 
         # get comet logger
         comet_logger_idx = np.argmax([isinstance(logger, pl.loggers.comet.CometLogger) for logger in trainer.logger])
         comet_logger = trainer.logger[comet_logger_idx]
 
-        # creating figure
+        # get predictions for whole test dataset
+        y = torch.concat(trainer.model.test_results["y"]).detach().numpy()
+        y_hat = torch.concat(trainer.model.test_results["y_hat"]).detach().numpy()
 
-        # get percentile for zooming in on axis
-        percentile = 99
-        y_org_percentile = np.percentile(y_org, percentile)
-        diff_org_percentile = np.percentile(diff_org, percentile)
-        diff_org_low_percentile = np.percentile(diff_org, 100 - percentile)
+        for pred_idx, predictand in enumerate(trainer.model.predictands):
+            y_pred = y[:pred_idx]
+            y_hat_pred = y_hat[:, pred_idx]
 
-        fig, axs = plt.subplots(2, 2, figsize=(20, 20))
-
-        # predictand vs. ground truth # todo adapt to multitask
-        axs[0, 0].hist([y_hat, y], bins=100, alpha=0.5, density=True)
-        axs[0, 0].set_xlabel("log({})".format(trainer.datamodule.predictands))
-        axs[0, 0].set_ylabel("density")
-        axs[0, 0].legend(["predicted", "ground_truth"])
-        axs[0, 0].set_title("predictand distribution (log scale)")
-
-        axs[0, 1].hist([y_hat_org, y_org], bins=1000, alpha=0.5, density=True)
-        axs[0, 1].set_xlabel(trainer.datamodule.predictands)
-        axs[0, 1].set_ylabel("density")
-        axs[0, 1].legend(["predicted", "ground_truth"])
-        axs[0, 1].set_title("predictand distribution")
-        axs[0, 1].set_xlim([0, y_org_percentile])
-
-        # # predictand vs.ground truth scatter
-        # axs[1, 0].scatter(y, y_hat, s=1, alpha=0.8)
-        # axs[1, 0].plot(y, y, "r-")
-        # axs[1, 0].set_xlabel("log({})".format(trainer.datamodule.predictand))
-        # axs[1, 0]..set_xlabel("log({}) predicted".format(trainer.datamodule.predictand))
-        # axs[1, 0].legend(["predicted", "ground_truth"])
-        # axs[1, 0].set_title("scatter y vs y_hat (log scale)")
-        #
-        # axs[1, 1].scatter(y_org, y_hat_org, s=1, alpha=0.8)
-        # axs[1, 1].plot(y_org, y_org, "r-")
-        # axs[1, 1].set_xlabel(trainer.datamodule.predictand)
-        # axs[1, 1].set_ylabel("{} predicted".format(trainer.datamodule.predictand)
-        # axs[1, 1].legend(["predicted", "ground_truth"])
-        # axs[1, 1].set_title("scatter y vs y_hat")
-        # axs[1, 1].set_xlim([0, y_org_percentile])
-        # axs[1, 1].set_ylim([0, y_org_percentile])
-
-        # residuals
-        axs[1, 0].hist(diff, bins=100, density=True)
-        axs[1, 0].set_xlabel("residuals (log scale)")
-        axs[1, 0].set_ylabel("density")
-        axs[1, 0].set_title("residuals (log scale)")
-
-        axs[1, 1].hist(diff_org, bins=1000, density=True)
-        axs[1, 1].set_xlabel("residuals")
-        axs[1, 1].set_ylabel("density")
-        axs[1, 1].set_title("residuals")
-        axs[1, 1].set_xlim([diff_org_low_percentile, diff_org_percentile])
-
-        # # predicted vs. residuals scatter
-        # axs[3, 0].scatter(diff, y_hat, alpha=0.8, s=1)
-        # axs[3, 0].set_xlabel("residuals (log scale)")
-        # axs[3, 0].set_ylabel("log(iwc) predicted")
-        # axs[3, 0].set_title("prediction vs. residual (log scale)")
-        #
-        # axs[3, 1].scatter(diff_org, y_hat_org, alpha=0.8, s=1)
-        # axs[3, 1].set_xlabel("residuals")
-        # axs[3, 1].set_ylabel("iwc predicted")
-        # axs[3, 1].set_title("prediction vs. residual")
-        # axs[3, 1].set_xlim([0, diff_org_percentile])
-        # axs[3, 1].set_ylim([0, y_org_percentile])
-
-        plt.tight_layout()
-        plt.show()
-
-        comet_logger.experiment.log_figure(figure=fig, figure_name="test_set_prediction_distribution")
-
+            log_scale = predictand in trainer.datamodule.log_transform_predictands
+            fig = create_ditribution_figures(predictand, y_pred, y_hat_pred, log_scale)
+            comet_logger.experiment.log_figure(figure=fig, figure_name=f"{predictand}_test_set_prediction_distribution")
 
 # class LSTMRegressor(pl.LightningModule):
 #     '''
@@ -295,7 +225,6 @@ class LogCallback(pl.callbacks.Callback):
 #
 #         # log gradients as histograms
 
-
 class SimpleAttention(nn.Module):
     def __init__(self, layer_size, *args, **kwargs):
         super().__init__()
@@ -366,8 +295,10 @@ class LSTMRegressor(pl.LightningModule):
         # multi task loss
         # keys in hparam dicts
 
-        assert isinstance(criterion, MultiTaskLearningLoss) if len(predictands) > 1 else True, "criterion mast be of cla" \
-                                                                                               "ss MultiTaskLearningLoss when training multiple predictands, is {}".format(type(criterion))
+        assert isinstance(criterion, MultiTaskLearningLoss) if len(
+            predictands) > 1 else True, "criterion mast be of cla" \
+                                        "ss MultiTaskLearningLoss when training multiple predictands, is {}".format(
+            type(criterion))
 
         ### init hparams ###
 
@@ -507,39 +438,41 @@ class LSTMRegressor(pl.LightningModule):
 
         return loss
 
-    def additional_logging(self, y_hat, y, stage):
-        # additional logging
-        y_hat = y_hat.cpu().reshape(-1).numpy()
-        y = y.cpu().reshape(-1).numpy()
+    def additional_logging(self, y_hat: torch.Tensor, y: torch.Tensor, stage: str):
+        # create numpy arrays from torch tensors
+        y_hat = y_hat.detach().numpy()
+        y = y.detach().numpy()
 
-        # get original scale, i.e. inverse log10 transform
-        y_hat_org = exp10(y_hat)
-        y_org = exp10(y)
+        # log performance metrics for each predictand
+        for idx, predictand in enumerate(self.predictands):
+            y_hat_pred = y_hat[:, idx]
+            y_pred = y[:, idx]
+            self.log_performance_metrics_single_predictand(predictand, y_hat_pred, y_pred, stage)
 
-        # calc metric on log scale
+            if predictand in ["iwc", "icnc_5um", "icnc_100um"]:
+                # get original scale, i.e. inverse log10 transform
+                y_hat_pred_org = exp10(y_hat_pred)
+                y_pred_org = exp10(y_pred)
+
+                self.log_performance_metrics_single_predictand(f"{predictand}_org_scale", y_hat_pred_org, y_pred_org,
+                                                               stage)
+
+        # log weights for multi tasking loss
+        if isinstance(self.criterion, MultiTaskLearningLoss) and self.criterion.mtl_weighting_type == "uncertainty":
+            log_vars = self.criterion.log_vars.detach().numpy()
+            self.log_dict({f"{pred}_mtl_weight": log_var for pred, log_var in zip(self.predictands, log_vars)})
+
+        # log gradients as histograms
+
+    def log_performance_metrics_single_predictand(self, predictand: str, y_hat: np.ndarray, y: np.ndarray, stage: str):
         rmse = np.sqrt(sklearn.metrics.mean_squared_error(y_hat, y))
         spearmanr = scipy.stats.spearmanr(y_hat, y).correlation
         r2 = sklearn.metrics.r2_score(y, y_hat)
         mae = sklearn.metrics.mean_absolute_error(y_hat, y)
         me = np.mean(y_hat - y)
 
-        # calc metrics on original scale
-        org_rmse = np.sqrt(sklearn.metrics.mean_squared_error(y_hat_org, y_org))
-        org_spearmanr = scipy.stats.spearmanr(y_hat_org, y_org).correlation
-        org_r2 = sklearn.metrics.r2_score(y_org, y_hat_org)
-        org_mae = sklearn.metrics.mean_absolute_error(y_hat_org, y_org)
-        org_me = np.mean(y_hat_org - y_org)
-
         self.log_dict(
-            {f"rmse_{stage}": rmse, f"mean_error_{stage}": me, f"mae_{stage}": mae, f"spearmanr_{stage}": spearmanr,
-             f"r2_{stage}": r2},
+            {f"rmse_{predictand}_{stage}": rmse, f"mean_error_{predictand}_{stage}": me,
+             f"mae_{predictand}_{stage}": mae, f"spearmanr_{predictand}_{stage}": spearmanr,
+             f"r2_{predictand}_{stage}": r2},
             logger=True, on_epoch=True)
-
-        self.log_dict({f"org_rmse_{stage}": org_rmse, f"org_mean_error_{stage}": org_me, f"org_mae_{stage}": org_mae,
-                       f"org_spearmanr_{stage}": org_spearmanr, f"org_r2_{stage}": org_r2},
-                      logger=True, on_epoch=True)
-
-        # log gradients as histograms
-
-
-
