@@ -90,7 +90,7 @@ class MultiTaskLearningLoss(nn.Module):
 
         self.task_num = task_num
         self.criterion = criterion
-        self.log_vars = nn.Parameter(torch.zeros(task_num))
+        self.log_vars = nn.Parameter(torch.zeros(task_num), requires_grad=True)
         self.mtl_weighting_type = mtl_weighting_type  # "equal", "uncertainty"
 
     def forward(self, yhat: list[torch.Tensor], y: list[torch.Tensor], weights: list[torch.Tensor] = None):
