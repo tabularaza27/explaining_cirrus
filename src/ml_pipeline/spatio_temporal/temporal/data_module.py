@@ -45,7 +45,7 @@ class BacktrajDataset(Dataset):
             X_static: n_samples x x_static_features
             y: n_samples x n_target_variables
             coords: n_samples x 4 → (time, lev, lat, lon)
-            reweight:
+            reweight: 'none', 'inverse', 'sqrt_inv'
             multiple_predictand_reweight_type: "individual", "lead_predictand"
             reweight_lead_predictand_idx:  index of predictand that is used for calculating deep imbalanced regression weights
                                                only used if multiple_predictand_reweight_type=="lead_predicatne" and reweight!="none"
@@ -107,7 +107,7 @@ class BacktrajDataset(Dataset):
 
         Args:
             y: shape: (n_samples)
-            reweight:
+            reweight: 'none', 'inverse', 'sqrt_inv'
             bin_width:
             lds:
             lds_kernel:
@@ -200,7 +200,7 @@ class BacktrajDataModule(pl.LightningDataModule):
             train_size:
             num_workers:
             regional_feature_resolution: in degrees. if None, no regional feature is used
-            reweight:
+            reweight: 'none', 'inverse', 'sqrt_inv'
             multiple_predictand_reweight_type: "individual", "lead_predictand"
             reweight_lead_predictand: predictand that is used for calculating deep imbalanced regression weights
                                                only used if multiple_predictand_reweight_type=="lead_predicatne" and reweight!="none"
@@ -292,14 +292,20 @@ class BacktrajDataModule(pl.LightningDataModule):
         self.cont_static_features_list = []
         self.categorical_static_features_list = []
 
+        ### call prepare data routine ###
+
+        self._prepare_data()
+
         # todo save y_preds if multitask, i.e. is it working with current setup
         #
 
-    def prepare_data(self):
+    def _prepare_data(self):
         """
-        see info here: https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html?highlight=prepare_data#prepare-data
+        call this at the end of init, cause info about e.g. oh encoded features is needed for ml model initialization
 
-        todo double check when this is called, do I need if/else based on stage → I think no for now
+
+        there is also a hook prepare_data() in pytorch lightning that is called before requesting the dataloaders
+        see info here: https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html?highlight=prepare_data#prepare-data
         """
         if "grid_cell" not in self.traj_df.columns:
             self.traj_df["grid_cell"] = self.traj_df["date"].astype("str") + self.traj_df["lat"].astype("str") + \
