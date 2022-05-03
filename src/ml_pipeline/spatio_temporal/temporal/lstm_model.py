@@ -295,10 +295,11 @@ class LSTMRegressor(pl.LightningModule):
         # multi task loss
         # keys in hparam dicts
 
-        assert isinstance(criterion, MultiTaskLearningLoss) if len(
-            predictands) > 1 else True, "criterion mast be of cla" \
-                                        "ss MultiTaskLearningLoss when training multiple predictands, is {}".format(
-            type(criterion))
+        # todo uncomment
+        # assert isinstance(criterion, MultiTaskLearningLoss) if len(
+        #     predictands) > 1 else True, "criterion must be of cla" \
+        #                                 "ss MultiTaskLearningLoss when training multiple predictands, is {}".format(
+        #     type(criterion))
 
         ### init hparams ###
 
@@ -355,7 +356,6 @@ class LSTMRegressor(pl.LightningModule):
         # if multi-task learning on final fc head per predictan
         self.final_layers_module_dict = nn.ModuleDict()
         for predictand in predictands:
-            print(predictand)
             fc_layer_head = multiple_fc_layers(layer_sizes=self.final_fc_layer_sizes)
             last = nn.Linear(self.final_fc_layer_sizes[-1], 1)
             fc_layer_head = nn.Sequential(
