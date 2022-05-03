@@ -101,6 +101,8 @@ class MultiTaskLearningLoss(nn.Module):
         else:
             losses = torch.Tensor([self.criterion(yhat[:, i], y[:, i]) for i in range(0, self.task_num)])
 
+        losses = losses.type_as(self.criterion) # transfer losses to gpu, see: https://pytorch-lightning.readthedocs.io/en/latest/accelerators/accelerator_prepare.html#init-tensors-using-type-as-and-register-buffer
+
         # equal weights
         if self.mtl_weighting_type == "equal":
             weighted_losses = losses / self.task_num # n_samples, n_predictands
