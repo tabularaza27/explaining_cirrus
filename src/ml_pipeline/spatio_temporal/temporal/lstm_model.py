@@ -27,8 +27,8 @@ class LogCallback(pl.callbacks.Callback):
         comet_logger = trainer.logger[comet_logger_idx]
 
         # get predictions for whole test dataset
-        y = torch.concat(trainer.model.test_results["y"]).detach().numpy()
-        y_hat = torch.concat(trainer.model.test_results["y_hat"]).detach().numpy()
+        y = torch.concat(trainer.model.test_results["y"]).cpu().numpy()
+        y_hat = torch.concat(trainer.model.test_results["y_hat"]).cpu().numpy()
 
         for pred_idx, predictand in enumerate(trainer.model.predictands):
             y_pred = y[:pred_idx]
@@ -440,8 +440,8 @@ class LSTMRegressor(pl.LightningModule):
 
     def additional_logging(self, y_hat: torch.Tensor, y: torch.Tensor, stage: str):
         # create numpy arrays from torch tensors
-        y_hat = y_hat.detach().numpy()
-        y = y.detach().numpy()
+        y_hat = y_hat.cpu().numpy()
+        y = y.cpu().numpy()
 
         # log performance metrics for each predictand
         for idx, predictand in enumerate(self.predictands):
@@ -459,7 +459,7 @@ class LSTMRegressor(pl.LightningModule):
 
         # log weights for multi tasking loss
         if isinstance(self.criterion, MultiTaskLearningLoss) and self.criterion.mtl_weighting_type == "uncertainty":
-            log_vars = self.criterion.log_vars.detach().numpy()
+            log_vars = self.criterion.log_vars.cpu().numpy()
             self.log_dict({f"{pred}_mtl_weight": log_var for pred, log_var in zip(self.predictands, log_vars)})
 
         # log gradients as histograms
