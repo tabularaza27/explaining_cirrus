@@ -90,8 +90,10 @@ class MultiTaskLearningLoss(nn.Module):
 
         self.task_num = task_num
         self.criterion = criterion
-        self.log_vars = nn.Parameter(torch.zeros(task_num), requires_grad=True)
         self.mtl_weighting_type = mtl_weighting_type  # "equal", "uncertainty"
+
+        if self.mtl_weighting_type == "uncertainty":
+            self.log_vars = nn.Parameter(torch.zeros(task_num), requires_grad=True)
 
         print("initialized multitask loss with {} tasks and loss criterion {}".format(self.task_num,type(self.criterion)))
 
@@ -103,7 +105,7 @@ class MultiTaskLearningLoss(nn.Module):
         else:
             losses = torch.Tensor([self.criterion(yhat[:, i], y[:, i]) for i in range(0, self.task_num)])
 
-        losses = losses.type_as(self.log_vars) # transfer losses to gpu, see: https://pytorch-lightning.readthedocs.io/en/latest/accelerators/accelerator_prepare.html#init-tensors-using-type-as-and-register-buffer
+        losses = losses.type_as(yhat) # transfer losses to gpu, see: https://pytorch-lightning.readthedocs.io/en/latest/accelerators/accelerator_prepare.html#init-tensors-using-type-as-and-register-buffer
 
         # equal weights
         if self.mtl_weighting_type == "equal":
