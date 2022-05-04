@@ -465,6 +465,10 @@ class LSTMRegressor(pl.LightningModule):
         # log gradients as histograms
 
     def log_performance_metrics_single_predictand(self, predictand: str, y_hat: np.ndarray, y: np.ndarray, stage: str):
+
+        print(y)
+        print(y_hat)
+
         rmse = np.sqrt(sklearn.metrics.mean_squared_error(y_hat, y))
         spearmanr = scipy.stats.spearmanr(y_hat, y).correlation
         r2 = sklearn.metrics.r2_score(y, y_hat)
