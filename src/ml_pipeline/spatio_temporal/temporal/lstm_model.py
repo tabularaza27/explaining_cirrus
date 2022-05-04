@@ -392,7 +392,12 @@ class LSTMRegressor(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         X_seq, X_static, y, weights, coords = batch
+
+        print(X_seq,X_static,y,weights,coords)
+
         y_hat = self(X_seq, X_static)
+
+        print(y_hat)
 
         # if sample based weighted loss pass weights (i.e. imbalanced regression)
         if is_sample_based_weighted_loss(self.criterion):
