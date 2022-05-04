@@ -392,12 +392,7 @@ class LSTMRegressor(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         X_seq, X_static, y, weights, coords = batch
-
-        print(X_seq,X_static,y,weights,coords)
-
         y_hat = self(X_seq, X_static)
-
-        print(y_hat)
 
         # if sample based weighted loss pass weights (i.e. imbalanced regression)
         if is_sample_based_weighted_loss(self.criterion):
@@ -470,10 +465,6 @@ class LSTMRegressor(pl.LightningModule):
         # log gradients as histograms
 
     def log_performance_metrics_single_predictand(self, predictand: str, y_hat: np.ndarray, y: np.ndarray, stage: str):
-
-        print(y)
-        print(y_hat)
-
         rmse = np.sqrt(sklearn.metrics.mean_squared_error(y_hat, y))
         spearmanr = scipy.stats.spearmanr(y_hat, y).correlation
         r2 = sklearn.metrics.r2_score(y, y_hat)
