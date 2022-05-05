@@ -125,7 +125,7 @@ class MultiTaskLearningLoss(nn.Module):
             # else:
             #     l = self.criterion(yhat[:, i], y[:, i])
 
-            l = (yhat[i]-y[i])**2.
+            l = (yhat[:,i]-y[:,i])**2.
 
             # loss weighting
             if self.mtl_weighting_type == "equal":
