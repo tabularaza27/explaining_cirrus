@@ -10,7 +10,7 @@ from src.ml_pipeline.ml_preprocess import create_filter_string
 
 ### general ###
 
-def filter_temporal_df(df: pd.DataFrame, filters: list):
+def filter_temporal_df(df: pd.DataFrame, filters: list, drop_nan_rows: bool = True):
     """Filters trajectory dataframe on conditions at trajectory endpoints
 
     filters are applied only on timestep==0, i.e. where I have satellite observations
@@ -19,6 +19,7 @@ def filter_temporal_df(df: pd.DataFrame, filters: list):
     Args:
         df (pd.DataFrame): the complete dataframe
         filters (list): list of filter expressions. e.g. ["liquid_origin == 1", "instrument_flag == 3"]
+        drop_nan_rows (bool): if True, dropping trajectories with nan value in any variable at trajectory end point
 
     Returns:
         pd.DataFrame: filtered dataframe
@@ -26,6 +27,16 @@ def filter_temporal_df(df: pd.DataFrame, filters: list):
     filters.append("timestep==0")
     filter_str = create_filter_string(filters)
     filtered_trajectory_ids = df.query(filter_str).trajectory_id.unique()
+
+    if drop_nan_rows:
+        nan_df = df.query("timestep==0")[df.query("timestep==0").isna().any(axis=1)] # checks for nan in all columns
+        nan_counts = nan_df.isna().sum()
+        print("nan counts per variable:")
+        print(nan_counts[nan_counts > 0])
+        nan_trajectory_id = nan_df.trajectory_id.unique()
+        filtered_trajectory_ids = np.concatenate(filtered_trajectory_ids, nan_trajectory_id)
+        print("dropped trajectories with nan variables at timestep==0")
+
     filtered_df = df[df.trajectory_id.isin(filtered_trajectory_ids)].reset_index(drop=True)
 
     return filtered_df

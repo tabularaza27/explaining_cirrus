@@ -307,6 +307,7 @@ class BacktrajDataModule(pl.LightningDataModule):
         there is also a hook prepare_data() in pytorch lightning that is called before requesting the dataloaders
         see info here: https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html?highlight=prepare_data#prepare-data
         """
+        # add grid_cell column if it doesnt exist yet
         if "grid_cell" not in self.traj_df.columns:
             self.traj_df["grid_cell"] = self.traj_df["date"].astype("str") + self.traj_df["lat"].astype("str") + \
                                         self.traj_df["lon"].astype("str")
