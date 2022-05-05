@@ -99,22 +99,42 @@ class MultiTaskLearningLoss(nn.Module):
 
     def forward(self, yhat: list[torch.Tensor], y: list[torch.Tensor], weights: list[torch.Tensor] = None):
         # if deep imbalanced regression weighted loss pass weights, for test split all weights are 1
-        if isinstance(self.criterion, ImbalancedRegressionLoss):
-            losses = torch.Tensor(
-                [self.criterion(yhat[:, i], y[:, i], weights=weights[:, i]) for i in range(0, self.task_num)])
-        else:
-            losses = torch.Tensor([self.criterion(yhat[:, i], y[:, i]) for i in range(0, self.task_num)])
 
-        losses = losses.type_as(yhat) # transfer losses to gpu, see: https://pytorch-lightning.readthedocs.io/en/latest/accelerators/accelerator_prepare.html#init-tensors-using-type-as-and-register-buffer
+        # if isinstance(self.criterion, ImbalancedRegressionLoss):
+        #     losses = torch.Tensor(
+        #         [self.criterion(yhat[:, i], y[:, i], weights=weights[:, i]) for i in range(0, self.task_num)])
+        # else:
+        #     losses = torch.Tensor([self.criterion(yhat[:, i], y[:, i]) for i in range(0, self.task_num)])
+        #
+        # losses = losses.type_as(yhat) # transfer losses to gpu, see: https://pytorch-lightning.readthedocs.io/en/latest/accelerators/accelerator_prepare.html#init-tensors-using-type-as-and-register-buffer
+        #
+        # # equal weights
+        # if self.mtl_weighting_type == "equal":
+        #     weighted_losses = losses / self.task_num # n_predictands
+        # elif self.mtl_weighting_type == "uncertainty":
+        #     precisions = torch.exp(-self.log_vars)  # n_predictands
+        #     weighted_losses = precisions * losses + self.log_vars  # n_predictands
+        #
+        # torch.sum(weighted_losses)
 
-        # equal weights
-        if self.mtl_weighting_type == "equal":
-            weighted_losses = losses / self.task_num # n_samples, n_predictands
-        elif self.mtl_weighting_type == "uncertainty":
-            precisions = torch.exp(-self.log_vars)  # n_samples, n_predictands
-            weighted_losses = precisions * losses + self.log_vars  # n_samples, n_predictands
+        loss = 0
+        for i in range(self.task_num):
+            # sample based weighting unterscheidung
+            # if isinstance(self.criterion, ImbalancedRegressionLoss):
+            #     l = self.criterion(yhat[:, i], y[:, i], weights=weights[:, i])
+            # else:
+            #     l = self.criterion(yhat[:, i], y[:, i])
 
-        return torch.sum(weighted_losses)
+            l = (yhat[i]-y[i])**2.
+
+            # loss weighting
+            if self.mtl_weighting_type == "equal":
+                loss += l
+            elif self.mtl_weighting_type == "uncertainty":
+                precision = torch.exp(-self.log_vars[i])
+                loss += torch.sum(precision * l + self.log_vars[i], -1)  # n_predictands
+
+        return torch.mean(loss)
 
 
 def is_sample_based_weighted_loss(criterion: nn.Module) -> bool:
