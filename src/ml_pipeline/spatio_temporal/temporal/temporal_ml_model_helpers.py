@@ -26,15 +26,15 @@ def filter_temporal_df(df: pd.DataFrame, filters: list, drop_nan_rows: bool = Tr
     """
     filters.append("timestep==0")
     filter_str = create_filter_string(filters)
-    filtered_trajectory_ids = df.query(filter_str).trajectory_id.unique()
+    filtered_trajectory_ids = df.query(filter_str).trajectory_id.unique() # trajectories that will be kept
 
     if drop_nan_rows:
         nan_df = df.query("timestep==0")[df.query("timestep==0").isna().any(axis=1)] # checks for nan in all columns
         nan_counts = nan_df.isna().sum()
         print("nan counts per variable:")
         print(nan_counts[nan_counts > 0])
-        nan_trajectory_id = nan_df.trajectory_id.unique()
-        filtered_trajectory_ids = np.concatenate((filtered_trajectory_ids, nan_trajectory_id))
+        nan_trajectory_id = nan_df.trajectory_id.unique() # trajectories that will be kicked out
+        df = df[~df.trajectory_id.isin(nan_trajectory_id)].reset_index(drop=True)
         print("dropped trajectories with nan variables at timestep==0")
 
     filtered_df = df[df.trajectory_id.isin(filtered_trajectory_ids)].reset_index(drop=True)
