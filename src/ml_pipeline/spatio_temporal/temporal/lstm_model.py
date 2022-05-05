@@ -31,7 +31,7 @@ class LogCallback(pl.callbacks.Callback):
         y_hat = torch.concat(trainer.model.test_results["y_hat"]).cpu().numpy()
 
         for pred_idx, predictand in enumerate(trainer.model.predictands):
-            y_pred = y[:pred_idx]
+            y_pred = y[:, pred_idx]
             y_hat_pred = y_hat[:, pred_idx]
 
             log_scale = predictand in trainer.datamodule.log_transform_predictands
