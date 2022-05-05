@@ -34,7 +34,7 @@ def filter_temporal_df(df: pd.DataFrame, filters: list, drop_nan_rows: bool = Tr
         print("nan counts per variable:")
         print(nan_counts[nan_counts > 0])
         nan_trajectory_id = nan_df.trajectory_id.unique()
-        filtered_trajectory_ids = np.concatenate(filtered_trajectory_ids, nan_trajectory_id)
+        filtered_trajectory_ids = np.concatenate((filtered_trajectory_ids, nan_trajectory_id))
         print("dropped trajectories with nan variables at timestep==0")
 
     filtered_df = df[df.trajectory_id.isin(filtered_trajectory_ids)].reset_index(drop=True)
