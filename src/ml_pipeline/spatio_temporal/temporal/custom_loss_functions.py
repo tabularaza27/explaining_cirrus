@@ -117,6 +117,25 @@ class MultiTaskLearningLoss(nn.Module):
         #
         # torch.sum(weighted_losses)
 
+        # from https://github.com/yaringal/multi-task-learning-example/blob/master/multi-task-learning-example-pytorch.ipynb
+        # → don't fully understand though
+        # loss = 0
+        # for i in range(self.task_num):
+        #     # sample based weighting unterscheidung
+        #     # if isinstance(self.criterion, ImbalancedRegressionLoss):
+        #     #     l = self.criterion(yhat[:, i], y[:, i], weights=weights[:, i])
+        #     # else:
+        #     #     l = self.criterion(yhat[:, i], y[:, i])
+        #
+        #     l = (yhat[:,i]-y[:,i])**2.
+        #
+        #     # loss weighting
+        #     if self.mtl_weighting_type == "equal":
+        #         loss += l
+        #     elif self.mtl_weighting_type == "uncertainty":
+        #         precision = torch.exp(-self.log_vars[i])
+        #         loss += torch.sum(precision * l + self.log_vars[i], -1)  # n_predictands
+
         loss = 0
         for i in range(self.task_num):
             # sample based weighting unterscheidung
@@ -125,16 +144,12 @@ class MultiTaskLearningLoss(nn.Module):
             # else:
             #     l = self.criterion(yhat[:, i], y[:, i])
 
-            l = (yhat[:,i]-y[:,i])**2.
+            l = self.criterion(yhat[:, i], y[:, i])
+            precision = torch.exp(-self.log_vars[i])
+            weighted_loss = precision * l + self.log_vars[i]
+            loss += weighted_loss
 
-            # loss weighting
-            if self.mtl_weighting_type == "equal":
-                loss += l
-            elif self.mtl_weighting_type == "uncertainty":
-                precision = torch.exp(-self.log_vars[i])
-                loss += torch.sum(precision * l + self.log_vars[i], -1)  # n_predictands
-
-        return torch.mean(loss)
+        return loss
 
 
 def is_sample_based_weighted_loss(criterion: nn.Module) -> bool:
