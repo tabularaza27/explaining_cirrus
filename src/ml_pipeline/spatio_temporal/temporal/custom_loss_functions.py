@@ -136,20 +136,19 @@ class MultiTaskLearningLoss(nn.Module):
         #         precision = torch.exp(-self.log_vars[i])
         #         loss += torch.sum(precision * l + self.log_vars[i], -1)  # n_predictands
 
-        loss = 0
+        total_weighted_loss = 0
         for i in range(self.task_num):
             # sample based weighting unterscheidung
-            # if isinstance(self.criterion, ImbalancedRegressionLoss):
-            #     l = self.criterion(yhat[:, i], y[:, i], weights=weights[:, i])
-            # else:
-            #     l = self.criterion(yhat[:, i], y[:, i])
+            if isinstance(self.criterion, ImbalancedRegressionLoss):
+                predictand_loss = self.criterion(yhat[:, i], y[:, i], weights=weights[:, i])
+            else:
+                predictand_loss = self.criterion(yhat[:, i], y[:, i])
 
-            l = self.criterion(yhat[:, i], y[:, i])
             precision = torch.exp(-self.log_vars[i])
-            weighted_loss = precision * l + self.log_vars[i]
-            loss += weighted_loss
+            weighted_loss = precision * predictand_loss + self.log_vars[i]
+            total_weighted_loss += weighted_loss
 
-        return loss
+        return total_weighted_loss
 
 
 def is_sample_based_weighted_loss(criterion: nn.Module) -> bool:
