@@ -287,7 +287,8 @@ class LSTMRegressor(pl.LightningModule):
                  batch_size: int,
                  learning_rate: float,
                  criterion,
-                 grad_clip=False):
+                 grad_clip=False,
+                 log_transform_predictands: list = ["iwc", "icnc_5um", "icnc_100um"]):
         super().__init__()
 
         ### assertions ###
@@ -302,6 +303,9 @@ class LSTMRegressor(pl.LightningModule):
         #     type(criterion))
 
         ### init hparams ###
+
+        # only for logging purposes
+        self.log_transform_predictands = log_transform_predictands
 
         # init general hparams
         self.predictands = predictands
@@ -449,7 +453,7 @@ class LSTMRegressor(pl.LightningModule):
             y_pred = y[:, idx]
             self.log_performance_metrics_single_predictand(predictand, y_hat_pred, y_pred, stage)
 
-            if predictand in ["iwc", "icnc_5um", "icnc_100um"]:
+            if predictand in self.log_transform_predictands:
                 # get original scale, i.e. inverse log10 transform
                 y_hat_pred_org = exp10(y_hat_pred)
                 y_pred_org = exp10(y_pred)
