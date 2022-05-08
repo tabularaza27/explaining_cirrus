@@ -430,6 +430,7 @@ class LSTMRegressor(pl.LightningModule):
 
         self.test_results["y_hat"].append(y_hat)
         self.test_results["y"].append(y)
+        self.test_results["coords"].append(coords)
 
         # if sample based weighted loss pass weights (i.e. imbalanced regression)
         if is_sample_based_weighted_loss(self.criterion):
