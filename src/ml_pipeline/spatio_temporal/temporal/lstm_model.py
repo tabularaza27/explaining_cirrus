@@ -334,7 +334,7 @@ class LSTMRegressor(pl.LightningModule):
         self.final_fc_layer_sizes.insert(0, fc_input_layer_size)
 
         # other
-        self.test_results = {"y_hat": [], "y": []}  # todo adapt to Multi Task Learning
+        self.test_results = {"y_hat": [], "y": [], "coords": []}  # todo adapt to Multi Task Learning
 
         ### define model ###
 
