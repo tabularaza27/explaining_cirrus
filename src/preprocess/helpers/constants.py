@@ -4,7 +4,7 @@ import socket
 hostname = socket.gethostname()
 if hostname.startswith("eu"):
     host = "euler"
-elif hostname.startswith("daint"):
+elif hostname.startswith("daint") or hostname.startswith("nid"):
     host = "daint"
 else:
     host = "iac"
