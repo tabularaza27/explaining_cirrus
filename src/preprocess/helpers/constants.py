@@ -4,6 +4,8 @@ import socket
 hostname = socket.gethostname()
 if hostname.startswith("eu"):
     host = "euler"
+elif hostname.startswith("daint"):
+    host = "daint"
 else:
     host = "iac"
 
@@ -17,6 +19,8 @@ g = 9.80665  # Standard gravity
 # base directory under which all config ids are saved
 if host == "euler":
     BASE_DIRECTORY = "/cluster/scratch/kjeggle/CIRRUS_PIPELINE"
+elif host == "daint":
+    BASE_DIRECTORY = "/project/s1144/kjeggle/CIRRUS_PIPELINE"
 else:
     BASE_DIRECTORY = "/net/n2o/wolke_scratch/kjeggle/CIRRUS_PIPELINE"
 CONFIGS = "/home/kjeggle/cirrus/src/config_files/configs.json"  # location of configs.json
