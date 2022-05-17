@@ -17,7 +17,7 @@ class LogCallback(pl.callbacks.Callback):
 
     def on_test_start(self, trainer, pl_module):
         # empty test results
-        pl_module.test_results = {"y": [], "y_hat": []}
+        pl_module.test_results = {"y": [], "y_hat": [],"coords": []}
 
     def on_test_end(self, trainer, pl_module):
         """create distribution/residual figures for predictands"""
