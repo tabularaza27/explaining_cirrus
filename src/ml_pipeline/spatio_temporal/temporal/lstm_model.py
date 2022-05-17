@@ -253,16 +253,38 @@ def lstm_block(input_size, hidden_size, num_layers, dropout, batch_first=True):
 
 
 def fc_layer(input_size, output_size, activation="relu", dropout=None, batchnorm=False):
+    """creates fc layer with optional batchnorm and dropout
+
+    ordering: fc --> activation --> bn --> dropout
+    because of: https://www.reddit.com/r/MachineLearning/comments/67gonq/d_batch_normalization_before_or_after_relu/
+    and: https://stackoverflow.com/questions/39691902/ordering-of-batch-normalization-and-dropout
+
+    Args:
+        input_size:
+        output_size:
+        activation:
+        dropout:
+        batchnorm:
+
+    Returns:
+
+    """
+
     # todo add dropout, batch norm
     activations = nn.ModuleDict([
         ['lrelu', nn.LeakyReLU()],
         ['relu', nn.ReLU()]
     ])
 
-    return nn.Sequential(
-        nn.Linear(input_size, output_size),
-        activations[activation]
-    )
+    modules = [nn.Linear(input_size, output_size), activations[activation]]
+
+    if batchnorm:
+        modules.append(nn.BatchNorm1d(output_size))
+
+    if dropout:
+        modules.append(nn.Dropout(dropout))
+
+    return nn.Sequential(*modules)
 
 
 def multiple_fc_layers(layer_sizes, activation="relu", dropout=None, batchnorm=None):
@@ -326,15 +348,19 @@ class LSTMRegressor(pl.LightningModule):
         self.static_branch_layer_sizes = static_branch_hparams["layer_sizes"]
         self.static_branch_layer_sizes.insert(0,
                                               self.n_static_features)  # input size of first layer is number of static features
+        self.static_branch_dropout = static_branch_hparams["dropout"]
+        self.static_branch_batchnorm = static_branch_hparams["batchnorm"]
 
         # init hparams for final fully connected layers
         self.final_fc_layer_sizes = final_fc_layers_hparams["layer_sizes"]
         fc_input_layer_size = self.lstm_hidden_size + self.static_branch_layer_sizes[
             -1] if self.n_static_features > 0 else self.lstm_hidden_size  # size of input layer is hidden_size of lstm + size of last layer of static branch (if exists)
         self.final_fc_layer_sizes.insert(0, fc_input_layer_size)
+        self.final_fc_layer_dropout = final_fc_layers_hparams["dropout"]
+        self.final_fc_layer_batchnorm = final_fc_layers_hparams["batchnorm"]
 
         # other
-        self.test_results = {"y_hat": [], "y": [], "coords": []}  # todo adapt to Multi Task Learning
+        self.test_results = {"y_hat": [], "y": [], "coords": []}
 
         ### define model ###
 
@@ -353,14 +379,14 @@ class LSTMRegressor(pl.LightningModule):
             self.attention_layer = None
 
         # static branch
-        self.static_branch = multiple_fc_layers(layer_sizes=self.static_branch_layer_sizes)
+        self.static_branch = multiple_fc_layers(layer_sizes=self.static_branch_layer_sizes, dropout=self.static_branch_dropout, batchnorm=self.static_branch_batchnorm)
         # todo potentially add other params dropout, batchnorm etc.
 
         # final fc branch: connecting temporal and static branch
         # if multi-task learning on final fc head per predictan
         self.final_layers_module_dict = nn.ModuleDict()
         for predictand in predictands:
-            fc_layer_head = multiple_fc_layers(layer_sizes=self.final_fc_layer_sizes)
+            fc_layer_head = multiple_fc_layers(layer_sizes=self.final_fc_layer_sizes, dropout=self.final_fc_layer_dropout, batchnorm=self.final_fc_layer_batchnorm)
             last = nn.Linear(self.final_fc_layer_sizes[-1], 1)
             fc_layer_head = nn.Sequential(
                 fc_layer_head,
