@@ -433,6 +433,7 @@ class LSTMRegressor(pl.LightningModule):
         # logs metrics for each training_step,
         # and the average across the epoch, to the progress bar and logger
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.additional_logging(y_hat, y, stage="val")
         #         self.additional_logging(y_hat, y, stage="train")
         return loss
 
