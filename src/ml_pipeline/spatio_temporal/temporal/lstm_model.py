@@ -433,8 +433,9 @@ class LSTMRegressor(pl.LightningModule):
         # logs metrics for each training_step,
         # and the average across the epoch, to the progress bar and logger
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        # self.additional_logging(y_hat, y, stage="val")
-        #         self.additional_logging(y_hat, y, stage="train")
+        # self.additional_logging(y_hat, y, stage="train")
+        # → above line raises: y_hat = y_hat.cpu().numpy()
+        # RuntimeError: Can't call numpy() on Tensor that requires grad. Use tensor.detach().numpy() instead.
         return loss
 
     def validation_step(self, batch, batch_idx):
