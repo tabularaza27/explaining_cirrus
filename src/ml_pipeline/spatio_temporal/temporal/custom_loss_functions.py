@@ -85,7 +85,7 @@ class MultiTaskLearningLoss(nn.Module):
         """
         super().__init__()
 
-        assert mtl_weighting_type in ["equal","uncertainty"], 'mtl_weighting_type must be in ["equal","uncertainty"], ' \
+        assert mtl_weighting_type in ["equal", "uncertainty", "sum"], 'mtl_weighting_type must be in ["equal","uncertainty"], ' \
                                                               'is {}'.format(mtl_weighting_type)
 
         self.task_num = task_num
@@ -144,8 +144,14 @@ class MultiTaskLearningLoss(nn.Module):
             else:
                 predictand_loss = self.criterion(yhat[:, i], y[:, i])
 
-            precision = torch.exp(-self.log_vars[i])
-            weighted_loss = precision * predictand_loss + self.log_vars[i]
+            if self.mtl_weighting_type == "uncertainty":
+                precision = torch.exp(-self.log_vars[i])
+                weighted_loss = precision * predictand_loss + self.log_vars[i]
+            elif self.mtl_weighting_type == "equal":
+                weighted_loss = predictand_loss / self.task_num
+            elif self.mtl_weighting_type == "sum":
+                weighted_loss = predictand_loss
+
             total_weighted_loss += weighted_loss
 
         return total_weighted_loss
