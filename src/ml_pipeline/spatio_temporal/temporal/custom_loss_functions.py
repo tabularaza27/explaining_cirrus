@@ -95,7 +95,7 @@ class MultiTaskLearningLoss(nn.Module):
         if self.mtl_weighting_type == "uncertainty":
             self.log_vars = nn.Parameter(torch.zeros(task_num), requires_grad=True)
 
-        print("initialized multitask loss with {} tasks and loss criterion {}".format(self.task_num,type(self.criterion)))
+        print("initialized multitask loss with {} tasks, {} weighting and loss criterion {}".format(self.task_num, self.mtl_weighting_type, type(self.criterion)))
 
     def forward(self, yhat: list[torch.Tensor], y: list[torch.Tensor], weights: list[torch.Tensor] = None):
         # if deep imbalanced regression weighted loss pass weights, for test split all weights are 1
