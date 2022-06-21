@@ -23,8 +23,13 @@ class LogCallback(pl.callbacks.Callback):
         """create distribution/residual figures for predictands"""
 
         # get comet logger
-        comet_logger_idx = np.argmax([isinstance(logger, pl.loggers.comet.CometLogger) for logger in trainer.logger])
-        comet_logger = trainer.logger[comet_logger_idx]
+        if isinstance(trainer.logger, pl.loggers.comet.CometLogger):
+            # only one logger exists
+            comet_logger = trainer.logger
+        else:
+            # multiple logger exist
+            comet_logger_idx = np.argmax([isinstance(logger, pl.loggers.comet.CometLogger) for logger in trainer.logger])
+            comet_logger = trainer.logger[comet_logger_idx]
 
         # get predictions for whole test dataset
         y = torch.concat(trainer.model.test_results["y"]).cpu().numpy()
