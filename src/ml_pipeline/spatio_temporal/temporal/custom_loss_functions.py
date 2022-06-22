@@ -14,7 +14,7 @@ class RMSELoss(nn.Module):
         return torch.sqrt(self.mse(yhat, y))
 
 
-def weighted_focal_l1_loss(inputs, targets, weights=None, activate='sigmoid', beta=.2, gamma=1):
+def weighted_focal_l1_loss(inputs, targets, weights=None, activate='sigmoid', beta=5, gamma=1):
     loss = F.l1_loss(inputs, targets, reduction='none')
     loss *= (torch.tanh(beta * torch.abs(inputs - targets))) ** gamma if activate == 'tanh' else \
         (2 * torch.sigmoid(beta * torch.abs(inputs - targets)) - 1) ** gamma
@@ -24,10 +24,26 @@ def weighted_focal_l1_loss(inputs, targets, weights=None, activate='sigmoid', be
     return loss
 
 
-def weighted_focal_mse_loss(inputs, targets, weights=None, activate='sigmoid', beta=.2, gamma=1):
+def weighted_focal_mse_loss(inputs, targets, weights=None, activate='sigmoid', beta=5, gamma=1):
     loss = (inputs - targets) ** 2
     loss *= (torch.tanh(beta * torch.abs(inputs - targets))) ** gamma if activate == 'tanh' else \
         (2 * torch.sigmoid(beta * torch.abs(inputs - targets)) - 1) ** gamma
+    if weights is not None:
+        loss *= weights.expand_as(loss)
+    loss = torch.mean(loss)
+    return loss
+
+
+def weighted_mse_loss(inputs, targets, weights=None):
+    loss = F.mse_loss(inputs, targets, reduce=False)
+    if weights is not None:
+        loss *= weights.expand_as(loss)
+    loss = torch.mean(loss)
+    return loss
+
+
+def weighted_l1_loss(inputs, targets, weights=None):
+    loss = F.l1_loss(inputs, targets, reduce=False)
     if weights is not None:
         loss *= weights.expand_as(loss)
     loss = torch.mean(loss)
@@ -45,21 +61,51 @@ class ImbalancedRegressionLoss(nn.Module):
 
 
 class WeightedFocalMSELoss(ImbalancedRegressionLoss):
-    # todo add hparam args
-    def __init__(self):
+    def __init__(self, activate: str = 'sigmoid', beta: float = 5, gamma: int = 1):
         super().__init__()
+        self.activate=activate
+        self.beta=beta
+        self.gamma=gamma
 
     def forward(self, yhat, y, weights):
-        return weighted_focal_mse_loss(yhat, y, weights)
+        return weighted_focal_mse_loss(inputs=yhat,
+                                       targets=y,
+                                       weights=weights,
+                                       activate=self.activate,
+                                       beta=self.beta,
+                                       gamma=self.gamma)
 
 
 class WeightedFocalL1Loss(ImbalancedRegressionLoss):
+    def __init__(self, activate: str = 'sigmoid', beta: float = 5, gamma: int = 1):
+        super().__init__()
+        self.activate = activate
+        self.beta = beta
+        self.gamma = gamma
+
+    def forward(self, yhat, y, weights):
+        return weighted_focal_l1_loss(inputs=yhat,
+                                      targets=y,
+                                      weights=weights,
+                                      activate=self.activate,
+                                      beta=self.beta,
+                                      gamma=self.gamma)
+
+
+class WeightedL1Loss(ImbalancedRegressionLoss):
     def __init__(self):
-        # todo add hparam args
         super().__init__()
 
     def forward(self, yhat, y, weights):
-        return weighted_focal_l1_loss(yhat, y, weights)
+        return weighted_l1_loss(yhat, y, weights)
+
+
+class WeightedMSELoss(ImbalancedRegressionLoss):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, yhat, y, weights):
+        return weighted_mse_loss(yhat, y, weights)
 
 
 class MultiTaskLearningLoss(nn.Module):
@@ -76,6 +122,7 @@ class MultiTaskLearningLoss(nn.Module):
 
     Can be combined with deep imbalanced regression, just pass a sample based criterion, e.g. weighted_focal_l1
     """
+
     def __init__(self, task_num: int, criterion: nn.Module, mtl_weighting_type: str = "equal"):
         """
         Args:
@@ -85,8 +132,9 @@ class MultiTaskLearningLoss(nn.Module):
         """
         super().__init__()
 
-        assert mtl_weighting_type in ["equal", "uncertainty", "sum"], 'mtl_weighting_type must be in ["equal","uncertainty"], ' \
-                                                              'is {}'.format(mtl_weighting_type)
+        assert mtl_weighting_type in ["equal", "uncertainty",
+                                      "sum"], 'mtl_weighting_type must be in ["equal","uncertainty"], ' \
+                                              'is {}'.format(mtl_weighting_type)
 
         self.task_num = task_num
         self.criterion = criterion
@@ -95,7 +143,10 @@ class MultiTaskLearningLoss(nn.Module):
         if self.mtl_weighting_type == "uncertainty":
             self.log_vars = nn.Parameter(torch.zeros(task_num), requires_grad=True)
 
-        print("initialized multitask loss with {} tasks, {} weighting and loss criterion {}".format(self.task_num, self.mtl_weighting_type, type(self.criterion)))
+        print("initialized multitask loss with {} tasks, {} weighting and loss criterion {}".format(self.task_num,
+                                                                                                    self.mtl_weighting_type,
+                                                                                                    type(
+                                                                                                        self.criterion)))
 
     def forward(self, yhat: list[torch.Tensor], y: list[torch.Tensor], weights: list[torch.Tensor] = None):
         # if deep imbalanced regression weighted loss pass weights, for test split all weights are 1
@@ -140,7 +191,12 @@ class MultiTaskLearningLoss(nn.Module):
         for i in range(self.task_num):
             # sample based weighting unterscheidung
             if isinstance(self.criterion, ImbalancedRegressionLoss):
-                predictand_loss = self.criterion(yhat[:, i], y[:, i], weights=weights[:, i])
+                if weights is None:
+                    # only focal loss
+                    predictand_loss = self.criterion(yhat[:, i], y[:, i], weights=None)
+                else:
+                    # weighted loss + evtl. focal
+                    predictand_loss = self.criterion(yhat[:, i], y[:, i], weights=weights[:, i])
             else:
                 predictand_loss = self.criterion(yhat[:, i], y[:, i])
 
@@ -181,4 +237,3 @@ def is_sample_based_weighted_loss(criterion: nn.Module) -> bool:
 #     ])
 #
 #     return losses[loss]
-
