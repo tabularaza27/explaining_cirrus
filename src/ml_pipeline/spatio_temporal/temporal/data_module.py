@@ -349,7 +349,7 @@ class BacktrajDataModule(pl.LightningDataModule):
                 # add oh encoded features to df
                 self.traj_df[col] = oh_df[col]
 
-            # remove original feature fro feature lists
+            # remove original feature from feature lists
             if feature in self.sequential_features:
                 self.sequential_features.remove(feature)
             else:
@@ -411,7 +411,8 @@ class BacktrajDataModule(pl.LightningDataModule):
 
         # init scalers for sequential and static features
         self.sequential_scaler.fit(self.df_train[self.cont_sequential_features_list])
-        self.static_scaler.fit(self.df_train.query("timestep==0")[self.cont_static_features_list])
+        if len(self.cont_static_features_list) > 0:
+            self.static_scaler.fit(self.df_train.query("timestep==0")[self.cont_static_features_list])
 
         # create scaled np.ndarrays
         self.X_train_sequential = self.scale_and_create_x(self.df_train, "sequential")
@@ -499,11 +500,15 @@ class BacktrajDataModule(pl.LightningDataModule):
             X = np.flip(X, axis=1).copy()  # flip time so that last index is timestep 0, i.e end of trajectory
 
         elif var_type == "static":
-            X_cont = self.static_scaler.transform(
-                df.query("timestep==0")[self.cont_static_features_list])  # n_samples, # n_features
-            X_cat = df.query("timestep==0")[self.categorical_static_features_list].values
+            if len(self.cont_static_features_list) > 0:
+                X_cont = self.static_scaler.transform(
+                    df.query("timestep==0")[self.cont_static_features_list])  # n_samples, # n_features
+                X_cat = df.query("timestep==0")[self.categorical_static_features_list].values
 
-            X = np.concatenate((X_cont, X_cat), axis=1)
+                X = np.concatenate((X_cont, X_cat), axis=1)
+            else:
+                # not cont static features
+                X = df.query("timestep==0")[self.categorical_static_features_list].values
 
         else:
             raise ValueError("var_type needs to be sequential or static, is: {}".format(var_type))
