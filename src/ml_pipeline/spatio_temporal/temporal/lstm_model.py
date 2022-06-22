@@ -505,7 +505,7 @@ class LSTMRegressor(pl.LightningModule):
     def log_performance_metrics_single_predictand(self, predictand: str, y_hat: np.ndarray, y: np.ndarray, stage: str):
         rmse = np.sqrt(sklearn.metrics.mean_squared_error(y_hat, y))
         spearmanr = scipy.stats.spearmanr(y_hat, y).correlation
-        pearsonr = scipy.stats.pearsonr(y_hat, y).r
+        pearsonr, pearsonp = scipy.stats.pearsonr(y_hat, y)
         r2 = sklearn.metrics.r2_score(y, y_hat)
         mae = sklearn.metrics.mean_absolute_error(y_hat, y)
         me = np.mean(y_hat - y)
@@ -513,5 +513,6 @@ class LSTMRegressor(pl.LightningModule):
         self.log_dict(
             {f"rmse_{predictand}_{stage}": rmse, f"mean_error_{predictand}_{stage}": me,
              f"mae_{predictand}_{stage}": mae, f"spearmanr_{predictand}_{stage}": spearmanr,
-             f"pearsonr_{predictand}_{stage}": pearsonr, f"r2_{predictand}_{stage}": r2},
+             f"pearsonr_{predictand}_{stage}": pearsonr, f"pearsonp_{predictand}_{stage}": pearsonp,
+             f"r2_{predictand}_{stage}": r2},
             logger=True, on_epoch=True)
