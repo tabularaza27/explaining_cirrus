@@ -1,3 +1,5 @@
+from typing import Any, Callable, cast, Dict, Iterable, List, Optional, Tuple, Union
+
 import numpy as np
 import sklearn
 import scipy
@@ -312,8 +314,9 @@ class LSTMRegressor(pl.LightningModule):
                  static_branch_hparams: dict,
                  final_fc_layers_hparams: dict,
                  batch_size: int,
-                 learning_rate: float,
                  criterion,
+                 learning_rate: float,
+                 lr_scheduler: bool = False,
                  grad_clip=False,
                  log_transform_predictands: list = ["iwc", "icnc_5um", "icnc_100um"]):
         super().__init__()
@@ -341,6 +344,7 @@ class LSTMRegressor(pl.LightningModule):
         self.n_static_features = n_static_features
         self.criterion = criterion
         self.learning_rate = learning_rate
+        self.lr_scheduler = lr_scheduler
         self.grad_clip = grad_clip
 
         # init hparams for lstm branch
@@ -423,7 +427,23 @@ class LSTMRegressor(pl.LightningModule):
         return preds
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=self.learning_rate)
+
+        optim = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
+
+        if self.lr_scheduler:
+            # select lr_scheduler
+            if self.lr_scheduler == "cosine_annealing":
+                lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer=optim, T_max=20)
+            elif self.lr_scheduler == "cosine_annealing_wr":
+                lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer=optim, T_0=3)
+            elif self.lr_scheduler == "exponential":
+                lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=optim, gamma=0.99)
+            else:
+                raise ValueError("lr_scheduler {} not implemented".format(self.lr_scheduler))
+            return optim, lr_scheduler
+        else:
+            # no scheduler
+            return optim
 
     def training_step(self, batch, batch_idx):
         X_seq, X_static, y, weights, coords = batch
@@ -501,6 +521,9 @@ class LSTMRegressor(pl.LightningModule):
             self.log_dict({f"{pred}_mtl_weight": log_var for pred, log_var in zip(self.predictands, log_vars)})
 
         # log gradients as histograms
+
+        # log lr
+        self.log("lr", self.learning_rate)
 
     def log_performance_metrics_single_predictand(self, predictand: str, y_hat: np.ndarray, y: np.ndarray, stage: str):
         rmse = np.sqrt(sklearn.metrics.mean_squared_error(y_hat, y))
