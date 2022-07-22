@@ -440,7 +440,7 @@ class LSTMRegressor(pl.LightningModule):
                 lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=optim, gamma=0.99)
             else:
                 raise ValueError("lr_scheduler {} not implemented".format(self.lr_scheduler))
-            return optim, lr_scheduler
+            return {"optimizer": optim, "lr_scheduler": lr_scheduler}
         else:
             # no scheduler
             return optim
