@@ -230,8 +230,8 @@ def parallel_caltra(n_workers, year, config_id):
     pool = mp.Pool(n_workers)
 
     # check caltras that have already been calculted
-    out_file_dir=get_data_product_dir(config_id,BACKTRAJ_OUTFILES)
-    already_calculated =glob.glob(os.path.join(out_file_dir,  "**/**/**/tra_traced*"), recursive=False)
+    out_file_dir = get_data_product_dir(config_id,BACKTRAJ_OUTFILES)
+    already_calculated = glob.glob(os.path.join(out_file_dir,  "{}/**/**/tra_traced*".format(year)), recursive=False)
     calculated_caltras = [re.findall("[0-9]{8}_[0-9]{2}", file)[0] for file in already_calculated] # list of date_hour of already calculated caltras
 
     # get start files
