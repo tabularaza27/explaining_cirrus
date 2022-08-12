@@ -233,6 +233,32 @@ class LogCallback(pl.callbacks.Callback):
 #         # log gradients as histograms
 
 class SimpleAttention(nn.Module):
+    """
+    Following the implementation in:
+
+    1. Yang et al. [https://www.cs.cmu.edu/~diyiy/docs/naacl16.pdf]
+    "Hierarchical Attention Networks for Document Classification"
+    accepted in NAACL 2016
+    2. Winata, et al. https://arxiv.org/abs/1805.12307
+    "Attention-Based LSTM for Psychological Stress Detection from Spoken Language Using Distant Supervision."
+    accepted in ICASSP 2018
+
+    implementation in TF:
+    https://github.com/gentaiscool/lstm-attention/blob/58adc7e345b5b3a79638483049704802a66aa1f4/layers.py#L50
+
+    follows these equations:
+
+    (1) u_t = tanh(W lstm_out + b)
+    (2) \alpha_t = \frac{exp(u^T u)}{\sum_t(exp(u_t^T u))}, this is the attention weight
+    (3) z_t = \sum(\alpha_t * lstm_out) # sum along time dimension
+
+    # Input shape
+        3D tensor with shape: `(samples, steps, features)`.
+    # Output shape
+        z: 2D tensor with shape: `(samples, features)`.
+        alpha: 3D tensor with shape: `(samples, steps, features)`
+
+    """
     def __init__(self, layer_size, *args, **kwargs):
         super().__init__()
         self.input_size = layer_size
@@ -405,8 +431,8 @@ class LSTMRegressor(pl.LightningModule):
 
     def forward(self, x_seq, x_static):
         ## sequential branch
-        # lstm_out = (batch_size, seq_len, hidden_size)
-        lstm_out, (hn, cn) = self.lstm(x_seq)
+        # lstm_out = (batch_size, seq_len, hidden_size) # lstm_out is h_t
+        lstm_out, (hn, cn) = self.lstm(x_seq) # lstm_out[:,-1,:] == hn
         if self.attention_layer:
             z, alpha = self.attention_layer(lstm_out)
             seq_out = F.relu(z)
