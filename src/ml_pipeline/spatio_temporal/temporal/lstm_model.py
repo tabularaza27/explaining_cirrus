@@ -262,14 +262,31 @@ class SimpleAttention(nn.Module):
     def __init__(self, layer_size, *args, **kwargs):
         super().__init__()
         self.input_size = layer_size
-        self.attention_layer = nn.Linear(self.input_size, self.input_size)
-        self.u_layer = nn.Linear(self.input_size, self.input_size, bias=False)
+
+        # context matrix: one weight per timestep per hidden size neuron
+        # self.attention_layer = nn.Linear(self.input_size, self.input_size)
+        # self.u_layer = nn.Linear(self.input_size, self.input_size, bias=False)
+
+        # context vector: one weight per timestep
+        self.attention_layer = nn.Linear(self.input_size, self.input_size)  # attention layer
+        self.u = nn.Parameter(torch.rand(self.input_size), requires_grad=True)  # context vector
 
     def forward(self, x):
-        u = torch.tanh(self.attention_layer(x))
-        alpha = self.u_layer(u)
+        # u = torch.tanh(self.attention_layer(x))
+        # alpha = self.u_layer(u)
+        # alpha = F.softmax(alpha, dim=1)
+        # z = torch.sum(x * alpha, dim=1)
+
+        # (1)
+        u_it = torch.tanh(self.attention_layer(x))
+
+        # (2)
+        alpha = torch.matmul(u_it, self.u)
         alpha = F.softmax(alpha, dim=1)
-        z = torch.sum(x * alpha, dim=1)
+        alpha = alpha.unsqueeze(-1)  # add dim
+
+        # (3)
+        z = torch.sum(alpha * x, dim=1)  # sum along time axis
 
         return z, alpha
 
