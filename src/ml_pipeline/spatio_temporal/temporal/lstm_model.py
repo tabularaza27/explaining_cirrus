@@ -425,10 +425,10 @@ class LSTMRegressor(pl.LightningModule):
 
         # attention layer (part of lstm branch)
         if self.attention == True:
-            self.attention_layer = SimpleAttention(
+            self.attention_module = SimpleAttention(
                 layer_size=self.lstm_hidden_size)  # attention layer has same size as lstm hidden state
         else:
-            self.attention_layer = None
+            self.attention_module = None
 
         # static branch
         self.static_branch = multiple_fc_layers(layer_sizes=self.static_branch_layer_sizes, dropout=self.static_branch_dropout, batchnorm=self.static_branch_batchnorm)
@@ -450,8 +450,8 @@ class LSTMRegressor(pl.LightningModule):
         ## sequential branch
         # lstm_out = (batch_size, seq_len, hidden_size) # lstm_out is h_t
         lstm_out, (hn, cn) = self.lstm(x_seq) # lstm_out[:,-1,:] == hn
-        if self.attention_layer:
-            z, alpha = self.attention_layer(lstm_out)
+        if self.attention_module:
+            z, alpha = self.attention_module(lstm_out)
             seq_out = F.relu(z)
         else:
             seq_out = F.relu(lstm_out[:, -1])
