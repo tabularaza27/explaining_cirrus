@@ -398,7 +398,7 @@ class BacktrajDataModule(pl.LightningDataModule):
         self.coords_val = self.df_val.query("timestep==0")[self.coords].values
         self.coords_test = self.df_test.query("timestep==0")[self.coords].values
 
-        # sequential features
+        # sequential features todo move this to _prepare data after onehot encoding
         self.cont_sequential_features_list = [var for var in self.sequential_features if
                                               not any(map(var.startswith, CAT_VARS))]  # select only cont. features
         self.categorical_sequential_feature_list = [var for var in self.sequential_features if
