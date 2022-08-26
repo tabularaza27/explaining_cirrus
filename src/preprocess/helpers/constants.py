@@ -27,6 +27,10 @@ CONFIGS = "/home/kjeggle/cirrus/src/config_files/configs.json"  # location of co
 CONFIG_FILE_DIR = "CONFIG_FILES"  # dir where config files like template.nc for a specific config id are saved
 TEMPLATE_PATH = "CONFIG_FILES/template.nc"
 
+## ML Data ##
+
+ML_DATA_DIR = "ML_DATA"
+
 ## Reanalysis ##
 
 # Merra

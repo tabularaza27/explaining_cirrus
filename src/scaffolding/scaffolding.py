@@ -113,7 +113,8 @@ def setup_config_directories(config_id):
             BACKTRAJ_DF_DIR,
             BACKTRAJ_MERRATRACED,
             IC_CIR_INTERMEDIATE,
-            IC_CIR_PREPROC
+            IC_CIR_PREPROC,
+            ML_DATA_DIR
             ]
 
     print("##### start creating directories for config {}".format(config_id))

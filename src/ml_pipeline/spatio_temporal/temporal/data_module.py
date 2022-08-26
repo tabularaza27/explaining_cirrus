@@ -26,6 +26,9 @@ from src.ml_pipeline.ml_preprocess import CAT_VARS
 from src.ml_pipeline.spatio_temporal.temporal.temporal_ml_model_helpers import *
 from src.preprocess.helpers.common_helpers import pd_dtime_to_std_seconds, std_seconds_to_pd_dtime
 
+from src.preprocess.helpers.constants import *
+from src.scaffolding.scaffolding import get_data_product_dir
+
 
 class BacktrajDataset(Dataset):
     def __init__(self,
@@ -217,6 +220,8 @@ class BacktrajDataModule(pl.LightningDataModule):
             lds_kernel:
             lds_ks:
             lds_sigma:
+
+            todo implement loading only specific features when loading preloaded dataset
         """
         super().__init__()
 
@@ -389,8 +394,14 @@ class BacktrajDataModule(pl.LightningDataModule):
         # todo kickout outliers on log transformed y data
 
     def _load_preprocessed_data(self, dataset_id):
+
+        # make dynamic if I will use different config ids in the future
+        config_id = "larger_domain_high_res"
+        ml_dir = get_data_product_dir(config_id, ML_DATA_DIR)
+        dataset_dir = os.path.join(ml_dir, dataset_id)
+
+
         # arrays to load from disk
-        ml_data_dir = "/net/n2o/wolke_scratch/kjeggle/CIRRUS_PIPELINE/larger_domain_high_res/ML_DATA/" # todo make dynamic
         arr_to_load = ['X_test_sequential',
                        'X_test_static',
                        'X_train_sequential',
@@ -409,7 +420,7 @@ class BacktrajDataModule(pl.LightningDataModule):
             arr_to_load = [arr for arr in arr_to_load if "test" in arr]
 
         for arr_name in arr_to_load:
-            filename = os.path.join(ml_data_dir, dataset_id, "{}.npy".format(arr_name.lower()))
+            filename = os.path.join(dataset_dir, "{}.npy".format(arr_name.lower()))
             arr_vals = np.load(filename)
             setattr(self, arr_name, arr_vals)
             print("loaded", arr_name)
@@ -417,7 +428,7 @@ class BacktrajDataModule(pl.LightningDataModule):
         scalers_to_load = ["sequential_scaler", "static_scaler"]
 
         for scaler_name in scalers_to_load:
-            fname = os.path.join(ml_data_dir, dataset_id, "{}.pkl".format(scaler_name.lower()))
+            fname = os.path.join(dataset_dir, "{}.pkl".format(scaler_name.lower()))
 
             with open(fname, "rb") as f:
                 scaler = pickle.load(f)
