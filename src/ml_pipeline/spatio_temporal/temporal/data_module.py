@@ -424,10 +424,13 @@ class BacktrajDataModule(pl.LightningDataModule):
         if self.inference_only:
             # load test data only
             arr_to_load = [arr for arr in arr_to_load if "test" in arr]
+            arr_to_load += ['sequential_features', 'static_features']
 
         for arr_name in arr_to_load:
             filename = os.path.join(dataset_dir, "{}.npy".format(arr_name.lower()))
             arr_vals = np.load(filename, allow_pickle=True)
+            if "features" in arr_name:
+                arr_vals = list(arr_vals)
             setattr(self, arr_name, arr_vals)
             print("loaded", arr_name)
         # scalers to load from disk
