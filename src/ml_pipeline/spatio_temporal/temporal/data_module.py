@@ -1,3 +1,7 @@
+import os
+import pickle
+from typing import Union
+
 import numpy as np
 import pandas as pd
 
@@ -167,7 +171,8 @@ class BacktrajDataModule(pl.LightningDataModule):
     '''
 
     def __init__(self,
-                 traj_df: pd.DataFrame,
+                 traj_df: Union[pd.DataFrame, None],
+                 preloaded_dataset_id: Union[str, None] = None,
                  data_filters: list = ["cloud_cover>0.9"],
                  sequential_features: list = ["p", "GPH", "T", "Q", "U", "V", "OMEGA", "o3", "RH_ice"],
                  static_features: list = ['land_water_mask', 'season', 'nightday_flag'],
@@ -191,6 +196,7 @@ class BacktrajDataModule(pl.LightningDataModule):
 
         Args:
             traj_df:
+            preloaded_dataset_id: id of preprocesses dataset, loads npy arrays from disk instead of preprocessing in _prepare_data and setup()
             data_filters:
             sequential_features:
             static_features:
@@ -213,10 +219,16 @@ class BacktrajDataModule(pl.LightningDataModule):
         super().__init__()
 
         # todo assertions
+        assert not (type(traj_df) == type(preloaded_dataset_id) == type(
+            None)), "either traj_df or preload_data_filters can be None, pass either datafram or id"
+        assert (type(traj_df) == type(None)) or (type(preloaded_dataset_id) == type(None)), "Pass either dataframe or " \
+                                                                                            "preload dataset id, " \
+                                                                                            "now passed both "
 
         ### init df, features and predictands ###
 
         self.traj_df = traj_df
+        self.preloaded_dataset_id = preloaded_dataset_id
         self.data_filters = data_filters
         self.predictands = predictands
         self.sequential_features = sequential_features
@@ -307,55 +319,103 @@ class BacktrajDataModule(pl.LightningDataModule):
         there is also a hook prepare_data() in pytorch lightning that is called before requesting the dataloaders
         see info here: https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_module.html?highlight=prepare_data#prepare-data
         """
-        # add grid_cell column if it doesnt exist yet
-        if "grid_cell" not in self.traj_df.columns:
-            self.traj_df["grid_cell"] = self.traj_df["date"].astype("str") + self.traj_df["lat"].astype("str") + \
-                                        self.traj_df["lon"].astype("str")
 
-        # create std time column (time of observation), necessary to create torch tensor, i.e. needs to be numeric
-        if "std_time" not in self.traj_df.columns:
-            self.traj_df["std_time"] = pd_dtime_to_std_seconds(self.traj_df["time"])
+        # preprocessing steps on dataframe, not necessary if preloaded dataset it used
+        if self.traj_df is not None:
+            # add grid_cell column if it doesnt exist yet
+            if "grid_cell" not in self.traj_df.columns:
+                self.traj_df["grid_cell"] = self.traj_df["date"].astype("str") + self.traj_df["lat"].astype("str") + \
+                                            self.traj_df["lon"].astype("str")
 
-        # filter dataframe
-        self.traj_df = filter_temporal_df(self.traj_df, self.data_filters, drop_nan_rows=True)
+            # create std time column (time of observation), necessary to create torch tensor, i.e. needs to be numeric
+            if "std_time" not in self.traj_df.columns:
+                self.traj_df["std_time"] = pd_dtime_to_std_seconds(self.traj_df["time"])
 
-        # set dtypes for static features
-        self.traj_df[self.static_features] = self.traj_df[
-            self.static_features].convert_dtypes()  # converts to best possible datatypes
+            # filter dataframe
+            self.traj_df = filter_temporal_df(self.traj_df, self.data_filters, drop_nan_rows=True)
 
-        # add lat/lon region feature
-        if self.regional_feature_resolution is not None:
-            self.traj_df["lat_region"] = (np.round(
-                self.traj_df.lat * (1 / self.regional_feature_resolution)) * self.regional_feature_resolution).astype(
-                'int')
-            self.traj_df["lon_region"] = (np.round(
-                self.traj_df.lon * (1 / self.regional_feature_resolution)) * self.regional_feature_resolution).astype(
-                'int')
-            self.sequential_features.append("lat_region")
-            self.sequential_features.append("lon_region")
+            # set dtypes for static features
+            self.traj_df[self.static_features] = self.traj_df[
+                self.static_features].convert_dtypes()  # converts to best possible datatypes
 
-        # one hot encoding of categorical variables (both sequential and static)
-        oh_features = [col for col in self.static_features + self.sequential_features if col in CAT_VARS]
-        for feature in oh_features:
-            oh_df = pd.get_dummies(self.traj_df[feature], prefix=feature)
+            # add lat/lon region feature
+            if self.regional_feature_resolution is not None:
+                self.traj_df["lat_region"] = (np.round(
+                    self.traj_df.lat * (1 / self.regional_feature_resolution)) * self.regional_feature_resolution).astype(
+                    'int')
+                self.traj_df["lon_region"] = (np.round(
+                    self.traj_df.lon * (1 / self.regional_feature_resolution)) * self.regional_feature_resolution).astype(
+                    'int')
+                self.sequential_features.append("lat_region")
+                self.sequential_features.append("lon_region")
 
-            for col in oh_df.columns:
-                # add oh_encoded_features to feature lists and df
+            # one hot encoding of categorical variables (both sequential and static)
+            oh_features = [col for col in self.static_features + self.sequential_features if col in CAT_VARS]
+            for feature in oh_features:
+                oh_df = pd.get_dummies(self.traj_df[feature], prefix=feature)
+
+                for col in oh_df.columns:
+                    # add oh_encoded_features to feature lists and df
+                    if feature in self.sequential_features:
+                        self.sequential_features.append(col)
+                    else:
+                        self.static_features.append(col)
+
+                    # add oh encoded features to df
+                    self.traj_df[col] = oh_df[col]
+
+                # remove original feature from feature lists
                 if feature in self.sequential_features:
-                    self.sequential_features.append(col)
+                    self.sequential_features.remove(feature)
                 else:
-                    self.static_features.append(col)
+                    self.static_features.remove(feature)
 
-                # add oh encoded features to df
-                self.traj_df[col] = oh_df[col]
+        # sequential features
+        self.cont_sequential_features_list = [var for var in self.sequential_features if
+                                              not any(
+                                                  map(var.startswith, CAT_VARS))]  # select only cont. features
+        self.categorical_sequential_feature_list = [var for var in self.sequential_features if
+                                                    any(map(var.startswith,
+                                                            CAT_VARS))]  # select only cat. features
 
-            # remove original feature from feature lists
-            if feature in self.sequential_features:
-                self.sequential_features.remove(feature)
-            else:
-                self.static_features.remove(feature)
+        # static features
+        self.cont_static_features_list = [var for var in self.static_features if
+                                          not any(map(var.startswith, CAT_VARS))]
+        self.categorical_static_features_list = [var for var in self.static_features if
+                                                 any(map(var.startswith, CAT_VARS))]
 
         # todo kickout outliers on log transformed y data
+
+    def _load_preprocessed_data(self, dataset_id):
+        # arrays to load from disk
+        ml_data_dir = "/net/n2o/wolke_scratch/kjeggle/CIRRUS_PIPELINE/larger_domain_high_res/ML_DATA/"
+        arr_to_load = ['X_test_sequential',
+                       'X_test_static',
+                       'X_train_sequential',
+                       'X_train_static',
+                       'X_val_sequential',
+                       'X_val_static',
+                       'y_test',
+                       'y_train',
+                       'y_val',
+                       'coords_train',
+                       'coords_val',
+                       'coords_test']
+
+        for arr_name in arr_to_load:
+            print(arr_name)
+            filename = os.path.join(ml_data_dir, dataset_id, "{}.npy".format(arr_name.lower()))
+            arr_vals = np.load(filename)
+            setattr(self, arr_name, arr_vals)
+        # scalers to load from disk
+        scalers_to_load = ["sequential_scaler", "static_scaler"]
+
+        for scaler_name in scalers_to_load:
+            fname = os.path.join(ml_data_dir, dataset_id, "{}.pkl".format(scaler_name.lower()))
+
+            with open(fname, "rb") as f:
+                scaler = pickle.load(f)
+                setattr(self, scaler_name, scaler)
 
     def setup(self, stage=None):
         '''preprocessing
@@ -374,60 +434,55 @@ class BacktrajDataModule(pl.LightningDataModule):
         if stage is None and self.X_train_sequential is not None and self.X_test_sequential is not None:
             return
 
-        ### create train/val/test split ###
+        # preprocessing steps on dataframe, not necessary if preloaded dataset it used
+        if self.traj_df is not None:
 
-        # only for selecting trajectory ids using function from xgboost preproc
-        # get current global seed → it is set via pl seed_everything() in outer loop
-        current_seed = np.random.get_state()[1][0]
-        X_train, X_val, X_test, y_train, y_val, y_test = split_train_val_test(df=self.traj_df.query("timestep==0"),
-                                                                              predictand=self.predictands,
-                                                                              random_state=current_seed,
-                                                                              train_size=self.train_size)
-        # save traj ids
-        self.train_traj_ids = X_train.trajectory_id.unique()
-        self.val_traj_ids = X_val.trajectory_id.unique()
-        self.test_traj_ids = X_test.trajectory_id.unique()
+            ### create train/val/test split ###
 
-        # create train/val/test dfs
-        self.df_train = self.traj_df[self.traj_df.trajectory_id.isin(self.train_traj_ids)]
-        self.df_val = self.traj_df[self.traj_df.trajectory_id.isin(self.val_traj_ids)]
-        self.df_test = self.traj_df[self.traj_df.trajectory_id.isin(self.test_traj_ids)]
+            # only for selecting trajectory ids using function from xgboost preproc
+            # get current global seed → it is set via pl seed_everything() in outer loop
+            current_seed = np.random.get_state()[1][0]
+            X_train, X_val, X_test, y_train, y_val, y_test = split_train_val_test(df=self.traj_df.query("timestep==0"),
+                                                                                  predictand=self.predictands,
+                                                                                  random_state=current_seed,
+                                                                                  train_size=self.train_size)
+            # save traj ids
+            self.train_traj_ids = X_train.trajectory_id.unique()
+            self.val_traj_ids = X_val.trajectory_id.unique()
+            self.test_traj_ids = X_test.trajectory_id.unique()
 
-        # save coords (time, lev, lat, lon)
-        self.coords_train = self.df_train.query("timestep==0")[self.coords].values
-        self.coords_val = self.df_val.query("timestep==0")[self.coords].values
-        self.coords_test = self.df_test.query("timestep==0")[self.coords].values
+            # create train/val/test dfs
+            self.df_train = self.traj_df[self.traj_df.trajectory_id.isin(self.train_traj_ids)]
+            self.df_val = self.traj_df[self.traj_df.trajectory_id.isin(self.val_traj_ids)]
+            self.df_test = self.traj_df[self.traj_df.trajectory_id.isin(self.test_traj_ids)]
 
-        # sequential features todo move this to _prepare data after onehot encoding
-        self.cont_sequential_features_list = [var for var in self.sequential_features if
-                                              not any(map(var.startswith, CAT_VARS))]  # select only cont. features
-        self.categorical_sequential_feature_list = [var for var in self.sequential_features if
-                                                    any(map(var.startswith, CAT_VARS))]  # select only cat. features
+            # save coords (time, lev, lat, lon)
+            self.coords_train = self.df_train.query("timestep==0")[self.coords].values
+            self.coords_val = self.df_val.query("timestep==0")[self.coords].values
+            self.coords_test = self.df_test.query("timestep==0")[self.coords].values
 
-        # static features
-        self.cont_static_features_list = [var for var in self.static_features if not any(map(var.startswith, CAT_VARS))]
-        self.categorical_static_features_list = [var for var in self.static_features if
-                                                 any(map(var.startswith, CAT_VARS))]
+            # init scalers for sequential and static features
+            self.sequential_scaler.fit(self.df_train[self.cont_sequential_features_list])
+            if len(self.cont_static_features_list) > 0:
+                self.static_scaler.fit(self.df_train.query("timestep==0")[self.cont_static_features_list])
 
-        # init scalers for sequential and static features
-        self.sequential_scaler.fit(self.df_train[self.cont_sequential_features_list])
-        if len(self.cont_static_features_list) > 0:
-            self.static_scaler.fit(self.df_train.query("timestep==0")[self.cont_static_features_list])
+            # create scaled np.ndarrays
+            self.X_train_sequential = self.scale_and_create_x(self.df_train, "sequential")
+            self.X_train_static = self.scale_and_create_x(self.df_train, "static")
 
-        # create scaled np.ndarrays
-        self.X_train_sequential = self.scale_and_create_x(self.df_train, "sequential")
-        self.X_train_static = self.scale_and_create_x(self.df_train, "static")
+            self.X_val_sequential = self.scale_and_create_x(self.df_val, "sequential")
+            self.X_val_static = self.scale_and_create_x(self.df_val, "static")
 
-        self.X_val_sequential = self.scale_and_create_x(self.df_val, "sequential")
-        self.X_val_static = self.scale_and_create_x(self.df_val, "static")
+            self.X_test_sequential = self.scale_and_create_x(self.df_test, "sequential")
+            self.X_test_static = self.scale_and_create_x(self.df_test, "static")
 
-        self.X_test_sequential = self.scale_and_create_x(self.df_test, "sequential")
-        self.X_test_static = self.scale_and_create_x(self.df_test, "static")
-
-        # create train/val/test arrays
-        self.y_train = self.transform_and_create_y(self.df_train)
-        self.y_val = self.transform_and_create_y(self.df_val)
-        self.y_test = self.transform_and_create_y(self.df_test)
+            # create train/val/test arrays
+            self.y_train = self.transform_and_create_y(self.df_train)
+            self.y_val = self.transform_and_create_y(self.df_val)
+            self.y_test = self.transform_and_create_y(self.df_test)
+        else:
+            # load preprocessed arrays
+            self._load_preprocessed_data(dataset_id=self.preloaded_dataset_id)
 
     def train_dataloader(self):
         train_dataset = BacktrajDataset(X_seq=self.X_train_sequential,
