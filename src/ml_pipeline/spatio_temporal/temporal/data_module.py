@@ -413,7 +413,13 @@ class BacktrajDataModule(pl.LightningDataModule):
                        'y_val',
                        'coords_train',
                        'coords_val',
-                       'coords_test']
+                       'coords_test',
+                       'sequential_features',
+                       'static_features',
+                       'train_traj_ids',
+                       'val_traj_ids',
+                       'test_traj_ids'
+                       ]
 
         if self.inference_only:
             # load test data only
