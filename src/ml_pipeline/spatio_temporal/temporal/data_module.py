@@ -173,6 +173,7 @@ class BacktrajDataModule(pl.LightningDataModule):
     def __init__(self,
                  traj_df: Union[pd.DataFrame, None],
                  preloaded_dataset_id: Union[str, None] = None,
+                 inference_only: bool = False,
                  data_filters: list = ["cloud_cover>0.9"],
                  sequential_features: list = ["p", "GPH", "T", "Q", "U", "V", "OMEGA", "o3", "RH_ice"],
                  static_features: list = ['land_water_mask', 'season', 'nightday_flag'],
@@ -197,6 +198,7 @@ class BacktrajDataModule(pl.LightningDataModule):
         Args:
             traj_df:
             preloaded_dataset_id: id of preprocesses dataset, loads npy arrays from disk instead of preprocessing in _prepare_data and setup()
+            inference_only: If True and preloaded_dataset_id is given, only load test data
             data_filters:
             sequential_features:
             static_features:
@@ -224,11 +226,11 @@ class BacktrajDataModule(pl.LightningDataModule):
         assert (type(traj_df) == type(None)) or (type(preloaded_dataset_id) == type(None)), "Pass either dataframe or " \
                                                                                             "preload dataset id, " \
                                                                                             "now passed both "
-
         ### init df, features and predictands ###
 
         self.traj_df = traj_df
         self.preloaded_dataset_id = preloaded_dataset_id
+        self.inference_only = inference_only
         self.data_filters = data_filters
         self.predictands = predictands
         self.sequential_features = sequential_features
@@ -388,7 +390,7 @@ class BacktrajDataModule(pl.LightningDataModule):
 
     def _load_preprocessed_data(self, dataset_id):
         # arrays to load from disk
-        ml_data_dir = "/net/n2o/wolke_scratch/kjeggle/CIRRUS_PIPELINE/larger_domain_high_res/ML_DATA/"
+        ml_data_dir = "/net/n2o/wolke_scratch/kjeggle/CIRRUS_PIPELINE/larger_domain_high_res/ML_DATA/" # todo make dynamic
         arr_to_load = ['X_test_sequential',
                        'X_test_static',
                        'X_train_sequential',
@@ -402,11 +404,15 @@ class BacktrajDataModule(pl.LightningDataModule):
                        'coords_val',
                        'coords_test']
 
+        if self.inference_only:
+            # load test data only
+            arr_to_load = [arr for arr in arr_to_load if "test" in arr]
+
         for arr_name in arr_to_load:
-            print(arr_name)
             filename = os.path.join(ml_data_dir, dataset_id, "{}.npy".format(arr_name.lower()))
             arr_vals = np.load(filename)
             setattr(self, arr_name, arr_vals)
+            print("loaded", arr_name)
         # scalers to load from disk
         scalers_to_load = ["sequential_scaler", "static_scaler"]
 
@@ -416,6 +422,7 @@ class BacktrajDataModule(pl.LightningDataModule):
             with open(fname, "rb") as f:
                 scaler = pickle.load(f)
                 setattr(self, scaler_name, scaler)
+                print("loaded", scaler_name)
 
     def setup(self, stage=None):
         '''preprocessing
