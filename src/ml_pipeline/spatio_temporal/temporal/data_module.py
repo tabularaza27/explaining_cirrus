@@ -1,5 +1,6 @@
 import os
 import pickle
+import re
 from typing import Union
 
 import numpy as np
@@ -444,6 +445,8 @@ class BacktrajDataModule(pl.LightningDataModule):
             arr_vals = np.load(filename, allow_pickle=True)
             if "features" in arr_name:
                 arr_vals = list(arr_vals)
+            if re.match("X_.*_sequential", arr_name):
+                arr_vals = arr_vals[:, -self.backtraj_timestep+1:, :]
             setattr(self, arr_name, arr_vals)
             print("loaded", arr_name)
         # scalers to load from disk
@@ -523,6 +526,10 @@ class BacktrajDataModule(pl.LightningDataModule):
         else:
             # load preprocessed arrays
             self._load_preprocessed_data(dataset_id=self.preloaded_dataset_id)
+
+        # assert that sequential features have correct length
+        assert self.X_train_sequential.shape[1] == self.backtraj_timestep+1
+        assert self.X_test_sequential.shape[1] == self.backtraj_timestep+1
 
     def train_dataloader(self):
         train_dataset = BacktrajDataset(X_seq=self.X_train_sequential,
