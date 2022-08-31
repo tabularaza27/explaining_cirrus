@@ -200,7 +200,7 @@ class BacktrajDataModule(pl.LightningDataModule):
                  lds_kernel: str = "gaussian",
                  lds_ks: int = 5,
                  lds_sigma: int = 2,
-                 backtraj_timestep: int = 60):
+                 backtraj_timesteps: int = 60):
         """
 
         Args:
@@ -225,7 +225,7 @@ class BacktrajDataModule(pl.LightningDataModule):
             lds_kernel:
             lds_ks:
             lds_sigma:
-            backtraj_timestep: number of timesteps (hours) of backtrajectories to train the model
+            backtraj_timesteps: number of timesteps (hours) of backtrajectories to train the model
 
             todo implement loading only specific features when loading preloaded dataset
         """
@@ -286,7 +286,7 @@ class BacktrajDataModule(pl.LightningDataModule):
         self.static_scaler = static_scaler
         self.log_transform_predictands = [p for p in log_transform_predictands if p in predictands] # only transform predictands that are active
         self.regional_feature_resolution = regional_feature_resolution
-        self.backtraj_timestep = backtraj_timestep
+        self.backtraj_timestep = backtraj_timesteps
 
         # deep imbalanced regression
         self.reweight = reweight
