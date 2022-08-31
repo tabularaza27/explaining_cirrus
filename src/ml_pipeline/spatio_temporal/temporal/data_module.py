@@ -23,7 +23,7 @@ from torch.utils.data import Dataset, DataLoader, random_split
 import pytorch_lightning as pl
 
 from src.ml_pipeline.ml_preprocess import split_train_val_test, log_transform
-from src.ml_pipeline.ml_preprocess import CAT_VARS
+from src.ml_pipeline.ml_preprocess import CAT_VARS, BINARY_VARS
 from src.ml_pipeline.spatio_temporal.temporal.temporal_ml_model_helpers import *
 from src.preprocess.helpers.common_helpers import pd_dtime_to_std_seconds, std_seconds_to_pd_dtime
 
@@ -314,8 +314,11 @@ class BacktrajDataModule(pl.LightningDataModule):
         # sequential features
         self.cont_sequential_features_list = []
         self.categorical_sequential_feature_list = []
+        self.binary_sequential_feature_list = [] # there are none currently
+
         # static features
         self.cont_static_features_list = []
+        self.binary_static_feature_list = []
         self.categorical_static_features_list = []
 
         ### call prepare data routine ###
@@ -390,16 +393,21 @@ class BacktrajDataModule(pl.LightningDataModule):
         # sequential features
         self.cont_sequential_features_list = [var for var in self.sequential_features if
                                               not any(
-                                                  map(var.startswith, CAT_VARS))]  # select only cont. features
+                                                  map(var.startswith, CAT_VARS+BINARY_VARS))]  # select only cont. features
         self.categorical_sequential_feature_list = [var for var in self.sequential_features if
                                                     any(map(var.startswith,
                                                             CAT_VARS))]  # select only cat. features
+        self.binary_sequential_feature_list = [var for var in self.sequential_features if
+                                                    any(map(var.startswith,
+                                                            BINARY_VARS))]  # select only bin features
 
         # static features
         self.cont_static_features_list = [var for var in self.static_features if
-                                          not any(map(var.startswith, CAT_VARS))]
+                                          not any(map(var.startswith, CAT_VARS+BINARY_VARS))]
         self.categorical_static_features_list = [var for var in self.static_features if
                                                  any(map(var.startswith, CAT_VARS))]
+        self.binary_static_feature_list = [var for var in self.static_features if
+                                           any(map(var.startswith, BINARY_VARS))]
 
         # todo kickout outliers on log transformed y data
 
@@ -593,25 +601,42 @@ class BacktrajDataModule(pl.LightningDataModule):
         Returns: np.ndarray; sequential: (n_samples, n_timesteps, n_features); static: (n_samples, n_features)
         """
         if var_type == "sequential":
+            X_arr = []
             X_cont = self.sequential_scaler.transform(df[self.cont_sequential_features_list]).reshape(
                 int(df.shape[0] / self.backtraj_timestep + 1), self.backtraj_timestep+1,
                 len(self.cont_sequential_features_list))  # n_samples, # n_timesteps, # n_features
-            X_cat = df[self.categorical_sequential_feature_list].values.reshape(int(df.shape[0] / self.backtraj_timestep+1), self.backtraj_timestep+1,
-                                                                                len(self.categorical_sequential_feature_list))
+            X_arr.append(X_cont)
 
-            X = np.concatenate((X_cont, X_cat), axis=2)
+            if len(self.categorical_sequential_feature_list):
+                X_cat = df[self.categorical_sequential_feature_list].values.reshape(int(df.shape[0] / self.backtraj_timestep+1), self.backtraj_timestep+1,
+                                                                                len(self.categorical_sequential_feature_list))
+                X_arr.append(X_cat)
+
+            if len(self.binary_sequential_feature_list) > 0:
+                X_bin = df[self.binary_sequential_feature_list].values.reshape(int(df.shape[0] / self.backtraj_timestep + 1), self.backtraj_timestep + 1,
+                                len(self.categorical_sequential_feature_list))
+                X_arr.append(X_bin)
+
+            X = np.concatenate(X_arr, axis=2)
             X = np.flip(X, axis=1).copy()  # flip time so that last index is timestep 0, i.e end of trajectory
 
         elif var_type == "static":
+            X_arr = []
             if len(self.cont_static_features_list) > 0:
                 X_cont = self.static_scaler.transform(
                     df.query("timestep==0")[self.cont_static_features_list])  # n_samples, # n_features
-                X_cat = df.query("timestep==0")[self.categorical_static_features_list].values
+                X_arr.append(X_cont)
 
-                X = np.concatenate((X_cont, X_cat), axis=1)
-            else:
+            if len(self.categorical_static_features_list) > 0 :
                 # not cont static features
-                X = df.query("timestep==0")[self.categorical_static_features_list].values
+                X_cat = df.query("timestep==0")[self.categorical_static_features_list].values
+                X_arr.append(X_cat)
+
+            if len(self.binary_static_feature_list) > 0:
+                X_bin = df.query("timestep==0")[self.binary_static_feature_list].values
+                X_arr.append(X_cat)
+
+            X = np.concatenate(X_arr, axis=1)
 
         else:
             raise ValueError("var_type needs to be sequential or static, is: {}".format(var_type))

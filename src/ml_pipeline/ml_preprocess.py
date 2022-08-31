@@ -8,6 +8,7 @@ from src.preprocess.helpers.constants import DATA_ONLY_DF_FILESTUMPY, OBSERVATIO
     OBSERVATION_VICINITY_DF_FILESTUMPY
 
 CAT_VARS = ["season", "lat_region", "lon_region", "IC_CIR", "IC_CIR_class", "clm_v2", 'nightday_flag', 'land_water_mask', 'instrument_flag']
+BINARY_VARS = ["cloud_top", "cloud_bottom", "liquid_origin"]
 LOG_TRANS_VARS = ['DU', "SO4", "SO2", 'DU001', 'DU002', 'DU003', 'DU004', 'DU005']
 BASE_PREDICTORS = ['t', 'w', 'u', 'v', 'rh_ice', 'SO4', 'season']  # ' lat_region','dz_top',"IC_CIR"] # DU, clm_v2
 
