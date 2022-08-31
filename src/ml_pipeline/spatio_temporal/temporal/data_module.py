@@ -446,7 +446,7 @@ class BacktrajDataModule(pl.LightningDataModule):
             if "features" in arr_name:
                 arr_vals = list(arr_vals)
             if re.match("X_.*_sequential", arr_name):
-                arr_vals = arr_vals[:, -self.backtraj_timestep+1:, :]
+                arr_vals = arr_vals[:, -(self.backtraj_timestep+1):, :]
             setattr(self, arr_name, arr_vals)
             print("loaded", arr_name)
         # scalers to load from disk
