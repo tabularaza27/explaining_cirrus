@@ -171,6 +171,9 @@ class BacktrajDataModule(pl.LightningDataModule):
 
     Serves the purpose of aggregating all data loading
       and processing work in one place.
+
+    Either pass trajectory df then all preprocessing steps will be done by _prepare_data() and setup() or provide
+    preloaded_dataset_id, then preprocesses np arrays will be loaded directly ( → needs a lot less memory and time )
     '''
 
     def __init__(self,
@@ -200,9 +203,9 @@ class BacktrajDataModule(pl.LightningDataModule):
 
         Args:
             traj_df:
-            preloaded_dataset_id: id of preprocesses dataset, loads npy arrays from disk instead of preprocessing in _prepare_data and setup()
-            inference_only: If True and preloaded_dataset_id is given, only load test data
-            data_filters:
+            preloaded_dataset_id (str): id of preprocesses dataset, loads npy arrays from disk instead of preprocessing in _prepare_data and setup()
+            inference_only (bool): If True and preloaded_dataset_id is given, only load test data
+            data_filters (list): list of queries that are applied to timestep==0
             sequential_features:
             static_features:
             predictands:
@@ -394,12 +397,16 @@ class BacktrajDataModule(pl.LightningDataModule):
         # todo kickout outliers on log transformed y data
 
     def _load_preprocessed_data(self, dataset_id):
+        """loads preprocessed numpy arrays and scalers
+
+        Args:
+            dataset_id:
+        """
 
         # make dynamic if I will use different config ids in the future
         config_id = "larger_domain_high_res"
         ml_dir = get_data_product_dir(config_id, ML_DATA_DIR)
         dataset_dir = os.path.join(ml_dir, dataset_id)
-
 
         # arrays to load from disk
         arr_to_load = ['X_test_sequential',
