@@ -528,7 +528,8 @@ class BacktrajDataModule(pl.LightningDataModule):
             self._load_preprocessed_data(dataset_id=self.preloaded_dataset_id)
 
         # assert that sequential features have correct length
-        assert self.X_train_sequential.shape[1] == self.backtraj_timestep+1
+        if not self.inference_only:
+            assert self.X_train_sequential.shape[1] == self.backtraj_timestep+1
         assert self.X_test_sequential.shape[1] == self.backtraj_timestep+1
 
     def train_dataloader(self):
