@@ -198,7 +198,8 @@ class BacktrajDataModule(pl.LightningDataModule):
                  lds: bool = False,
                  lds_kernel: str = "gaussian",
                  lds_ks: int = 5,
-                 lds_sigma: int = 2):
+                 lds_sigma: int = 2,
+                 backtraj_timestep: int = 60):
         """
 
         Args:
@@ -223,6 +224,7 @@ class BacktrajDataModule(pl.LightningDataModule):
             lds_kernel:
             lds_ks:
             lds_sigma:
+            backtraj_timestep: number of timesteps (hours) of backtrajectories to train the model
 
             todo implement loading only specific features when loading preloaded dataset
         """
@@ -283,6 +285,7 @@ class BacktrajDataModule(pl.LightningDataModule):
         self.static_scaler = static_scaler
         self.log_transform_predictands = [p for p in log_transform_predictands if p in predictands] # only transform predictands that are active
         self.regional_feature_resolution = regional_feature_resolution
+        self.backtraj_timestep = backtraj_timestep
 
         # deep imbalanced regression
         self.reweight = reweight
@@ -332,6 +335,9 @@ class BacktrajDataModule(pl.LightningDataModule):
 
         # preprocessing steps on dataframe, not necessary if preloaded dataset it used
         if self.traj_df is not None:
+            # select only needed timesteps
+            self.traj_df = self.traj_df.query("timestep>=-{}".format(self.backtraj_timestep))
+
             # add grid_cell column if it doesnt exist yet
             if "grid_cell" not in self.traj_df.columns:
                 self.traj_df["grid_cell"] = self.traj_df["date"].astype("str") + self.traj_df["lat"].astype("str") + \
@@ -580,9 +586,9 @@ class BacktrajDataModule(pl.LightningDataModule):
         """
         if var_type == "sequential":
             X_cont = self.sequential_scaler.transform(df[self.cont_sequential_features_list]).reshape(
-                int(df.shape[0] / 61), 61,
+                int(df.shape[0] / self.backtraj_timestep + 1), self.backtraj_timestep+1,
                 len(self.cont_sequential_features_list))  # n_samples, # n_timesteps, # n_features
-            X_cat = df[self.categorical_sequential_feature_list].values.reshape(int(df.shape[0] / 61), 61,
+            X_cat = df[self.categorical_sequential_feature_list].values.reshape(int(df.shape[0] / self.backtraj_timestep+1), self.backtraj_timestep+1,
                                                                                 len(self.categorical_sequential_feature_list))
 
             X = np.concatenate((X_cont, X_cat), axis=2)
