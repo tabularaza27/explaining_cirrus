@@ -614,7 +614,7 @@ class BacktrajDataModule(pl.LightningDataModule):
 
             if len(self.binary_sequential_feature_list) > 0:
                 X_bin = df[self.binary_sequential_feature_list].values.reshape(int(df.shape[0] / (self.backtraj_timestep+1)), self.backtraj_timestep + 1,
-                                len(self.categorical_sequential_feature_list))
+                                len(self.binary_sequential_feature_list))
                 X_arr.append(X_bin)
 
             X = np.concatenate(X_arr, axis=2)
