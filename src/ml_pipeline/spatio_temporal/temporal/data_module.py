@@ -634,7 +634,7 @@ class BacktrajDataModule(pl.LightningDataModule):
 
             if len(self.binary_static_feature_list) > 0:
                 X_bin = df.query("timestep==0")[self.binary_static_feature_list].values
-                X_arr.append(X_cat)
+                X_arr.append(X_bin)
 
             X = np.concatenate(X_arr, axis=1)
 
