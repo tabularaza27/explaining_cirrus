@@ -26,9 +26,8 @@ def filter_temporal_df(df: pd.DataFrame, filters: list, drop_nan_rows: bool = Tr
     Returns:
         pd.DataFrame: filtered dataframe
     """
-    filters.append("timestep==0")
     filter_str = create_filter_string(filters)
-    filtered_trajectory_ids = df.query(filter_str).trajectory_id.unique() # trajectories that will be kept
+    filtered_trajectory_ids = df.query("timestep==0").query(filter_str).trajectory_id.unique() # trajectories that will be kept
 
     if drop_nan_rows:
         nan_df = df.query("timestep==0")[df.query("timestep==0").isna().any(axis=1)] # checks for nan in all columns
