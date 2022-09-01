@@ -627,7 +627,7 @@ class BacktrajDataModule(pl.LightningDataModule):
                     df.query("timestep==0")[self.cont_static_features_list])  # n_samples, # n_features
                 X_arr.append(X_cont)
 
-            if len(self.categorical_static_features_list) > 0 :
+            if len(self.categorical_static_features_list) > 0:
                 # not cont static features
                 X_cat = df.query("timestep==0")[self.categorical_static_features_list].values
                 X_arr.append(X_cat)
@@ -640,6 +640,8 @@ class BacktrajDataModule(pl.LightningDataModule):
 
         else:
             raise ValueError("var_type needs to be sequential or static, is: {}".format(var_type))
+
+        X = X.astype(np.float64)
 
         return X
 
