@@ -603,17 +603,17 @@ class BacktrajDataModule(pl.LightningDataModule):
         if var_type == "sequential":
             X_arr = []
             X_cont = self.sequential_scaler.transform(df[self.cont_sequential_features_list]).reshape(
-                int(df.shape[0] / self.backtraj_timestep + 1), self.backtraj_timestep+1,
+                int(df.shape[0] / (self.backtraj_timestep+1)), self.backtraj_timestep+1,
                 len(self.cont_sequential_features_list))  # n_samples, # n_timesteps, # n_features
             X_arr.append(X_cont)
 
             if len(self.categorical_sequential_feature_list):
-                X_cat = df[self.categorical_sequential_feature_list].values.reshape(int(df.shape[0] / self.backtraj_timestep+1), self.backtraj_timestep+1,
+                X_cat = df[self.categorical_sequential_feature_list].values.reshape(int(df.shape[0] / (self.backtraj_timestep+1)), self.backtraj_timestep+1,
                                                                                 len(self.categorical_sequential_feature_list))
                 X_arr.append(X_cat)
 
             if len(self.binary_sequential_feature_list) > 0:
-                X_bin = df[self.binary_sequential_feature_list].values.reshape(int(df.shape[0] / self.backtraj_timestep + 1), self.backtraj_timestep + 1,
+                X_bin = df[self.binary_sequential_feature_list].values.reshape(int(df.shape[0] / (self.backtraj_timestep+1)), self.backtraj_timestep + 1,
                                 len(self.categorical_sequential_feature_list))
                 X_arr.append(X_bin)
 
