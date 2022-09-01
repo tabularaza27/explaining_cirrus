@@ -436,15 +436,24 @@ class LSTMRegressor(pl.LightningModule):
 
         # final fc branch: connecting temporal and static branch
         # if multi-task learning on final fc head per predictan
-        self.final_layers_module_dict = nn.ModuleDict()
-        for predictand in predictands:
-            fc_layer_head = multiple_fc_layers(layer_sizes=self.final_fc_layer_sizes, dropout=self.final_fc_layer_dropout, batchnorm=self.final_fc_layer_batchnorm)
-            last = nn.Linear(self.final_fc_layer_sizes[-1], 1)
-            fc_layer_head = nn.Sequential(
+        fc_layer_head = multiple_fc_layers(layer_sizes=self.final_fc_layer_sizes, dropout=self.final_fc_layer_dropout,
+                                           batchnorm=self.final_fc_layer_batchnorm)
+        last = nn.Linear(self.final_fc_layer_sizes[-1], len(self.predictands))
+        self.final_layers = nn.Sequential(
                 fc_layer_head,
                 last
             )
-            self.final_layers_module_dict[predictand] = fc_layer_head
+
+
+        # self.final_layers_module_dict = nn.ModuleDict()
+        # for predictand in predictands:
+        #     fc_layer_head = multiple_fc_layers(layer_sizes=self.final_fc_layer_sizes, dropout=self.final_fc_layer_dropout, batchnorm=self.final_fc_layer_batchnorm)
+        #     last = nn.Linear(self.final_fc_layer_sizes[-1], 1)
+        #     fc_layer_head = nn.Sequential(
+        #         fc_layer_head,
+        #         last
+        #     )
+        #     self.final_layers_module_dict[predictand] = fc_layer_head
 
     def forward(self, x_seq, x_static):
         ## sequential branch
@@ -464,8 +473,9 @@ class LSTMRegressor(pl.LightningModule):
         concat_out = torch.concat([seq_out, static_out], dim=1)
 
         ## fully connected layers
-        preds = torch.concat([self.final_layers_module_dict[pred](concat_out) for pred in self.predictands],
-                             -1)  # shape: n_samples, n_predictands
+        # preds = torch.concat([self.final_layers_module_dict[pred](concat_out) for pred in self.predictands],
+        #                      -1)  # shape: n_samples, n_predictands
+        preds = self.final_layers(concat_out)
 
         return preds
 
