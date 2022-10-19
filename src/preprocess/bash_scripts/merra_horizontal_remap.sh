@@ -23,6 +23,10 @@ MAX_LON=`jq -r ".${config_id}.lonmax" $Config_File_Path`
 MIN_LAT=`jq -r ".${config_id}.latmin" $Config_File_Path`
 MAX_LAT=`jq -r ".${config_id}.latmax" $Config_File_Path`
 
+# select only levels that I need (http://wiki.seas.harvard.edu/geos-chem/index.php/GEOS-Chem_vertical_grids#72-layer_vertical_grid)
+MIN_LEV=16
+MAX_LEV=43
+
 d=`echo $filename | grep -E -o '[0-9]{8}'`
 
 echo "Start Horizontal remapping $d"
@@ -42,16 +46,21 @@ else
   meteo_file=${Meteo_Directory}/MERRA2_400.inst3_3d_asm_Nv.${d}.nc4.nc4
 fi
 
-# 1. remap horizontally
-cdo remapbil,$Template_Path $meteo_file ${Intermediate_File_Directory}/remap_meteo_merra2_date_${d}.nc
-cdo remapcon,$Template_Path $filename ${Intermediate_File_Directory}/remap_merra2_date_${d}.nc
+## 1. meteo
+# level
+cdo -sellevel,$MIN_LEV/$MAX_LEV -select,name=T -remapbil,$template_file $meteo_file ${Intermediate_File_Directory}/remap_meteo_merra2_date_${d}.nc
+# surface variables
+cdo -select,name=PHIS -remapbil,$template_file $meteo_file ${Intermediate_File_Directory}/remap_meteo_surface_merra2_date_${d}.nc
 
-# 2. select domain
-#cdo sellonlatbox,$MIN_LON,$MAX_LON,$MIN_LAT,$MAX_LAT ${Intermediate_File_Directory}/remap_merra2_date_${d}.nc ${Intermediate_File_Directory}/sel_remap_merra2_date_${d}.nc
-#cdo sellonlatbox,$MIN_LON,$MAX_LON,$MIN_LAT,$MAX_LAT ${Intermediate_File_Directory}/remap_meteo_merra2_date_${d}.nc ${Intermediate_File_Directory}/sel_remap_meteo_merra2_date_${d}.nc
+## 2. aerosols
+# level
+cdo -sellevel,$MIN_LEV/$MAX_LEV -select,name=AIRDENS,BCPHILIC,BCPHOBIC,DELP,DMS,DU001,DU002,DU003,DU004,DU005,OCPHILIC,OCPHOBIC,RH,SO4 -remapcon,$template_file $aero_file ${Intermediate_File_Directory}/remap_merra2_date_${d}.nc
+# surface
+cdo -select,name=PS -remapcon,$template_file $aero_file ${Intermediate_File_Directory}/remap_merra2_surface_date_${d}.nc
 
 # 3. Join aerosol data with temperature data
-cdo merge ${Intermediate_File_Directory}/remap_merra2_date_${d}.nc ${Intermediate_File_Directory}/remap_meteo_merra2_date_${d}.nc $FINAL_FILE
+cdo merge ${Intermediate_File_Directory}/remap_merra2_date_${d}.nc ${Intermediate_File_Directory}/remap_merra2_surface_date_${d}.nc ${Intermediate_File_Directory}/remap_meteo_merra2_date_${d}.nc ${Intermediate_File_Directory}/remap_meteo_surface_merra2_date_${d}.nc $FINAL_FILE
+
 
 # 6. Delete intermediate files
-rm  ${Intermediate_File_Directory}/*_date_${d}_time_${t}.nc
+rm  ${Intermediate_File_Directory}/*_date_${d}.nc
