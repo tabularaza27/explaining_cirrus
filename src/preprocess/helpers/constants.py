@@ -34,8 +34,8 @@ ML_DATA_DIR = "ML_DATA"
 ## Reanalysis ##
 
 # Merra
-MERRA_INCOMING_DIR = 'MERRA2/incoming'
-MERRA_METEO_INCOMING_DIR = 'MERRA2/meteo_incoming/'
+MERRA_INCOMING_DIR = 'net/n2o/wolke_scratch2/kjeggle/MERRA2/incoming/global_bulk'
+MERRA_METEO_INCOMING_DIR = '/net/n2o/wolke_scratch2/kjeggle/MERRA2/meteo_data/inst_incoming/global'
 MERRA_IM_DIR = 'MERRA2/intermediate'
 MERRA_PRE_PROC_DIR = "MERRA2/preproc"
 MERRA_REGRID_DIR = "MERRA2/regrid"
