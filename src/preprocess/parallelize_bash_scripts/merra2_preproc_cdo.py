@@ -25,19 +25,22 @@ def process_singlefile(filepath, config_id):
     os.system("{} {} {}".format(MERRA_CDO_SCRIPT_PATH, filepath, config_id))
 
 
-def parallel_preproc(n_workers, year, config_id):
+def parallel_preproc(n_workers, config_id, year=None):
     """call bash script that preprocesses era5 data with cdo in parallel using python multiprocessing
 
     Args:
         n_workers (int):
-        year (int):
+        year (int|None): if year is None run preproc for all existing files in directory
         config_id (str):
 
     """
     print("Start parallel merra preprocessing of config {} for year {} with {} workers".format(config_id, year,
                                                                                                n_workers))
     merra_incoming_dir = get_data_product_dir(config_id, MERRA_INCOMING_DIR)  # get dir of config id
-    filepaths = glob.glob("{}/*{}*".format(merra_incoming_dir, year))
+    if year is None:
+        filepaths = glob.glob("{}/*.nc4".format(merra_incoming_dir, year))
+    else:
+        filepaths = glob.glob("{}/*{}*.nc4".format(merra_incoming_dir, year))
 
     pool = mp.Pool(n_workers)
     for filepath in filepaths:
@@ -48,7 +51,9 @@ def parallel_preproc(n_workers, year, config_id):
 
 if __name__ == "__main__":
     # todo make user friendly
-    if len(sys.argv) == 4:
-        parallel_preproc(n_workers=int(sys.argv[1]), year=int(sys.argv[2]), config_id=sys.argv[3])
+    if len(sys.argv) == 3:
+        parallel_preproc(n_workers=int(sys.argv[1]), config_id=sys.argv[2])
+    elif len(sys.argv) == 4:
+        parallel_preproc(n_workers=int(sys.argv[1]), config_id=sys.argv[2], year=int(sys.argv[3]))
     else:
-        raise ValueError("Provide valid arguments. E.g.: python merra2_preproc_cdo.py <#workers> <year> <config_id>")
+        raise ValueError("Provide valid arguments. E.g.: python merra2_preproc_cdo.py <#workers> <config_id> <year>")
