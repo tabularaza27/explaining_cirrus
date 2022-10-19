@@ -48,15 +48,15 @@ fi
 
 ## 1. meteo
 # level
-cdo -sellevel,$MIN_LEV/$MAX_LEV -select,name=T -remapbil,$template_file $meteo_file ${Intermediate_File_Directory}/remap_meteo_merra2_date_${d}.nc
+cdo -sellevel,$MIN_LEV/$MAX_LEV -select,name=T -remapbil,$Template_Path $meteo_file ${Intermediate_File_Directory}/remap_meteo_merra2_date_${d}.nc
 # surface variables
-cdo -select,name=PHIS -remapbil,$template_file $meteo_file ${Intermediate_File_Directory}/remap_meteo_surface_merra2_date_${d}.nc
+cdo -select,name=PHIS -remapbil,$Template_Path $meteo_file ${Intermediate_File_Directory}/remap_meteo_surface_merra2_date_${d}.nc
 
 ## 2. aerosols
 # level
-cdo -sellevel,$MIN_LEV/$MAX_LEV -select,name=AIRDENS,BCPHILIC,BCPHOBIC,DELP,DMS,DU001,DU002,DU003,DU004,DU005,OCPHILIC,OCPHOBIC,RH,SO4 -remapcon,$template_file $filename ${Intermediate_File_Directory}/remap_merra2_date_${d}.nc
+cdo -sellevel,$MIN_LEV/$MAX_LEV -select,name=AIRDENS,BCPHILIC,BCPHOBIC,DELP,DMS,DU001,DU002,DU003,DU004,DU005,OCPHILIC,OCPHOBIC,RH,SO4 -remapcon,$Template_Path $filename ${Intermediate_File_Directory}/remap_merra2_date_${d}.nc
 # surface
-cdo -select,name=PS -remapcon,$template_file $filename ${Intermediate_File_Directory}/remap_merra2_surface_date_${d}.nc
+cdo -select,name=PS -remapcon,$Template_Path $filename ${Intermediate_File_Directory}/remap_merra2_surface_date_${d}.nc
 
 # 3. Join aerosol data with temperature data
 cdo merge ${Intermediate_File_Directory}/remap_merra2_date_${d}.nc ${Intermediate_File_Directory}/remap_merra2_surface_date_${d}.nc ${Intermediate_File_Directory}/remap_meteo_merra2_date_${d}.nc ${Intermediate_File_Directory}/remap_meteo_surface_merra2_date_${d}.nc $FINAL_FILE
