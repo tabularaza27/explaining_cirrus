@@ -42,6 +42,8 @@ def parallel_preproc(n_workers, config_id, year=None):
     else:
         filepaths = glob.glob("{}/*{}*.nc4".format(merra_incoming_dir, year))
 
+    print(f"detected {len(filepaths)} filepaths")
+
     pool = mp.Pool(n_workers)
     for filepath in filepaths:
         pool.apply_async(process_singlefile, args=(filepath, config_id,))
