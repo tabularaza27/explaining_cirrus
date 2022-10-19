@@ -38,7 +38,7 @@ def parallel_preproc(n_workers, config_id, year=None):
                                                                                                n_workers))
     merra_incoming_dir = MERRA_INCOMING_DIR  # get dir of config id
     if year is None:
-        filepaths = glob.glob("{}/*.nc4".format(merra_incoming_dir, year))
+        filepaths = glob.glob("{}/*.nc4".format(merra_incoming_dir))
     else:
         filepaths = glob.glob("{}/*{}*.nc4".format(merra_incoming_dir, year))
 
