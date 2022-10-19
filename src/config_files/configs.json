@@ -71,6 +71,18 @@
     "altitude_max": 20880,
     "layer_thickness": 300
   },
+  "merra_extended": {
+    "config_id": "global",
+    "latmin": -40,
+    "latmax": 90,
+    "lonmin": -180,
+    "lonmax": 179,
+    "horizontal_resolution": 0.25,
+    "temporal_resolution": "1H",
+    "altitude_min": 3960,
+    "altitude_max": 20880,
+    "layer_thickness": 300
+  },
   "test_config": {
     "config_id": "test_config",
     "latmin": 0,
