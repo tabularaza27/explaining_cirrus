@@ -41,9 +41,9 @@ fi
 year=`echo $filename | grep -E -o '[0-9]{4}'| head -1`
 if ((year<2011))
 then
-  meteo_file=${Meteo_Directory}/MERRA2_300.inst3_3d_asm_Nv.${d}.nc4.nc4
+  meteo_file=${Meteo_Directory}/MERRA2_300.inst3_3d_asm_Nv.${d}.nc4
 else
-  meteo_file=${Meteo_Directory}/MERRA2_400.inst3_3d_asm_Nv.${d}.nc4.nc4
+  meteo_file=${Meteo_Directory}/MERRA2_400.inst3_3d_asm_Nv.${d}.nc4
 fi
 
 ## 1. meteo
