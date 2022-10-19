@@ -36,7 +36,7 @@ def parallel_preproc(n_workers, config_id, year=None):
     """
     print("Start parallel merra preprocessing of config {} for year {} with {} workers".format(config_id, year,
                                                                                                n_workers))
-    merra_incoming_dir = get_data_product_dir(config_id, MERRA_INCOMING_DIR)  # get dir of config id
+    merra_incoming_dir = MERRA_INCOMING_DIR  # get dir of config id
     if year is None:
         filepaths = glob.glob("{}/*.nc4".format(merra_incoming_dir, year))
     else:
