@@ -48,7 +48,7 @@ fi
 
 ## 1. meteo
 # level
-cdo -sellevel,$MIN_LEV/$MAX_LEV -select,name=T -remapbil,$Template_Path $meteo_file ${Intermediate_File_Directory}/remap_meteo_merra2_date_${d}.nc
+cdo -sellevel,$MIN_LEV/$MAX_LEV -select,name=T,PL -remapbil,$Template_Path $meteo_file ${Intermediate_File_Directory}/remap_meteo_merra2_date_${d}.nc
 # surface variables
 cdo -select,name=PHIS -remapbil,$Template_Path $meteo_file ${Intermediate_File_Directory}/remap_meteo_surface_merra2_date_${d}.nc
 
