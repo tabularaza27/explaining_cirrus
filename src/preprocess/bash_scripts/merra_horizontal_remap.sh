@@ -25,7 +25,7 @@ MAX_LAT=`jq -r ".${config_id}.latmax" $Config_File_Path`
 
 # select only levels that I need (http://wiki.seas.harvard.edu/geos-chem/index.php/GEOS-Chem_vertical_grids#72-layer_vertical_grid)
 # level are reverse from what is displayed on link above
-MIN_LEV=27
+MIN_LEV=33
 MAX_LEV=72
 
 d=`echo $filename | grep -E -o '[0-9]{8}'`
