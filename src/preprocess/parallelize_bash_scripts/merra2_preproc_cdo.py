@@ -49,7 +49,7 @@ def parallel_preproc(n_workers, config_id, year=None):
     pool = mp.Pool(n_workers)
     for filepath in filepaths:
         # extract date string from file
-        date_str = filepath.split("remap_meteo_surface_merra2_date_")[-1].split(".")[0]
+        date_str = filepath.split("MERRA2_300.inst3_3d_aer_Nv.")[-1].split(".")[0]
         date = datetime.datetime.strptime(date_str, "%Y%m%d")
 
         if exists(date, "all_merra2_date", get_data_product_dir(config_id, MERRA_PRE_PROC_DIR), date_fmt_str="%Y%m%d"):
