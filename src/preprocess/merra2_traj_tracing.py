@@ -1,4 +1,6 @@
 import datetime
+import sys
+
 import pandas as pd
 import os
 import re
@@ -16,6 +18,7 @@ from sklearn.decomposition import PCA
 import glob
 import multiprocessing as mp
 
+from src.preprocess.helpers.io_helpers import exists
 # from src.preprocess.era5_preproc import calc_rh_ice, calc_e_sat_i, calc_e_sat_w
 from src.preprocess.merra2_preproc import calc_plevs
 from src.preprocess.helpers.constants import *
@@ -61,6 +64,11 @@ def trace_merra_daily(config_id, year, month):
 
     for day in unique_days:
         print(day)
+
+        # check if file already exists
+        if exists(day, "merra_traced_df", merra_traced_output_dir, date_fmt_str="%Y%m%d"):
+            print("File already exists for: {}".format(day))
+            continue
 
         day_traj_df = traj_df[traj_df.date.dt.date == day]
 
@@ -159,6 +167,7 @@ def run_parallel(n_workers=5, config_id="merra_extended", year=2007):
 
         Args:
             n_workers:
+            config_id
             year (int): if none run for all available merra2 files
 
         Returns:
@@ -175,4 +184,8 @@ def run_parallel(n_workers=5, config_id="merra_extended", year=2007):
 
 
 if __name__ == "__main__":
-    run_parallel(n_workers=6, config_id="merra_extended", year=2008)
+    if len(sys.argv) == 4:
+        run_parallel(n_workers=int(sys.argv[1]), config_id=sys.argv[2], year=int(sys.argv[3]))
+    else:
+        raise ValueError(
+            "Provide valid arguments. E.g.: python merra_traj_tracing.py <#workers> <config_id> <year>")
