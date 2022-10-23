@@ -66,7 +66,7 @@ def trace_merra_daily(config_id, year, month):
         print(day)
 
         # check if file already exists
-        if exists(day, "merra_traced_df", merra_traced_output_dir, date_fmt_str="%Y%m%d"):
+        if exists(day, "merra_traced_df", merra_traced_output_dir, date_fmt_str="%Y%m%d", file_fmt="ftr"):
             print("File already exists for: {}".format(day))
             continue
 

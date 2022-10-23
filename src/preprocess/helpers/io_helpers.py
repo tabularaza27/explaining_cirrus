@@ -93,7 +93,7 @@ def save_file(dir_path, file_name, ds, date, time_range="day", complevel=4):
     ds.to_netcdf(filepath, encoding=encoding)
 
 
-def exists(date, file_name, dir, date_fmt_str="%Y_%m_%d"):
+def exists(date, file_name, dir, date_fmt_str="%Y_%m_%d", file_fmt="nc"):
     """checks if file already exists
 
     Args:
@@ -107,7 +107,7 @@ def exists(date, file_name, dir, date_fmt_str="%Y_%m_%d"):
 
     """
     datestr = date.strftime(date_fmt_str)
-    filepath = os.path.join(dir, "{}_{}.nc".format(file_name, datestr))
+    filepath = os.path.join(dir, "{}_{}.{}".format(file_name, datestr, file_fmt))
 
     if len(glob.glob(filepath)) > 0:
         return True
