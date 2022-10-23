@@ -166,7 +166,7 @@ def run_parallel(n_workers=5, config_id="merra_extended", year=2007):
 
     pool = mp.Pool(n_workers)
 
-    for month in range(2, 13):
+    for month in range(1, 13):
         print(month)
         pool.apply_async(trace_merra_daily, args=(config_id, year, month))
 
@@ -175,4 +175,4 @@ def run_parallel(n_workers=5, config_id="merra_extended", year=2007):
 
 
 if __name__ == "__main__":
-    run_parallel()
+    run_parallel(n_workers=6, config_id="merra_extended", year=2008)
