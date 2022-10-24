@@ -78,7 +78,7 @@ def trace_merra_daily(config_id, year, month):
                        merra_date_range]
         merra_files = [f for f in merra_files if os.path.isfile(f)]  # check if file is available
         mds = xr.open_mfdataset(merra_files)  # ,preprocess=calc_plevs)
-        # mds=mds.load()
+        mds=mds.load()
         print("loaded merra dataset")
 
         # create plev_center variable
