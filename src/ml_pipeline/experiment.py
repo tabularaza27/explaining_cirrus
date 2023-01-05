@@ -195,7 +195,7 @@ def get_experiment_assets(experiment_name, project_name="icnc-xgboost"):
         json.dump(model_json, file)
 
     # load model into xgboost
-    xg_reg = xgb.Booster()
+    xg_reg = xgb.XGBRegressor() # xgb.Booster()
     xg_reg.load_model(fo.name)
 
     fo.close()
