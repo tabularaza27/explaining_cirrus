@@ -312,8 +312,7 @@ experiment_configs = [
                        "season",
                        "dz_top_v2",
                        "cloud_thickness_v2",
-                       "land_water_mask",
-                       "instrument_flag"],
+                       "land_water_mask"],
         "predictand": "iwc",
         "preproc_steps": {
             "x_log_trans": True,
