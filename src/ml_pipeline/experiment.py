@@ -109,7 +109,7 @@ def run_experiment(df, xgboost_config, experiment_config, comet_project_name="ic
     # create data set
     X_train, X_val, X_test, y_train, y_val, y_test = create_dataset(df, **experiment_config)
 
-    n_datapoints = X_train.t.count() + X_val.t.count() + X_test.t.count()
+    n_datapoints = X_train.count()[0] + X_val.count()[0] + X_test.count()[0]
     tags.append("Datapoints: {}".format(n_datapoints))
     print("tags:", tags)
 
