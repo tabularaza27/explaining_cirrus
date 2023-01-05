@@ -363,7 +363,7 @@ experiment_configs = [
         "predictand": "icnc_100um",
         "preproc_steps": {
             "x_log_trans": True,
-            "y_log_trans": True,
+            "y_log_trans": False,
             "kickout_outliers": True,
             "oh_encoding": True
         }
