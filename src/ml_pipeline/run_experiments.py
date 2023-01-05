@@ -388,7 +388,7 @@ def run_experiments():
 
     for config in experiment_configs:
         pprint(config)
-        run_experiment(df, xgboost_config, experiment_config=config, log_figures=False)
+        run_experiment(df, xgboost_config, experiment_config=config, log_figures=True)
 
 
 if __name__ == "__main__":
