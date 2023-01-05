@@ -369,7 +369,7 @@ experiment_configs = [
 
 
 xgboost_config = {"objective": "reg:squarederror", 'subsample': 0.4, "colsample_bytree": 0.8, 'learning_rate': 0.02,
-                  'max_depth': 15, 'alpha': 38, 'lambda': 7, 'n_estimators': 500, "n_jobs": 50}
+                  'max_depth': 15, 'alpha': 38, 'lambda': 7, 'n_estimators': 250, "n_jobs": 32}
 
 
 def load_dataframe():
