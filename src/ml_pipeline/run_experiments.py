@@ -301,7 +301,7 @@ experiment_configs = [
     # },
     {
         "filters": ["clm == 1", "nightday_flag ==1", "region != 'tropics'"],
-        "predictors": ["t",
+        "predictors": ["ta",
                        "w",
                        "wind_speed",
                        "wind_direction",
