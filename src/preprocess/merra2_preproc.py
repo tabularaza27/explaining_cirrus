@@ -31,7 +31,7 @@ PTOP = 1
 
 # variables of our interest
 VARIABLES = ["DU00{}".format(i) for i in range(1, 6)]
-VARIABLES += ["SO4", "SO2"]
+VARIABLES += ["SO4", "SO2", "BCPHILIC", "BCPHOBIC", "DMS", "OCPHILIC", "OCPHOBIC"]
 
 # HLEVS = pd.read_csv("/home/kjeggle/cirrus/src/config_files/height_levels.csv", index_col=0) # todo make dynamic
 # TARGET_LEVEL_CENTER = HLEVS["lev"].dropna() # todo
