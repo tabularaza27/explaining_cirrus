@@ -10,7 +10,7 @@ from src.preprocess.helpers.constants import DATA_ONLY_DF_FILESTUMPY, OBSERVATIO
 CAT_VARS = ["season", "lat_region", "lon_region", "IC_CIR", "IC_CIR_class", "clm_v2", 'nightday_flag', 'land_water_mask', 'instrument_flag']
 BINARY_VARS = ["cloud_top", "cloud_bottom", "liquid_origin"]
 LOG_TRANS_VARS = ['DU', "SO4", "SO2", 'DU001', 'DU002', 'DU003', 'DU004', 'DU005']
-BASE_PREDICTORS = ['t', 'w', 'u', 'v', 'rh_ice', 'SO4', 'season']  # ' lat_region','dz_top',"IC_CIR"] # DU, clm_v2
+BASE_PREDICTORS = []  # ' lat_region','dz_top',"IC_CIR"] # DU, clm_v2
 
 
 # other predictor variables: 'DU001','DU002','DU003','DU004','DU005','DU','clm_v2', 'nightday_flag','land_water_mask','instrument_flag', 'layer_index'
@@ -129,7 +129,10 @@ def log_transform(df, column_names, zero_handling="add_constant", drop_original=
         if df.query("{} == 0".format(col))[col].count() > 0:
             print("{} contains zero values".format(col))
             if zero_handling == "add_constant":
-                df["{}_log".format(col)] = (df[col] + 1e-25).transform(np.log10)
+                # replace with constant that is 1 OOM below the min above zero of that columns
+                min_above_zero = df.query(f"{col}>0")[col].min()
+                df[col] = df[col].replace(0, min_above_zero / 10)
+                df["{}_log".format(col)] = df[col].transform(np.log10)
             elif zero_handling == "drop":
                 df = df.query("{} > 0".format(col))
                 df["{}_log".format(col)] = (df[col]).transform(np.log10)
@@ -151,7 +154,7 @@ def log_transform(df, column_names, zero_handling="add_constant", drop_original=
     return df
 
 
-def select_columns(df, predictors, predictand, add_grid_cell=True):
+def select_columns(df, predictors, predictand, add_grid_cell=False, add_year_month=True):
     """select predictors and predictand of dataframe
 
     Args:
@@ -159,7 +162,7 @@ def select_columns(df, predictors, predictand, add_grid_cell=True):
         predictors (list):
         predictand (str):
         add_grid_cell (bool): if True, add column `grid_cell`. It is needed for splitting into train and test sets
-
+        add_year_month (bool): if True, add column `grid_cell`. It is needed for splitting into train and test sets
     Returns:
 
     """
@@ -167,6 +170,8 @@ def select_columns(df, predictors, predictand, add_grid_cell=True):
     sel.append(predictand)
     if add_grid_cell:
         sel.append("grid_cell")
+    if add_year_month:
+        sel.append("year_month")
     df = df[sel]
 
     return df
@@ -207,6 +212,8 @@ def run_preprocessing_steps(df, preproc_steps, predictand):
 def split_train_test(df, predictand, random_state, test_size=0.2):
     """splits between training and test set
 
+    ### WARNING: still uses the old method to split the data, i.e. gridcells
+
     rows of the same atmospheric column always belong to the same set
 
     Args:
@@ -235,8 +242,7 @@ def split_train_test(df, predictand, random_state, test_size=0.2):
 def split_train_val_test(df, predictand, random_state, train_size=0.8):
     """splits between training, validation and test set
 
-    rows of the same atmospheric column always belong to the same set
-
+    to prevent overfitting split by months, i.e. data of one month is only in one split
 
     Args:
         df:
@@ -248,22 +254,22 @@ def split_train_val_test(df, predictand, random_state, train_size=0.8):
 
     """
     ### split train / test data
-    unique_gridcell = df["grid_cell"].unique()
+    unique_month = df["year_month"].unique()
 
     # split between training and remaining data
-    train_cells, rem_cells = train_test_split(unique_gridcell, train_size=train_size, random_state=random_state)
+    train_cells, rem_cells = train_test_split(unique_month, train_size=train_size, random_state=random_state)
 
     # split between validate and test data for remaining cells
     val_cells, test_cells = train_test_split(rem_cells, test_size=0.5, random_state=random_state)
 
     # split dataframe
-    df_train, df_val, df_test = df[df.grid_cell.isin(train_cells)], df[df.grid_cell.isin(val_cells)], df[
-        df.grid_cell.isin(test_cells)]
+    df_train, df_val, df_test = df[df.year_month.isin(train_cells)], df[df.year_month.isin(val_cells)], df[
+        df.year_month.isin(test_cells)]
 
     # drop grid cell variable
-    df_train.drop("grid_cell", inplace=True, axis=1)
-    df_val.drop("grid_cell", inplace=True, axis=1)
-    df_test.drop("grid_cell", inplace=True, axis=1)
+    df_train.drop("year_month", inplace=True, axis=1)
+    df_val.drop("year_month", inplace=True, axis=1)
+    df_test.drop("year_month", inplace=True, axis=1)
 
     # create train, val, test dataframes
     X_train, X_val, X_test = df_train.drop(predictand, 1), df_val.drop(predictand, 1), df_test.drop(predictand, 1)
@@ -292,7 +298,7 @@ def create_dataset(df, filters, predictors, predictand, preproc_steps, random_st
     # select columns
     df = select_columns(df, predictors, predictand)
     # pre processing steps #
-    df = run_preprocessing_steps(df, preproc_steps, predictand)
+    df = run_preprocessing_steps(df, preproc_steps, predictand) # todo
 
     # split train / test data set
     if preproc_steps["y_log_trans"]:

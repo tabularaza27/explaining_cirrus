@@ -300,9 +300,21 @@ experiment_configs = [
     #     }
     # },
     {
-        "filters": ["clm == 1", "t <= 223.15", "clm_v2 != 0"],
-        "predictors": ["DU", 'nightday_flag', 'land_water_mask', 'instrument_flag', 'clm_v2', 'cloud_thickness'],
-        "predictand": "icnc_5um",
+        "filters": ["clm == 1", "nightday_flag ==1", "region != 'tropics'"],
+        "predictors": ["t",
+                       "w",
+                       "wind_speed",
+                       "wind_direction",
+                       "DU_sup",
+                       "DU_sub",
+                       "SO4",
+                       "lat_region",
+                       "season",
+                       "dz_top_v2",
+                       "cloud_thickness_v2",
+                       "land_water_mask",
+                       "instrument_flag"],
+        "predictand": "iwc",
         "preproc_steps": {
             "x_log_trans": True,
             "y_log_trans": True,
@@ -361,11 +373,12 @@ xgboost_config = {"objective": "reg:squarederror", 'subsample': 0.4, "colsample_
 
 
 def load_dataframe():
-    df = pd.read_pickle("/net/n2o/wolke/kjeggle/Notebooks/DataCube/df_pre_filtering.pickle")
+    # df = pd.read_pickle("/net/n2o/wolke/kjeggle/Notebooks/DataCube/df_pre_filtering.pickle")
+    df = pd.read_feather("/net/n2o/wolke_scratch/kjeggle/CIRRUS_PIPELINE/larger_domain_high_res/DATA_CUBE/dataframes/instananeous_preproc_200789.ftr")
     ### Drop NaN
     df = df.dropna()
     ### Filter for Temperature
-    df = df.query("ta <= {}".format(TEMP_THRES))
+    df = df.query("t <= {}".format(TEMP_THRES))
 
     return df
 
