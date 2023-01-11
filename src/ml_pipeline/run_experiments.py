@@ -355,7 +355,7 @@ experiment_configs = [
                        "dz_top_v2",
                        "cloud_thickness_v2",
                        "surface_height"],
-        "predictand": "icnc_5um",
+        "predictand": "iwc",
         "preproc_steps": {
             "x_log_trans": True,
             "y_log_trans": True,
