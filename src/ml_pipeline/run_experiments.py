@@ -353,7 +353,8 @@ experiment_configs = [
                        "DU_sub",
                        "SO4",
                        "dz_top_v2",
-                       "cloud_thickness_v2"],
+                       "cloud_thickness_v2",
+                       "surface_height"],
         "predictand": "icnc_5um",
         "preproc_steps": {
             "x_log_trans": True,
