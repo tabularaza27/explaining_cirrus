@@ -345,19 +345,15 @@ experiment_configs = [
     #     }
     # },
     {
-        "filters": ["nightday_flag ==1", "region != 'tropics'", "cloud_cover>0.5"],
+        "filters": ["nightday_flag ==1", "region != 'tropics'"],
         "predictors": ["t",
                        "w",
                        "wind_speed",
-                       "wind_direction",
                        "DU_sup",
                        "DU_sub",
                        "SO4",
-                       "lat_region",
-                       "season",
                        "dz_top_v2",
-                       "cloud_thickness_v2",
-                       "land_water_mask"],
+                       "cloud_thickness_v2"],
         "predictand": "icnc_5um",
         "preproc_steps": {
             "x_log_trans": True,
