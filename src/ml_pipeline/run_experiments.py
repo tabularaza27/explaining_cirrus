@@ -345,7 +345,7 @@ experiment_configs = [
     #     }
     # },
     {
-        "filters": ["nightday_flag ==1", "region != 'tropics'", "cloud_thickness_v2 < 600"],
+        "filters": ["nightday_flag ==1", "region != 'tropics'"],
         "predictors": ["t",
                        "w",
                        "wind_speed",
@@ -354,7 +354,8 @@ experiment_configs = [
                        "SO4",
                        "dz_top_v2",
                        "cloud_thickness_v2",
-                       "surface_height"],
+                       "surface_height",
+                       ],
         "predictand": "iwc",
         "preproc_steps": {
             "x_log_trans": True,
@@ -363,6 +364,124 @@ experiment_configs = [
             "oh_encoding": True
         }
     },
+    {
+        "filters": ["nightday_flag ==1", "region != 'tropics'"],
+        "predictors": ["t",
+                       "w",
+                       "wind_speed",
+                       "DU_sup",
+                       "DU_sub",
+                       "SO4",
+                       "dz_top_v2",
+                       "cloud_thickness_v2",
+                       "surface_height",
+                       "season",
+                       "land_water_mask",
+                       "lat_region"
+                       ],
+        "predictand": "icnc_5um",
+        "preproc_steps": {
+            "x_log_trans": True,
+            "y_log_trans": True,
+            "kickout_outliers": True,
+            "oh_encoding": True
+        }
+    },
+    {
+        "filters": ["nightday_flag ==1", "region != 'tropics'"],
+        "predictors": ["t",
+                       "w",
+                       "wind_speed",
+                       "DU_sup",
+                       "DU_sub",
+                       "SO4",
+                       "dz_top_v2",
+                       "cloud_thickness_v2",
+                       "surface_height",
+                       "season",
+                       "land_water_mask",
+                       "lat_region"
+                       ],
+        "predictand": "iwc",
+        "preproc_steps": {
+            "x_log_trans": True,
+            "y_log_trans": True,
+            "kickout_outliers": True,
+            "oh_encoding": True
+        }
+    },
+    {
+        "filters": ["nightday_flag ==1", "region != 'tropics'"],
+        "predictors": ["t",
+                       "w",
+                       "wind_speed",
+                       "DU_sup",
+                       "DU_sub",
+                       "SO4",
+                       "dz_top_v2",
+                       "cloud_thickness_v2",
+                       "surface_height",
+                       "season",
+                       "land_water_mask",
+                       "lat_region",
+                       "instrument_mask"
+                       ],
+        "predictand": "iwc",
+        "preproc_steps": {
+            "x_log_trans": True,
+            "y_log_trans": True,
+            "kickout_outliers": True,
+            "oh_encoding": True
+        }
+    },
+    {
+        "filters": ["nightday_flag ==1", "region != 'tropics'"],
+        "predictors": ["t",
+                       "w",
+                       "wind_speed",
+                       "DU_sup",
+                       "DU_sub",
+                       "SO4",
+                       "dz_top_v2",
+                       "cloud_thickness_v2",
+                       "surface_height",
+                       "season",
+                       "land_water_mask",
+                       "lat_region"
+                       ],
+        "predictand": "icnc_5um",
+        "preproc_steps": {
+            "x_log_trans": True,
+            "y_log_trans": True,
+            "kickout_outliers": True,
+            "oh_encoding": True
+        }
+    },
+    {
+        "filters": ["nightday_flag ==1", "region != 'tropics'"],
+        "predictors": ["t",
+                       "w",
+                       "wind_speed",
+                       "DU_sup",
+                       "DU_sub",
+                       "SO4",
+                       "dz_top_v2",
+                       "cloud_thickness_v2",
+                       "surface_height",
+                       "season",
+                       "land_water_mask",
+                       "lat_region",
+                       "instrument_mask"
+                       ],
+        "predictand": "icnc_5um",
+        "preproc_steps": {
+            "x_log_trans": True,
+            "y_log_trans": True,
+            "kickout_outliers": True,
+            "oh_encoding": True
+        }
+    },
+
     # {
     #     "filters": ["clm == 1", "nightday_flag ==1", "region != 'tropics'"],
     #     "predictors": ["t",
@@ -452,7 +571,10 @@ def run_experiments():
 
     for config in experiment_configs:
         pprint(config)
-        run_experiment(df, xgboost_config, experiment_config=config, log_figures=True)
+        # run each config 10 times with different seeds
+        for i in range(10):
+            config["random_state"] = int(np.exp(i))
+            run_experiment(df, xgboost_config, experiment_config=config, log_figures=True)
 
 
 if __name__ == "__main__":

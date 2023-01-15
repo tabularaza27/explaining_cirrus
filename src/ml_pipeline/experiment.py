@@ -122,7 +122,7 @@ def run_experiment(df, xgboost_config, experiment_config, comet_project_name="ic
     experiment.add_tags(tags)
 
     # build and train model
-    xg_reg = xgb.XGBRegressor(**xgboost_config)
+    xg_reg = xgb.XGBRegressor(random_state=experiment_config["random_state"], **xgboost_config)
     xg_reg.fit(X_train, y_train,
                eval_set=[(X_train, y_train), (X_val, y_val)],
                eval_metric="rmse", early_stopping_rounds=10)
