@@ -414,6 +414,7 @@ experiment_configs = [
         "filters": ["nightday_flag ==1", "region != 'tropics'"],
         "predictors": ["t",
                        "w",
+                       "RH_ice",
                        "wind_speed",
                        "DU_sup",
                        "DU_sub",
@@ -423,8 +424,7 @@ experiment_configs = [
                        "surface_height",
                        "season",
                        "land_water_mask",
-                       "lat_region",
-                       "instrument_flag"
+                       "lat_region"
                        ],
         "predictand": "iwc",
         "preproc_steps": {
@@ -438,6 +438,7 @@ experiment_configs = [
         "filters": ["nightday_flag ==1", "region != 'tropics'"],
         "predictors": ["t",
                        "w",
+                       "RH_ice",
                        "wind_speed",
                        "DU_sup",
                        "DU_sub",
@@ -457,30 +458,30 @@ experiment_configs = [
             "oh_encoding": True
         }
     },
-    {
-        "filters": ["nightday_flag ==1", "region != 'tropics'"],
-        "predictors": ["t",
-                       "w",
-                       "wind_speed",
-                       "DU_sup",
-                       "DU_sub",
-                       "SO4",
-                       "dz_top_v2",
-                       "cloud_thickness_v2",
-                       "surface_height",
-                       "season",
-                       "land_water_mask",
-                       "lat_region",
-                       "instrument_flag"
-                       ],
-        "predictand": "icnc_5um",
-        "preproc_steps": {
-            "x_log_trans": True,
-            "y_log_trans": True,
-            "kickout_outliers": True,
-            "oh_encoding": True
-        }
-    },
+    # {
+    #     "filters": ["nightday_flag ==1", "region != 'tropics'"],
+    #     "predictors": ["t",
+    #                    "w",
+    #                    "wind_speed",
+    #                    "DU_sup",
+    #                    "DU_sub",
+    #                    "SO4",
+    #                    "dz_top_v2",
+    #                    "cloud_thickness_v2",
+    #                    "surface_height",
+    #                    "season",
+    #                    "land_water_mask",
+    #                    "lat_region",
+    #                    "instrument_flag"
+    #                    ],
+    #     "predictand": "icnc_5um",
+    #     "preproc_steps": {
+    #         "x_log_trans": True,
+    #         "y_log_trans": True,
+    #         "kickout_outliers": True,
+    #         "oh_encoding": True
+    #     }
+    # },
 
     # {
     #     "filters": ["clm == 1", "nightday_flag ==1", "region != 'tropics'"],
