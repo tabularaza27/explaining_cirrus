@@ -414,7 +414,6 @@ experiment_configs = [
         "filters": ["nightday_flag ==1", "region != 'tropics'"],
         "predictors": ["t",
                        "w",
-                       "rh_ice",
                        "wind_speed",
                        "DU_sup",
                        "DU_sub",
@@ -438,7 +437,6 @@ experiment_configs = [
         "filters": ["nightday_flag ==1", "region != 'tropics'"],
         "predictors": ["t",
                        "w",
-                       "rh_ice",
                        "wind_speed",
                        "DU_sup",
                        "DU_sub",
@@ -558,7 +556,7 @@ xgboost_config = {"objective": "reg:squarederror", 'subsample': 0.4, "colsample_
 
 def load_dataframe():
     # df = pd.read_pickle("/net/n2o/wolke/kjeggle/Notebooks/DataCube/df_pre_filtering.pickle")
-    df = pd.read_feather("/net/n2o/wolke_scratch/kjeggle/CIRRUS_PIPELINE/larger_domain_high_res/DATA_CUBE/dataframes/instananeous_preproc_200789.ftr")
+    df = pd.read_feather("/net/n2o/wolke_scratch/kjeggle/CIRRUS_PIPELINE/larger_domain_high_res/DATA_CUBE/dataframes/instananeous_preproc_200789_new.ftr")
     ### Drop NaN
     df = df.dropna()
     ### Filter for Temperature
