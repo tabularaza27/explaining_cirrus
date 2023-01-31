@@ -5,16 +5,18 @@ If you have any question please reach out to me (kai.jeggle@env.ethz.ch)
 
 ## Structure
 
-├── src
-    ├── config_files  
-    ├── ml_pipeline
+├── src  
+    ├── config_files    
+    ├── ml_pipeline  
     ├── preprocess 
-    ├── scaffolding
+    ├── scaffolding  
 
 The code to train the machine learning models and apply the XAI methods is located in `src/ml_pipeline`. The other directories contain the code to create the co-located dataset of DARDAR-Nice, ERA5, and MERRA-2. 
 To reproduce the results in the paper only the scripts in `src/ml_pipeline` are relevant. The co-located datasets can be downloaded here: 
 
 ## How to reproduce the results
+
+Download the co-located datasets from: 
 
 In the paper a XGBoost model is trained on an instantaneous data set and a LSTM+Attention network is trained on a temporal dataset.  
 To train the models and the XAI pipeline run the code in the Notebooks `src/ml_pipeline/instantaneous/InstantaneousModel.ipynb` & `src/ml_pipeline/temporal/TemporalModel.ipynb`.
