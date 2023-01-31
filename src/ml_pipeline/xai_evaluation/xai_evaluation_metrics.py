@@ -118,7 +118,7 @@ def eval_faithfulness(x, y, attributions, model, base_values):
     print("True corr")
     print(stats.describe(true_cors))
 
-    return pred_cors, true_cors
+    return pred_cors #, true_cors
 
 ### Robustness / Stability
 # below implementations are adapted from https://github.com/AI4LIFE-GROUP/OpenXAI/
@@ -196,7 +196,7 @@ def evaluate_stability_metric(x, model, explainer, perturber, stability_metric, 
     # select perturbed samples that have same prediction as original sample
     y_pred_diffs = np.abs(y_prime_preds - y_pred)
     ind_equal_y_pred = y_pred_diffs < max_pred_diff
-    print(f"select {np.sum(ind_equal_y_pred)}/{num_samples} samples")
+    # print(f"select {np.sum(ind_equal_y_pred)}/{num_samples} samples")
     x_prime_samples = x_prime_samples[ind_equal_y_pred]
     y_prime_preds = y_prime_preds[ind_equal_y_pred]
 
