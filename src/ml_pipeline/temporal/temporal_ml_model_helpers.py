@@ -7,7 +7,7 @@ from scipy.ndimage import gaussian_filter1d
 from scipy.signal.windows import triang
 from scipy.special import exp10
 
-from src.ml_pipeline.ml_preprocess import create_filter_string
+from src.ml_pipeline.instantaneous.ml_preprocess import create_filter_string
 
 
 ### general ###

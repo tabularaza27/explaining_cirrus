@@ -1,11 +1,11 @@
 import pytorch_lightning as pl
-from pytorch_lightning import Trainer, seed_everything
+from pytorch_lightning import Trainer
 from pytorch_lightning import loggers as pl_loggers
 
 from optuna.integration import PyTorchLightningPruningCallback
 
-from src.ml_pipeline.spatio_temporal.temporal.data_module import BacktrajDataModule
-from src.ml_pipeline.spatio_temporal.temporal.lstm_model import LSTMRegressor, LogCallback
+from src.ml_pipeline.temporal.data_module import BacktrajDataModule
+from src.ml_pipeline.temporal.lstm_model import LSTMRegressor, LogCallback
 
 COMET_API_KEY = "Rrwj142Sk080T0Qth3KNdPQg5"
 COMET_WORKSPACE = "tabularaza27"

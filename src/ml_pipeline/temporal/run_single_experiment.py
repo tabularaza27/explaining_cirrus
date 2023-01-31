@@ -4,19 +4,12 @@ from pprint import pprint
 
 import pandas as pd
 
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import minmax_scale
-from sklearn.preprocessing import MaxAbsScaler
 from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import RobustScaler
-from sklearn.preprocessing import Normalizer
-from sklearn.preprocessing import QuantileTransformer
-from sklearn.preprocessing import PowerTransformer
 
 import torch
 import torch.nn as nn
 
-from src.ml_pipeline.spatio_temporal.temporal.experiment_setup import experiment_setup
+from src.ml_pipeline.temporal.experiment_setup import experiment_setup
 
 from src.preprocess.helpers.constants import *
 from src.scaffolding.scaffolding import get_data_product_dir

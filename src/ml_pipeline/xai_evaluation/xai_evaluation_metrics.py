@@ -229,7 +229,7 @@ def evaluate_stability_metric(x, model, explainer, perturber, stability_metric, 
             stability_ratio = np.divide(explanation_diff, x_diff)
         elif stability_metric == "ROS":
             y_diff = compute_Lp_norm_diff(y_pred, y_prime_preds[sample_ind], normalize_to_relative_change=False)
-            if y_diff <= eps: print("small y_diff:", y_diff)
+            #if y_diff <= eps: print("small y_diff:", y_diff)
             y_diff = np.max((y_diff, eps))
             y_diffs.append(y_diff)
             stability_ratio = np.divide(explanation_diff, y_diff)

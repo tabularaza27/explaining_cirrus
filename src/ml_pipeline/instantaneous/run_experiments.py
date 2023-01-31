@@ -1,10 +1,9 @@
 from pprint import pprint
-import copy
 
 import pandas as pd
 import numpy as np
 
-from src.ml_pipeline.experiment import run_experiment
+from src.ml_pipeline.instantaneous.experiment import run_experiment
 from src.preprocess.helpers.constants import TEMP_THRES
 
 experiment_configs = [

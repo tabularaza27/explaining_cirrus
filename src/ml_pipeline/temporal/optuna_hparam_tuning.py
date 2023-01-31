@@ -9,7 +9,7 @@ import optuna
 import torch
 import torch.nn as nn
 
-from src.ml_pipeline.spatio_temporal.temporal.experiment_setup import experiment_setup
+from src.ml_pipeline.temporal.experiment_setup import experiment_setup
 
 from src.preprocess.helpers.constants import *
 from src.scaffolding.scaffolding import get_data_product_dir
