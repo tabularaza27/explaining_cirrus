@@ -15,7 +15,7 @@ To reproduce the results in the paper only the scripts in `src/ml_pipeline` are 
 
 ## How to reproduce the results
 
-Download the co-located datasets from  
+**Download the co-located datasets from  [Zenodo](https://doi.org/10.5281/zenodo.7590910)**
 
 In the paper a XGBoost model is trained on an instantaneous data set and a LSTM+Attention network is trained on a temporal dataset.  
 
