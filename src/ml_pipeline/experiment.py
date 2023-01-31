@@ -30,13 +30,14 @@ def evaluate_model(model, X_test, y_test):
     return validate_df
 
 
-def run_experiment(df, xgboost_config, experiment_config):
+def run_experiment(df, xgboost_config, experiment_config, model_path=None):
     """run experiment
 
     Args:
         df (pd.Dataframe): data frame with each row representing one sample
         xgboost_config (dict): xgboost hyperparameter
         experiment_config (dict): experiment configuration
+        model_path (None | str): set path where to store the trained model, if None save model in current directory
 
     Examples:
         xgboost_config = {"objective": "reg:squarederror", 'subsample': 0.4, "colsample_bytree": 0.8, 'learning_rate': 0.02,
@@ -86,6 +87,9 @@ def run_experiment(df, xgboost_config, experiment_config):
     validate_df = evaluate_model(xg_reg, X_test, y_test)
 
     # save model to comet
-    xg_reg.save_model("xgboost_model.json")
+    if model_path:
+        xg_reg.save_model(f"{model_path}/xgboost_model_{experiment_config['predictand']}.json")
+    else:
+        xg_reg.save_model(f"xgboost_model_{experiment_config['predictand']}.json")
 
     return xg_reg, validate_df
