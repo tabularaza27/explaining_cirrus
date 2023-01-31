@@ -8,7 +8,7 @@ If you have any question please reach out to me (kai.jeggle@env.ethz.ch)
 ├── src  
     ├── config_files    
     ├── ml_pipeline  
-    ├── preprocess 
+    ├── preprocess  
     ├── scaffolding  
 
 The code to train the machine learning models and apply the XAI methods is located in `src/ml_pipeline`. The other directories contain the code to create the co-located dataset of DARDAR-Nice, ERA5, and MERRA-2. 
