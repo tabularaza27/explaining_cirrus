@@ -1,40 +1,12 @@
 import pandas as pd
 import numpy as np
-import os
 from sklearn.model_selection import train_test_split
 
-from src.preprocess.helpers.constants import DATA_CUBE_FEATURE_ENGINEERED_DF_DIR
-from src.preprocess.helpers.constants import DATA_ONLY_DF_FILESTUMPY, OBSERVATIONS_DF_FILESTUMPY, \
-    OBSERVATION_VICINITY_DF_FILESTUMPY
-
-CAT_VARS = ["season", "lat_region", "lon_region", "IC_CIR", "IC_CIR_class", "clm_v2", 'nightday_flag', 'land_water_mask', 'instrument_flag']
+CAT_VARS = ["season", "lat_region", "lon_region", "IC_CIR", "IC_CIR_class", "clm_v2", 'nightday_flag',
+            'land_water_mask', 'instrument_flag']
 BINARY_VARS = ["cloud_top", "cloud_bottom", "liquid_origin"]
-LOG_TRANS_VARS = ['DU', "SO4", "SO2", 'DU001', 'DU002', 'DU003', 'DU004', 'DU005','DU_sup','DU_sub']
-BASE_PREDICTORS = []  # ' lat_region','dz_top',"IC_CIR"] # DU, clm_v2
-
-
-# other predictor variables: 'DU001','DU002','DU003','DU004','DU005','DU','clm_v2', 'nightday_flag','land_water_mask','instrument_flag', 'layer_index'
-
-def load_feature_engineered_df(df_type, year):
-    """load dataframe with engineered features
-
-    created with FeatureEngineering Notebook
-
-    Args:
-        df_type (str): observations, observation_vicinity, data_only
-        year (int|str): year or all
-
-    Returns:
-
-    """
-    filepath_map = {"observations": OBSERVATIONS_DF_FILESTUMPY,
-                    "observation_vicinity": OBSERVATION_VICINITY_DF_FILESTUMPY, "data_only": DATA_ONLY_DF_FILESTUMPY}
-    filepath = os.path.join(DATA_CUBE_FEATURE_ENGINEERED_DF_DIR,
-                            "{}_feature_engineered_{}.pickle".format(filepath_map[df_type], year))
-    print("load file: {}".format(filepath))
-    df = pd.read_pickle(filepath)
-
-    return df
+LOG_TRANS_VARS = ['DU', "SO4", "SO2", 'DU001', 'DU002', 'DU003', 'DU004', 'DU005', 'DU_sup', 'DU_sub']
+BASE_PREDICTORS = []
 
 
 def create_filter_string(filters):
@@ -298,7 +270,7 @@ def create_dataset(df, filters, predictors, predictand, preproc_steps, random_st
     # select columns
     df = select_columns(df, predictors, predictand)
     # pre processing steps #
-    df = run_preprocessing_steps(df, preproc_steps, predictand) # todo
+    df = run_preprocessing_steps(df, preproc_steps, predictand)  # todo
 
     # split train / test data set
     if preproc_steps["y_log_trans"]:
