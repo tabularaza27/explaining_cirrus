@@ -343,7 +343,8 @@ class BacktrajDataModule(pl.LightningDataModule):
                 self.traj_df["std_time"] = pd_dtime_to_std_seconds(self.traj_df["time"])
 
             # filter dataframe
-            self.traj_df = filter_temporal_df(self.traj_df, self.data_filters, drop_nan_rows=True)
+            if len(self.data_filters>0):
+                self.traj_df = filter_temporal_df(self.traj_df, self.data_filters, drop_nan_rows=True)
 
             # set dtypes for static features
             self.traj_df[self.static_features] = self.traj_df[
