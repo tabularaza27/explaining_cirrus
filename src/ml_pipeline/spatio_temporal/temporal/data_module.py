@@ -7,14 +7,7 @@ import numpy as np
 import pandas as pd
 
 from sklearn.base import TransformerMixin
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import minmax_scale
-from sklearn.preprocessing import MaxAbsScaler
 from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import RobustScaler
-from sklearn.preprocessing import Normalizer
-from sklearn.preprocessing import QuantileTransformer
-from sklearn.preprocessing import PowerTransformer
 from scipy.ndimage import convolve1d
 
 import torch
@@ -100,7 +93,8 @@ class BacktrajDataset(Dataset):
 
     def __getitem__(self, index):
         # retrieve weights, if None, return array with ones
-        weight = self.weights[index].astype('float32') if self.weights is not None else np.ones(shape=self.n_predictands).astype('float32')
+        weight = self.weights[index].astype('float32') if self.weights is not None else np.ones(
+            shape=self.n_predictands).astype('float32')
         return self.X_seq[index, :, :], self.X_static[index], self.y[index], weight, self.coords[index]
 
     @staticmethod
@@ -226,8 +220,6 @@ class BacktrajDataModule(pl.LightningDataModule):
             lds_ks:
             lds_sigma:
             backtraj_timesteps: number of timesteps (hours) of backtrajectories to train the model
-
-            todo implement loading only specific features when loading preloaded dataset
         """
         super().__init__()
 
@@ -284,7 +276,8 @@ class BacktrajDataModule(pl.LightningDataModule):
         # data preproc
         self.sequential_scaler = sequential_scaler
         self.static_scaler = static_scaler
-        self.log_transform_predictands = [p for p in log_transform_predictands if p in predictands] # only transform predictands that are active
+        self.log_transform_predictands = [p for p in log_transform_predictands if
+                                          p in predictands]  # only transform predictands that are active
         self.regional_feature_resolution = regional_feature_resolution
         self.backtraj_timestep = backtraj_timesteps
 
@@ -301,7 +294,8 @@ class BacktrajDataModule(pl.LightningDataModule):
         self.reweight_lead_predictand = reweight_lead_predictand
 
         # get index for lead predicatand for use in BacktrajDataset
-        if (self.multiple_predictand_reweight_type == "lead_predictand") and (self.reweight!="none") and (len(self.predictands)>1):
+        if (self.multiple_predictand_reweight_type == "lead_predictand") and (self.reweight != "none") and (
+                len(self.predictands) > 1):
             self.reweight_lead_predictand_idx = self.predictands.index(self.reweight_lead_predictand)
         else:
             self.reweight_lead_predictand_idx = None
@@ -314,7 +308,7 @@ class BacktrajDataModule(pl.LightningDataModule):
         # sequential features
         self.cont_sequential_features_list = []
         self.categorical_sequential_feature_list = []
-        self.binary_sequential_feature_list = [] # there are none currently
+        self.binary_sequential_feature_list = []  # there are none currently
 
         # static features
         self.cont_static_features_list = []
@@ -324,9 +318,6 @@ class BacktrajDataModule(pl.LightningDataModule):
         ### call prepare data routine ###
 
         self._prepare_data()
-
-        # todo save y_preds if multitask, i.e. is it working with current setup
-        #
 
     def _prepare_data(self):
         """
@@ -361,10 +352,12 @@ class BacktrajDataModule(pl.LightningDataModule):
             # add lat/lon region feature
             if self.regional_feature_resolution is not None:
                 self.traj_df["lat_region"] = (np.round(
-                    self.traj_df.lat * (1 / self.regional_feature_resolution)) * self.regional_feature_resolution).astype(
+                    self.traj_df.lat * (
+                            1 / self.regional_feature_resolution)) * self.regional_feature_resolution).astype(
                     'int')
                 self.traj_df["lon_region"] = (np.round(
-                    self.traj_df.lon * (1 / self.regional_feature_resolution)) * self.regional_feature_resolution).astype(
+                    self.traj_df.lon * (
+                            1 / self.regional_feature_resolution)) * self.regional_feature_resolution).astype(
                     'int')
                 self.sequential_features.append("lat_region")
                 self.sequential_features.append("lon_region")
@@ -393,23 +386,22 @@ class BacktrajDataModule(pl.LightningDataModule):
         # sequential features
         self.cont_sequential_features_list = [var for var in self.sequential_features if
                                               not any(
-                                                  map(var.startswith, CAT_VARS+BINARY_VARS))]  # select only cont. features
+                                                  map(var.startswith,
+                                                      CAT_VARS + BINARY_VARS))]  # select only cont. features
         self.categorical_sequential_feature_list = [var for var in self.sequential_features if
                                                     any(map(var.startswith,
                                                             CAT_VARS))]  # select only cat. features
         self.binary_sequential_feature_list = [var for var in self.sequential_features if
-                                                    any(map(var.startswith,
-                                                            BINARY_VARS))]  # select only bin features
+                                               any(map(var.startswith,
+                                                       BINARY_VARS))]  # select only bin features
 
         # static features
         self.cont_static_features_list = [var for var in self.static_features if
-                                          not any(map(var.startswith, CAT_VARS+BINARY_VARS))]
+                                          not any(map(var.startswith, CAT_VARS + BINARY_VARS))]
         self.categorical_static_features_list = [var for var in self.static_features if
                                                  any(map(var.startswith, CAT_VARS))]
         self.binary_static_feature_list = [var for var in self.static_features if
                                            any(map(var.startswith, BINARY_VARS))]
-
-        # todo kickout outliers on log transformed y data
 
     def _load_preprocessed_data(self, dataset_id):
         """loads preprocessed numpy arrays and scalers
@@ -454,7 +446,7 @@ class BacktrajDataModule(pl.LightningDataModule):
             if "features" in arr_name:
                 arr_vals = list(arr_vals)
             if re.match("X_.*_sequential", arr_name):
-                arr_vals = arr_vals[:, -(self.backtraj_timestep+1):, :]
+                arr_vals = arr_vals[:, -(self.backtraj_timestep + 1):, :]
             setattr(self, arr_name, arr_vals)
             print("loaded", arr_name)
         # scalers to load from disk
@@ -537,8 +529,8 @@ class BacktrajDataModule(pl.LightningDataModule):
 
         # assert that sequential features have correct length
         if not self.inference_only:
-            assert self.X_train_sequential.shape[1] == self.backtraj_timestep+1
-        assert self.X_test_sequential.shape[1] == self.backtraj_timestep+1
+            assert self.X_train_sequential.shape[1] == self.backtraj_timestep + 1
+        assert self.X_test_sequential.shape[1] == self.backtraj_timestep + 1
 
     def train_dataloader(self):
         train_dataset = BacktrajDataset(X_seq=self.X_train_sequential,
@@ -603,18 +595,20 @@ class BacktrajDataModule(pl.LightningDataModule):
         if var_type == "sequential":
             X_arr = []
             X_cont = self.sequential_scaler.transform(df[self.cont_sequential_features_list]).reshape(
-                int(df.shape[0] / (self.backtraj_timestep+1)), self.backtraj_timestep+1,
+                int(df.shape[0] / (self.backtraj_timestep + 1)), self.backtraj_timestep + 1,
                 len(self.cont_sequential_features_list))  # n_samples, # n_timesteps, # n_features
             X_arr.append(X_cont)
 
             if len(self.categorical_sequential_feature_list):
-                X_cat = df[self.categorical_sequential_feature_list].values.reshape(int(df.shape[0] / (self.backtraj_timestep+1)), self.backtraj_timestep+1,
-                                                                                len(self.categorical_sequential_feature_list))
+                X_cat = df[self.categorical_sequential_feature_list].values.reshape(
+                    int(df.shape[0] / (self.backtraj_timestep + 1)), self.backtraj_timestep + 1,
+                    len(self.categorical_sequential_feature_list))
                 X_arr.append(X_cat)
 
             if len(self.binary_sequential_feature_list) > 0:
-                X_bin = df[self.binary_sequential_feature_list].values.reshape(int(df.shape[0] / (self.backtraj_timestep+1)), self.backtraj_timestep + 1,
-                                len(self.binary_sequential_feature_list))
+                X_bin = df[self.binary_sequential_feature_list].values.reshape(
+                    int(df.shape[0] / (self.backtraj_timestep + 1)), self.backtraj_timestep + 1,
+                    len(self.binary_sequential_feature_list))
                 X_arr.append(X_bin)
 
             X = np.concatenate(X_arr, axis=2)
