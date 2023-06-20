@@ -11,11 +11,11 @@ If you have any question please reach out to me (kai.jeggle@env.ethz.ch)
 ├── scaffolding  
 
 All the code to train the machine learning models and apply the XAI methods is located in `src/ml_pipeline`. The other directories contain the code and config files to create the co-located dataset of DARDAR-Nice, ERA5, and MERRA-2. 
-To reproduce the results in the paper only the scripts in `src/ml_pipeline` are relevant. The co-located datasets can be downloaded [Zenodo](https://doi.org/10.5281/zenodo.7590910)
+To reproduce the results in the paper only the scripts in `src/ml_pipeline` are relevant. The co-located datasets can be downloaded [Zenodo](https://zenodo.org/record/7965381)
 
 ## How to reproduce the results
 
-**Download the co-located datasets from  [Zenodo](https://doi.org/10.5281/zenodo.7590910)**
+**Download the co-located datasets from  [Zenodo](https://zenodo.org/record/7965381)**
 
 In the paper a XGBoost model is trained on an instantaneous data set and a LSTM+Attention network is trained on a temporal dataset.  
 
